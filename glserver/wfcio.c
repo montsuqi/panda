@@ -38,6 +38,8 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<json.h>
+#include	<unistd.h>
+#include	<errno.h>
 
 #include	"const.h"
 #include	"net.h"
@@ -81,7 +83,7 @@ ENTER_FUNC;
 	}
 	fp = SocketToNet(fd);
 	SendString(fp,(char*)json_object_to_json_string(req));ON_IO_ERROR(fp,badio);
-	str = RecvStringNew(fp);	ON_IO_ERROR(fp,badio);
+	str = RecvStringNew(fp);	ON_IO_ERROR(fp,badio2);
 	CloseNet(fp);
 	res = json_tokener_parse(str);
 	if (res == NULL || is_error(res)) {
@@ -89,5 +91,7 @@ ENTER_FUNC;
 	}
 	return res;
 badio:
-	Error("WFCIO_JSONRPC connection error");
+	Error("SendString error:%s",strerror(errno));
+badio2:
+	Error("RecvStringNew error:%s",strerror(errno));
 }

@@ -147,17 +147,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	ARG_TABLE	option[] = {
-	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ŝ|ň??"	 								},
-	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"³?āŭť|Ď?" 							},
-	{	"server",	BOOLEAN,	TRUE,	(void*)&fServer,
-		"start as server"								},
-
-	{	NULL,		0,			FALSE,	NULL,	NULL 	}
-};
-
 static	void
 SetDefault(void)
 {
@@ -172,10 +161,7 @@ main(
 	int		argc,
 	char	**argv)
 {
-	FILE_LIST	*fl;
-
 	SetDefault();
-	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("testnet",NULL);
 
 	InitNET();

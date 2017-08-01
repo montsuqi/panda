@@ -18,9 +18,33 @@
 
 ## Process this file with automake to produce Makefile.in
 
+bin_PROGRAMS = monbatch monblob monblobapi
 sbin_PROGRAMS = aps dbstub
 pkglib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
 
+monbatch_SOURCES = \
+	monbatch.c
+monbatch_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la
+monbatch_LDFLAGS	=			\
+	-export-dynamic
+
+monblob_SOURCES = \
+	monblob.c
+monblob_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la
+monblob_LDFLAGS	=			\
+	-export-dynamic
+
+monblobapi_SOURCES = \
+	monblobapi.c
+monblobapi_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la
+monblobapi_LDFLAGS	=			\
+	-export-dynamic
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
@@ -58,13 +82,11 @@ OpenCOBOLla += OpenCOBOL.la
 HANDLER_OBJECTS	=	\
 	C.la			\
 	Exec.la			\
-	Ruby.la			\
 	Resident.la		\
 	OpenCOBOL.la
 
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic -avoid-version
 C_la_LDFLAGS			=	-module -export-dynamic -avoid-version
-Ruby_la_LDFLAGS			=	-module -export-dynamic -avoid-version
 Exec_la_LDFLAGS			=	-module -export-dynamic -avoid-version
 Resident_la_LDFLAGS		=	-module -export-dynamic -avoid-version
 
@@ -72,14 +94,12 @@ C_la_SOURCES			=	\
 	C.c						\
 	apslib.c
 
-Ruby_la_SOURCES			=	\
-	Ruby.c					\
-	apslib.c
-
 OpenCOBOL_la_SOURCES	=	\
 	MONFUNC.c				\
 	MONFUNC.h				\
-	OpenCOBOL.c
+	OpenCOBOL.c				\
+	OpenCOBOL.h
+
 OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
 
 Exec_la_SOURCES			=	Exec.c

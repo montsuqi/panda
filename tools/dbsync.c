@@ -345,6 +345,7 @@ table_check(
 	return ng_list;
 }
 
+#if 0
 static Bool
 ng_list_check(TableList *ng_list)
 {
@@ -391,6 +392,7 @@ ng_list_sync(
 		}
 	}
 }
+#endif
 
 static	void
 lookup_master_slave(

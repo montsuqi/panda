@@ -55,6 +55,25 @@
 #include	"debug.h"
 
 static	void
+CheckAPS_Node(
+	LD_Node		*ld,
+	int			ix)
+{
+	APS_Node *aps;
+	SessionData *data;
+
+	aps = &ld->aps[ix];
+	if (aps->fp != NULL) {
+		data = New(SessionData);
+		memclear(data,sizeof(SessionData));
+		data->ld = ld;
+		data->apsid = ld->aps[ix].id;
+		data->type = SESSION_TYPE_CHECK;
+		CoreEnqueue(data);
+	}
+}
+
+static	void
 ClearAPS_Node(
 	LD_Node		*ld,
 	int			ix)
@@ -84,8 +103,7 @@ static	Bool
 CheckAPS(
 	PacketClass	klass,
 	LD_Node		*ld,
-	int			ix,
-	char		*uuid)
+	int			ix)
 {
 	APS_Node		*aps;
 
@@ -95,6 +113,7 @@ CheckAPS(
 		return TRUE;
 	}
 badio:
+	aps->fp = NULL;
 	return FALSE;
 }
 
@@ -313,9 +332,11 @@ ENTER_FUNC;
 		if (data->apsid == ld->aps[ix].id){
 			break;
 		}
-		if ((ThisEnv->mlevel == MULTI_NO) ||
-			(ThisEnv->mlevel == MULTI_ID)) {
-			break;
+		if (data->type != SESSION_TYPE_CHECK) {
+			if (((ThisEnv->mlevel == MULTI_NO) ||
+				(ThisEnv->mlevel == MULTI_ID))) {
+				break;
+			}
 		}
 	}
 	if (data != NULL) {
@@ -348,7 +369,7 @@ SendTermMessage(
 
 	fp = NULL; 
 	ld = data->ld;
-	if (CheckAPS(APS_REQ, ld,ix,data->hdr->uuid)) {
+	if (CheckAPS(APS_REQ,ld,ix)) {
 		if (PutAPS(ld,ix,data) && GetAPS_Control(ld,ix,data)) {
 			fp = ld->aps[ix].fp;
 		}
@@ -433,7 +454,7 @@ SendAPIMessage(
 
 	fp = NULL;
 	ld = data->ld;
-	if (!CheckAPS(APS_API,ld,ix,data->hdr->uuid)) {
+	if (!CheckAPS(APS_API,ld,ix)) {
 		data->apidata->status = WFC_API_NOT_FOUND;
 	} else {
 		fp = ld->aps[ix].fp;
@@ -486,6 +507,10 @@ ENTER_FUNC;
 				break;
 			case SESSION_TYPE_API:
 				SendAPIMessage(data,mq,ix);
+				break;
+			case SESSION_TYPE_CHECK:
+				CheckAPS(APS_CHECK,data->ld,ix);
+				free(data);
 				break;
 			}
 		} else {
@@ -673,28 +698,32 @@ ENTER_FUNC;
 #ifdef	DEBUG
 	printf("connect %s\n",buff);
 #endif
-	if ((ld = g_hash_table_lookup(APS_Hash,buff)) != NULL) {
-		if (ThisEnv->mlevel != MULTI_APS) {
-			ld->nports = 1;
-		}
-		SendPacketClass(fp,APS_OK);
-		for	( i = 0 ; i < ld->nports ; i ++ ) {
-			if (ld->aps[i].fp == NULL) {
-				break;
-			}
-		}
-		if (i < ld->nports) {
+	if ((ld = g_hash_table_lookup(APS_Hash,buff)) == NULL) {
+		Warning("invalid ld[%s]\n",buff);
+		SendPacketClass(fp,APS_NOT);
+		CloseNet(fp);
+		return;
+	}
+	if (ThisEnv->mlevel != MULTI_APS) {
+		ld->nports = 1;
+	}
+	for	(i = 0; i < ld->nports; i++) {
+		if (ld->aps[i].fp == NULL) {
 			ClearAPS_Node(ld,i);
 			ActivateAPS_Node(&ld->aps[i],fp);
 			pthread_cond_signal(&ld->conn);
-		} else {
-			Warning("aps connection overflow");
-			CloseNet(fp);
+			break;
 		}
-	} else {
-		SendPacketClass(fp,APS_NOT);
+	}
+	if (i >= ld->nports) {
+		for	(i = 0; i < ld->nports; i++) {
+			CheckAPS_Node(ld,i);
+		}
+		Warning("aps connection overflow");
+		SendPacketClass(fp,APS_WAIT);
 		CloseNet(fp);
-		printf("invalid aps = [%s]\n",buff);
+	} else {
+		SendPacketClass(fp,APS_OK);
 	}
 LEAVE_FUNC;
 }

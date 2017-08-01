@@ -47,5 +47,6 @@ GLOBAL	char	*Ciphers;
 #endif
 GLOBAL	URL		Auth;
 GLOBAL	Bool	fAPI;
+GLOBAL	Bool	fDebug;
 
 #endif

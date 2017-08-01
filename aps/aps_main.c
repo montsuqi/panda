@@ -72,6 +72,7 @@ InitSystem(
 ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,name,"","",P_ALL);
+	setenv("MON_DIRECTORY_PATH", Directory, 1);
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		Error("LD \"%s\" not found.",name);
 	}
@@ -111,7 +112,8 @@ MakeProcessNode(void)
 {
 	ProcessNode	*node;
 	int			i;
-
+	char		*mwname,*mwver;
+	ValueStruct	*e;
 ENTER_FUNC;
 	node = New(ProcessNode);
 	node->mcprec = ThisEnv->mcprec;
@@ -126,6 +128,18 @@ ENTER_FUNC;
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
+
+	mwname = getenv("__MCP_MIDDLEWARE_NAME");
+	if (mwname == NULL) {
+		mwname = "panda";
+	} 
+	mwver = getenv("__MCP_MIDDLEWARE_VERSION");
+	if (mwver == NULL) {
+		mwver = PACKAGE_VERSION;
+	} 
+	e = node->mcprec->value;
+	SetValueString(GetItemLongName(e,"dc.middleware_name"),mwname,NULL);
+	SetValueString(GetItemLongName(e,"dc.middleware_version"),mwver,NULL);
 LEAVE_FUNC;
 	return	(node);
 }
@@ -174,6 +188,7 @@ ExecuteServer(void)
 	ProcessNode	*node;
 	WindowBind	*bind;
 	char		*wname;
+	PacketClass pc;
 
 ENTER_FUNC;
 	if (WfcPortNumber == NULL) {
@@ -194,14 +209,26 @@ ENTER_FUNC;
 	fpWFC = SocketToNet(fhWFC);
 	SendStringDelim(fpWFC,ThisLD->name);
 	SendStringDelim(fpWFC,"\n");
-	if (RecvPacketClass(fpWFC) != APS_OK) {
+
+	pc = RecvPacketClass(fpWFC);
+	switch(pc) {
+	case APS_OK:
+		break;
+	case APS_NOT:
 		if (!CheckNetFile(fpWFC)) {
 			Warning("WFC connection lost");
 			CloseNet(fpWFC);
 			goto retry;
 		}
 		Error("invalid LD name");
+		break;
+	case APS_WAIT:
+		CloseNet(fpWFC);
+		sleep(1);
+		Warning("connection suspended by wfc; retry");
+		goto retry;
 	}
+
 	InitAPSIO(fpWFC);
 	if ( ReadyOnlineDB(AppName) < 0 ){
 		Error("Online DB is not ready");
@@ -212,6 +239,9 @@ ENTER_FUNC;
 			Message("GetWFC failure");
 			rc = -1;
 			break;
+		}
+		if (node->messageType == MESSAGE_TYPE_CHECK) {
+			continue;
 		}
 		wname = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
 		dbgprintf("ld     = [%s]",ThisLD->name);
@@ -346,7 +376,8 @@ main(
 {
 	FILE_LIST	*fl;
 	int			rc;
-	struct sigaction	sa;
+	struct		sigaction	sa;
+	char		*stderr_path,*stdout_path;
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = (void *)HungUp;
@@ -362,10 +393,19 @@ main(
 		Error("sigaction(2) failure");
 	}
 
+	stdout_path = getenv("APS_DEBUG_STDOUT_PATH");
+	if (stdout_path != NULL) {
+		freopen(stdout_path,"w",stdout);
+	}
+
+	stderr_path = getenv("APS_DEBUG_STDERR_PATH");
+	if (stderr_path != NULL) {
+		freopen(stderr_path,"w",stderr);
+	}
+
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
-	if		(	(  fl  !=  NULL  )
-			&&	(  fl->name  !=  NULL  ) ) {
+	if ((fl != NULL) && (fl->name != NULL)) {
 		snprintf(AppName, sizeof(AppName), "aps-%s",fl->name);
 		InitMessage(AppName,NULL);
 		InitNET();

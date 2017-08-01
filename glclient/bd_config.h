@@ -24,25 +24,32 @@
 #include <glib.h>      /* gchar, gboolean */
 #include <sys/types.h> /* mode_t */
 
-/* gconf tool */
-void gl_config_init();
-int gl_config_get_config_nums();
-gboolean gl_config_have_config(int i);
-int gl_config_get_index();
-void gl_config_set_index(int);
-int gl_config_add_server();
-void gl_config_del_server(int);
-void gl_config_save();
-void gl_config_set_string(int,const char*,const char*);
-const char* gl_config_get_string(int,const char*);
-void gl_config_set_int(int,const char*,int);
-int gl_config_get_int(int,const char*);
-void gl_config_set_boolean(int,const char*,gboolean);
-gboolean gl_config_get_boolean(int,const char*);
+#undef	GLOBAL
+#ifdef	BD_CONFIG_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
 
-void ListConfig();
-void LoadConfig(int n);
-void LoadConfigByDesc(const char *configname);
+/* gconf tool */
+void        gl_config_init();
+const char* gl_config_get_config_dir();
+int         gl_config_get_config_nums();
+gboolean    gl_config_have_config(int i);
+int         gl_config_get_index();
+void        gl_config_set_index(int);
+int         gl_config_add_server();
+void        gl_config_del_server(int);
+void        gl_config_save();
+void        gl_config_set_string(int,const char*,const char*);
+const char* gl_config_get_string(int,const char*);
+void        gl_config_set_int(int,const char*,int);
+int         gl_config_get_int(int,const char*);
+void        gl_config_set_boolean(int,const char*,gboolean);
+gboolean    gl_config_get_boolean(int,const char*);
+
+void        ListConfig();
+int         GetConfigIndexByDesc(const char *configname);
 
 #endif /* #ifndef __BD_CONFIG_H_INCLUDED__ */
 

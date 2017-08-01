@@ -17,7 +17,8 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir monupload $(dbsyncbin)
+bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir monupload monsql monsetup monbatch_ps monpushevent $(dbsyncbin)
+
 sbin_PROGRAMS = monitor msgd
 noinst_SCRIPTS = copy
 
@@ -80,6 +81,63 @@ monupload_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
+monpushevent_LDFLAGS	=			\
+	-export-dynamic
+monpushevent_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
+	$(COMMON_LIBS)
+
+monsql_SOURCES = \
+	monsql.c
+monsql_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la
+monsql_LDFLAGS	=			\
+	-export-dynamic
+monsql_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
+	$(COMMON_LIBS)
+
+monsetup_SOURCES = \
+	monsetup.c
+monsetup_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la
+monsetup_LDFLAGS	=			\
+	-export-dynamic
+monsetup_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
+	$(COMMON_LIBS)
+
+monbatch_ps_SOURCES = \
+	monbatch_ps.c
+monbatch_ps_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la
+monbatch_ps_LDFLAGS	=			\
+	-export-dynamic
+monbatch_ps_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
+	$(COMMON_LIBS)
+
 monitor_LDFLAGS	=			\
 	-export-dynamic
 monitor_LDADD 		=					\
@@ -105,6 +163,7 @@ AM_CPPFLAGS 			= 		\
 	$(SSL_CFLAGS)			\
 	$(COMMON_CFLAGS)		\
 	$(POSTGRES_CFLAGS)		\
+	-DBIN_DIR=\"$(bindir)\"			\
 	-DSERVER_DIR=\"$(sbindir)\"
 
 monitor_DEPENDENCIES	=				\
@@ -126,14 +185,17 @@ monupload_SOURCES	=	\
 
 monitor_SOURCES		=	\
 	monitor.c
+
 msgd_SOURCES		=	\
 	msgd.c
+
+monpushevent_SOURCES	=	\
+	monpushevent.c
 
 if POSTGRESQL
 dbsyncbin = dbsync
 
 dbsync_SOURCES	= \
-	$(top_builddir)/defaults.h			\
 	dbsync.c
 
 dbsync_LDADD			=		\

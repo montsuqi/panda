@@ -35,6 +35,8 @@
 #include	<signal.h>
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
+#include	<json.h>
+#include	<json_object_private.h> /*for json_object_object_foreachC()*/
 
 #include	"const.h"
 #include	"enum.h"
@@ -56,11 +58,12 @@
 typedef enum xml_open_mode {
 	MODE_READ = 0,
 	MODE_WRITE,
+	MODE_WRITE_XML,
+	MODE_WRITE_JSON,
 	MODE_NONE,
 } XMLMode;
 
 typedef struct {
-	xmlDocPtr doc;
 	XMLMode mode;
 	int	pos;
 	int obj;
@@ -68,15 +71,13 @@ typedef struct {
 } XMLCtx;
 
 static GHashTable *XMLCtxTable = NULL;
+static XMLMode PrevMode = MODE_WRITE_XML;
 
 static void
 FreeXMLCtx(XMLCtx *ctx)
 {
 	if (ctx == NULL) {
 		return;
-	}
-	if (ctx->doc != NULL) {
-		xmlFreeDoc(ctx->doc);
 	}
 	g_free(ctx);
 }
@@ -110,26 +111,6 @@ XMLGetString(
 	return buf;
 }
 
-static	void
-ResetArgValue(ValueStruct *val)
-{
-	int i;
-	gchar *name;
-
-	if (val == NULL || IS_VALUE_RECORD(val)) {
-		return ;
-	}
-	for(i=0;i<ValueRecordSize(val);i++) {
-		name = ValueRecordName(val,i);
-		if (g_strcmp0(name,"context") &&
-			g_strcmp0(name,"object") &&
-			g_strcmp0(name,"mode") &&
-			g_strcmp0(name,"recordname")) {
-			InitializeValue(ValueRecordItem(val,i));
-		}
-	}
-}
-
 static int
 XMLNode2Value(
 	ValueStruct	*val,
@@ -142,10 +123,12 @@ XMLNode2Value(
 
 ENTER_FUNC;
 	if (val == NULL || root == NULL) {
+		Warning("XMLNode2Value val = NULL || root = NULL");
 		return MCP_BAD_OTHER;
 	} 
 	type = xmlGetProp(root,"type");
 	if (type == NULL) {
+		Warning("XMLNode2Value root type is NULL");
 		return MCP_BAD_OTHER;
 	}
 	switch	(ValueType(val)) {
@@ -226,6 +209,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_OBJECT:
 		break;
 	  default:
+		Warning("XMLNode2Value");
 		return MCP_BAD_ARG;
 		break;
 	}
@@ -287,6 +271,7 @@ Value2XMLNode(
 
 ENTER_FUNC;
 	if (val == NULL || name == NULL) {
+		Warning("val or name = null,val:%p name:%p",val,name);
 		return NULL;
 	} 
 	node = NULL;
@@ -381,60 +366,49 @@ _OpenXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	int			rc;
-	ValueStruct	*obj;
-	ValueStruct	*mode;
-	ValueStruct	*context;
-	ValueStruct	*ret;
-	unsigned char		*buff;
-	size_t		size;
-	xmlNodePtr	root;
-	XMLCtx *ctx;
+	ValueStruct		*obj,*mode,*context,*ret;
+	XMLCtx			*ctx;
 
 ENTER_FUNC;
-	rc = MCP_BAD_OTHER;
+	ctrl->rc = MCP_BAD_ARG;
 	ret = NULL;
 	
-	ResetArgValue(args);
 	if (rec->type  !=  RECORD_DB) {
-		rc = MCP_BAD_ARG;
-	} else {
-		if ((obj = GetItemLongName(args,"object"))  !=  NULL &&
-			(mode = GetItemLongName(args,"mode"))  !=  NULL &&
-			(context = GetItemLongName(args,"context"))  !=  NULL
-		) {
-			ctx = NewXMLCtx();
-			ValueInteger(context) = ctx->num;
-			ret = DuplicateValue(args, TRUE);
-			ctx->mode = ValueInteger(mode);
-			if ( ctx->mode == MODE_WRITE) {
-				ctx->obj = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE);
-				if (ctx->obj != GL_OBJ_NULL) {
-					ValueObjectId(obj) = ctx->obj;
-					ctx->doc = xmlNewDoc("1.0");
-					root = xmlNewDocNode(ctx->doc, NULL, "xmlio2", NULL);
-					xmlDocSetRootElement(ctx->doc, root);
-					rc = MCP_OK;
-				}
-			} else {
-				ctx->obj = ValueObjectId(obj);
-				if(RequestReadBLOB(NBCONN(dbg),ctx->obj, &buff, &size) > 0) {
-					if (size > 0) {
-						ctx->doc = xmlReadMemory(buff, size, "http://www.montsuqi.org/", NULL, XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
-						if (ctx->doc != NULL) {
-							rc = MCP_OK;
-						}
-					}
-					xfree(buff);
-				}
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
+		return NULL;
 	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
+	if ((obj = GetItemLongName(args,"object")) == NULL) {
+		Warning("no [object] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
 	}
+	if ((mode = GetItemLongName(args,"mode")) == NULL) {
+		Warning("no [mode] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	if ((context = GetItemLongName(args,"context")) == NULL) {
+		Warning("no [context] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+
+	ctx = NewXMLCtx();
+	ValueInteger(context) = ctx->num;
+	ret = DuplicateValue(args,TRUE);
+	ctx->mode = ValueInteger(mode);
+	switch(ctx->mode) {
+	case MODE_WRITE:
+	case MODE_WRITE_XML:
+	case MODE_WRITE_JSON:
+		break;
+	case MODE_READ:
+		ctx->obj = ValueObjectId(obj);
+		break;
+	default:
+		Warning("not reach here");
+		break;
+	}
+	ctrl->rc = MCP_OK;
 LEAVE_FUNC;
 	return	ret;
 }
@@ -446,55 +420,100 @@ _CloseXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*obj;
-	ValueStruct *context;
-	ValueStruct	*ret;
-	xmlChar 	*buff;
-	int			size;
-	int			wrote;
-	XMLCtx		*ctx;
-
 ENTER_FUNC;
-	buff = NULL;
-	ret = NULL;
-	ResetArgValue(args);
-	if (rec->type  !=  RECORD_DB) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((obj = GetItemLongName(args,"object")) == NULL) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((context = GetItemLongName(args,"context")) == NULL) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ValueInteger(context)));
-	if (ctx == NULL) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-
 	ctrl->rc = MCP_OK;
-	if (ctx->mode == MODE_WRITE && ctx->doc != NULL) {
-		xmlDocDumpFormatMemoryEnc(ctx->doc, &buff, &size, "UTF-8", TRUE);
-		if (buff != NULL && ctx->obj != GL_OBJ_NULL) {
-			wrote = RequestWriteBLOB(NBCONN(dbg),ctx->obj, 
-						(unsigned char *)buff, size);
-			if (wrote == size) {
-				ValueObjectId(obj) = ctx->obj;
-				ret = DuplicateValue(args, TRUE);
-			} else {
-				ctrl->rc = MCP_BAD_OTHER;
-			}
-		}
-		xfree(buff);
-	}
-	FreeXMLCtx(ctx);
-	g_hash_table_remove(XMLCtxTable,GINT_TO_POINTER(ValueInteger(context)));
 LEAVE_FUNC;
-	return	ret;
+	return	NULL;
+}
+
+static	XMLMode
+CheckFormat(
+	char	*buff,
+	size_t	size)
+{
+	int i;
+	char *p;
+
+	p = buff;
+	for(i=0;i<size;i++) {
+		if (*p == '<') {
+			return MODE_WRITE_XML;
+		}
+		if (*p == '{') {
+			return MODE_WRITE_JSON;
+		}
+		p++;
+	}
+	return MODE_NONE;
+}
+
+static	int
+_ReadXML_XML(
+	ValueStruct *ret,
+	unsigned char *buff,
+	size_t size)
+{
+	xmlDocPtr	doc;
+	xmlNodePtr	node,root;
+	ValueStruct *val,*rname;
+	int rc;
+
+	rc = MCP_BAD_ARG;
+	doc = xmlReadMemory(buff,size,"http://www.montsuqi.org/",NULL,XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
+	if (doc == NULL) {
+		Warning("_ReadXML_XML failure");
+		return MCP_BAD_ARG;
+	}
+	root = xmlDocGetRootElement(doc);
+	if (root == NULL || root->children == NULL) {
+		Warning("root or root children is null");
+		return MCP_BAD_ARG;
+	}
+	node = root->children;
+	rname = GetItemLongName(ret,"recordname");
+	val = GetRecordItem(ret,CAST_BAD(node->name));
+    if (val != NULL) {
+		SetValueString(rname,CAST_BAD(node->name),NULL);
+		rc = XMLNode2Value(val,node);
+	}
+	xmlFreeDoc(doc);
+	return rc;
+}
+
+static	int
+_ReadXML_JSON(
+	ValueStruct *ret,
+	unsigned char *buff,
+	size_t size)
+{
+	unsigned char *jsonstr;
+	ValueStruct *val,*rname;
+	json_object *obj;
+	json_object_iter iter;
+
+	jsonstr = g_malloc0(size+1);
+	memcpy(jsonstr,buff,size);
+	obj = json_tokener_parse(jsonstr);
+	g_free(jsonstr);
+	if (is_error(obj)) {
+		Warning("_ReadXML_JSON failure");
+		return MCP_BAD_ARG;
+	}
+	if (json_object_get_type(obj) != json_type_object) {
+		Warning("invalid json type");
+		return MCP_BAD_ARG;
+	}
+	rname = GetItemLongName(ret,"recordname");
+	json_object_object_foreachC(obj,iter) {
+		val = GetRecordItem(ret,iter.key);
+		if (val != NULL) {
+			SetValueString(rname,iter.key,NULL);
+			JSON_UnPackValue(NULL,(unsigned char*)json_object_to_json_string(iter.val),val);
+		}
+		break;
+	}
+	json_object_put(obj);
+	return MCP_OK;
 }
 
 static	ValueStruct	*
@@ -504,67 +523,151 @@ _ReadXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	xmlNodePtr	node;
-	xmlNodePtr	root;
-	ValueStruct	*context;
-	ValueStruct	*ret;
-	ValueStruct	*recordname;
-	ValueStruct	*val;
-	XMLCtx		*ctx;
-	int			i;
+	ValueStruct		*ret,*context;
+	XMLCtx			*ctx;
+	unsigned char	*buff;
+	size_t			size;
 
 ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = MCP_BAD_OTHER;
-	ResetArgValue(args);
 	if (rec->type != RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((recordname = GetItemLongName(args,"recordname"))  ==  NULL) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
 	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
+		Warning("no [context] record");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,
-		GINT_TO_POINTER(ValueInteger(context)));
+	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ValueInteger(context)));
 	if (ctx == NULL || ctx->mode != MODE_READ) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	root = xmlDocGetRootElement(ctx->doc);
-	if (root == NULL || root->children == NULL) {
+	if (RequestReadBLOB(NBCONN(dbg),ctx->obj,&buff,&size) > 0) {
+		ret = DuplicateValue(args,TRUE);
+		if (size > 0) {
+			PrevMode = CheckFormat(buff,size);
+			switch(PrevMode) {
+			case MODE_WRITE_XML:
+				ctrl->rc = _ReadXML_XML(ret,buff,size);
+				break;
+			case MODE_WRITE_JSON:
+				ctrl->rc = _ReadXML_JSON(ret,buff,size);
+				break;
+			default:
+				Warning("not reach");
+				break;
+			}
+		}
+		xfree(buff);
+	} else {
+		Warning("RequestReadBLOB failure");
 		return NULL;
-	}
-	for (node=root->children, i=0; node != NULL; node=node->next, i++) {
-		root = NULL;
-		if (i == ctx->pos) {
-			root = node;
-			break;
-		}	
-	}
-	ctx->pos += 1;
-	if (root == NULL) {
-		return NULL;
-	}
-	ret = DuplicateValue(args,FALSE);
-	recordname = GetItemLongName(ret,"recordname");
-	val = GetRecordItem(ret,CAST_BAD(root->name));
-    if (val != NULL) {
-		SetValueString(recordname,CAST_BAD(root->name),NULL);
-		ctrl->rc = XMLNode2Value(val, root);
-    } else {
-		SetValueString(recordname,"",NULL);
-		ctrl->rc = MCP_OK;
 	}
 #ifdef TRACE
 	DumpValueStruct(ret);
 #endif
 LEAVE_FUNC;
-	return	(ret);
+	return ret;
+}
+
+static	int
+_WriteXML_XML(
+	DBG_Struct *dbg,
+	XMLCtx *ctx,
+	ValueStruct *ret)
+{
+	ValueStruct *rname,*val,*obj;
+	xmlDocPtr doc;
+	xmlNodePtr root,node;
+	unsigned char *buff;
+	int rc,oid,size;
+	size_t wrote;
+
+	rc = MCP_BAD_OTHER;
+	obj = GetItemLongName(ret,"object");
+	rname = GetItemLongName(ret,"recordname");
+	val = GetRecordItem(ret,ValueToString(rname,NULL));
+	oid = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE);
+	if (oid == GL_OBJ_NULL) {
+		Warning("RequestNewBLOB failure");
+		return MCP_BAD_OTHER;
+	}
+	doc = xmlNewDoc("1.0");
+	root = xmlNewDocNode(doc, NULL, "xmlio2", NULL);
+	xmlDocSetRootElement(doc,root);
+	node = Value2XMLNode(ValueToString(rname,NULL),val);
+	if (node != NULL) {
+		xmlAddChildList(root, node);
+	} else {
+		Warning("node is NULL");
+	}
+	xmlDocDumpFormatMemoryEnc(doc,&buff,&size,"UTF-8",TRUE);
+	if (buff != NULL) {
+		wrote = RequestWriteBLOB(NBCONN(dbg),oid,(unsigned char *)buff,size);
+		if (wrote == size) {
+			ValueObjectId(obj) = oid;
+			rc = MCP_OK;
+		} else {
+			Warning("RequestWriteBLOB failure");
+			ValueObjectId(obj) = GL_OBJ_NULL;
+			rc = MCP_BAD_OTHER;
+		}
+	}
+	xfree(buff);
+	xmlFreeDoc(doc);
+	return rc;
+}
+
+static	int
+_WriteXML_JSON(
+	DBG_Struct *dbg,
+	XMLCtx *ctx,
+	ValueStruct *ret)
+{
+	ValueStruct *val,*obj;
+	char *buff,*rname;
+	size_t size;
+	int rc,oid,wrote;
+	json_object *root,*jobj;
+
+	obj = GetItemLongName(ret,"object");
+	val = GetItemLongName(ret,"recordname");
+	rname = ValueToString(val,NULL);
+	val = GetRecordItem(ret,rname);
+	oid = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE);
+	if (oid == GL_OBJ_NULL) {
+		Warning("RequestNewBLOB failure");
+		return MCP_BAD_OTHER;
+	}
+	size = JSON_SizeValueOmmitString(NULL,val);
+	buff = g_malloc(size);
+	JSON_PackValueOmmitString(NULL,buff,val);
+
+	jobj = json_tokener_parse(buff);
+	g_free(buff);
+	if (is_error(jobj)) {
+		Warning("json_tokener_parse failure");
+		return MCP_BAD_OTHER;
+	}
+	root = json_object_new_object();
+	json_object_object_add(root,rname,jobj);
+	buff = (char*)json_object_to_json_string(root);
+	size = strlen(buff);
+
+	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
+	json_object_put(root);
+	if (wrote == size) {
+		ValueObjectId(obj) = oid;
+		rc = MCP_OK;
+	} else {
+		Warning("does not match wrote size %ld:%ld",wrote,size);
+		ValueObjectId(obj) = GL_OBJ_NULL;
+		rc = MCP_BAD_OTHER;
+	}
+	return rc;
 }
 
 static	ValueStruct	*
@@ -574,47 +677,64 @@ _WriteXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*ret;
-	ValueStruct *recordname;
-    ValueStruct *val;
-	ValueStruct	*context;
-	xmlNodePtr	root;
-	xmlNodePtr	node;
+	ValueStruct	*rname,*val,*context,*obj,*ret;
 	XMLCtx		*ctx;
+	int 		ctxnum;
 ENTER_FUNC;
-	ret = NULL;
+	ctrl->rc = MCP_BAD_OTHER;
 	if (rec->type != RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
 	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
+		Warning("no [context] record");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,
-		GINT_TO_POINTER(ValueInteger(context)));
-	if (ctx == NULL || ctx->mode != MODE_WRITE) {
+	ctxnum = ValueInteger(context);
+	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ctxnum));
+	if (ctx == NULL || ctx->mode == MODE_READ) {
+		Warning("ctx is null or invalid READ mode");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((recordname = GetItemLongName(args,"recordname"))  ==  NULL) {
+	if ((obj = GetItemLongName(args,"object"))  ==  NULL) {
+		Warning("no [object] record");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	val = GetRecordItem(args,ValueToString(recordname,NULL));
-    if (val == NULL) {
+	if ((rname = GetItemLongName(args,"recordname"))  ==  NULL) {
+		Warning("no [recordname] record");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
-    }
-	root = xmlDocGetRootElement(ctx->doc);
-	node = Value2XMLNode(ValueToString(recordname,NULL), val);
-	if (node != NULL) {
-		xmlAddChildList(root, node);
 	}
-	ResetArgValue(args);
-	ctrl->rc = MCP_OK;
+	val = GetRecordItem(args,ValueToString(rname,NULL));
+	if (val == NULL) {
+		Warning("no [%s] record",ValueToString(rname,NULL));
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	ret = DuplicateValue(args,TRUE);
+	if (ctx->mode == MODE_WRITE) {
+		ctx->mode = PrevMode;
+	}
+	switch(ctx->mode) {
+	case MODE_WRITE_XML:
+		ctrl->rc = _WriteXML_XML(dbg,ctx,ret);
+		break;
+	case MODE_WRITE_JSON:
+		ctrl->rc = _WriteXML_JSON(dbg,ctx,ret);
+		break;
+	default:
+		Warning("not reach");
+		break;
+	}
+	FreeXMLCtx(ctx);
+	g_hash_table_remove(XMLCtxTable,GINT_TO_POINTER(ctxnum));
+	val = GetRecordItem(ret,ValueToString(rname,NULL));
+	InitializeValue(val);
 LEAVE_FUNC;
-	return	(ret);
+	return ret;
 }
 
 extern	ValueStruct	*
@@ -678,6 +798,16 @@ _EXEC(
 }
 
 static	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return NULL;
+}
+
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -700,6 +830,7 @@ LEAVE_FUNC;
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	_QUERY,
 	NULL,
 };
 

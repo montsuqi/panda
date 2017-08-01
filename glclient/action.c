@@ -36,6 +36,7 @@
 #include	<sys/time.h>
 #include 	<gtk/gtk.h>
 #include	<gtkpanda/gtkpanda.h>
+#include	<glade/glade.h>
 #include	<json.h>
 
 #include	"types.h"
@@ -43,15 +44,16 @@
 #define		ACTION_MAIN
 #include	"bd_config.h"
 #include	"action.h"
-#include	"dialogs.h"
 #include	"styleParser.h"
 #include	"gettext.h"
 #include	"widgetcache.h"
 #include	"widgetOPS.h"
 #include	"protocol.h"
 #include	"notify.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"download.h"
+#include	"print.h"
+#include	"logger.h"
+#include	"dialogs.h"
 
 /* GdkPixbuf RGBA C-Source image dump 1-byte-run-length-encoded */
 
@@ -254,11 +256,11 @@ static struct changed_hander {
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
+static void ReDrawTopWindow(void);
 
 static void
 SetWindowIcon(GtkWindow *window)
 {
-
 	GdkPixbuf *pixbuf;
 
 	pixbuf = gdk_pixbuf_new_from_inline (-1, glclient_icon, FALSE, NULL);
@@ -275,40 +277,35 @@ RegisterChangedHandler(
 	gpointer data)
 {
   struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
-ENTER_FUNC;
 	p->object = object;
 	p->func = func;
 	p->data = data;
 	p->next = changed_hander_list;
 	p->block_flag = FALSE;
 	changed_hander_list = p;
-LEAVE_FUNC;
 }
 
 extern void
 BlockChangedHandlers(void)
 {
-  struct changed_hander *p;
+	struct changed_hander *p;
 
-ENTER_FUNC;
 	for (p = changed_hander_list; p != NULL; p = p->next) {
 		p->block_flag = TRUE;		 
 		g_signal_handlers_block_by_func (p->object, p->func, p->data);
 	}
-LEAVE_FUNC;
 }
 
 extern void
 UnblockChangedHandlers(void)
 {
-  struct changed_hander *p;
-ENTER_FUNC;
+	struct changed_hander *p;
+
 	for (p = changed_hander_list; p != NULL; p = p->next) {
 		if (p->block_flag) {
 			g_signal_handlers_unblock_by_func (p->object, p->func, p->data);
 		}
 	}
-LEAVE_FUNC;
 }
 
 extern	GtkWidget	*
@@ -316,9 +313,8 @@ GetWindow(
 	GtkWidget	*widget)
 {
 	GtkWidget	*window;
-ENTER_FUNC;
+
 	window = gtk_widget_get_toplevel(widget);
-LEAVE_FUNC;
 	return (window);
 }
 
@@ -327,64 +323,69 @@ GetWindowName(
 	GtkWidget	*widget)
 {
 	static char	wname[SIZE_LONGNAME];
-ENTER_FUNC;
 	/*	This logic is escape code for GTK bug.	*/
 	strcpy(wname,glade_get_widget_long_name(widget));
 	if (strchr(wname,'.')) {
 		*(strchr(wname,'.')) = 0;
 	}
-LEAVE_FUNC;
 	return (wname);
 }
 
 static	void
-_RegistTimer(
-	GtkWidget	*widget,
-	gpointer	data)
+RegisterWidgets(
+	GtkWidget *widget,
+	gpointer data)
 {
-	if(GTK_IS_CONTAINER(widget))
-		gtk_container_forall(GTK_CONTAINER(widget), _RegistTimer, data);
-	else if (GTK_IS_PANDA_TIMER(widget))
-		g_hash_table_insert((GHashTable*)data, 
-			(char *)gtk_widget_get_name(widget), widget);
+	WindowData *wdata;
+
+
+	wdata = (WindowData*)data;
+	if(GTK_IS_CONTAINER(widget)) {
+		gtk_container_forall(GTK_CONTAINER(widget),RegisterWidgets,data);
+	} 
+	if (GTK_IS_PANDA_TIMER(widget)) {
+		wdata->Timers = g_list_append(wdata->Timers,widget);
+	}
+}
+
+extern	void
+ResetTimers(
+	char	*wname)
+{
+	WindowData *data;
+	GList *l;
+
+	if ((data = GetWindowData(wname)) == NULL) {
+		// FIXME sometimes comes here.
+		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
+		return;
+	}
+	for(l=data->Timers;l!=NULL;l=l->next) {
+		gtk_widget_show(GTK_WIDGET(l->data));
+		gtk_panda_timer_reset (GTK_PANDA_TIMER(l->data));
+	}
 }
 
 static	void
-_ResetTimer(
-	gpointer	key,
-	gpointer	value,
-	gpointer	data)
-{
-	gtk_widget_show(GTK_WIDGET(value));
-	gtk_panda_timer_reset (GTK_PANDA_TIMER(value));
-}
-
-static	void
-_StopTimer(
-	gpointer	key,
-	gpointer	value,
-	gpointer	data)
-{
-	gtk_widget_hide(GTK_WIDGET(value));
-	gtk_panda_timer_stop(GTK_PANDA_TIMER(value));
-}
-
-static	void
-_StopTimerWidgetAll(
+_StopTimersAll(
 	gpointer	key,
 	gpointer	value,
 	gpointer	data)
 {
 	WindowData *wdata;
-	
+	GList *l;
+
 	wdata = (WindowData*)value;
-	g_hash_table_foreach(wdata->TimerWidgetTable,_StopTimer,NULL);
+	for(l=wdata->Timers;l!=NULL;l=l->next) {
+		gtk_widget_hide(GTK_WIDGET(l->data));
+		gtk_panda_timer_stop(GTK_PANDA_TIMER(l->data));
+	}
 }
 
 extern	void
-StopTimerWidgetAll(void)
+StopTimersAll(void)
 {
-	g_hash_table_foreach(WINDOWTABLE(Session),_StopTimerWidgetAll,NULL);
+	g_hash_table_foreach(WINDOWTABLE(Session),_StopTimersAll,NULL);
 }
 
 extern	void
@@ -397,7 +398,6 @@ _AddChangedWidget(
 	char		*tail;
 	WindowData	*wdata;
 
-ENTER_FUNC;
 	name = (char *)glade_get_widget_long_name(widget);
 	tail = strchr(name, '.');
 	if (tail == NULL) {
@@ -412,7 +412,6 @@ ENTER_FUNC;
 		}
 	}
 	free(wname);
-LEAVE_FUNC;
 }
 
 extern	void
@@ -428,7 +427,7 @@ extern	void
 ClearKeyBuffer(void)
 {
 	GdkEvent	*event; 
-ENTER_FUNC;
+
 	while( (event = gdk_event_get()) != NULL) {
 		if ( (event->type == GDK_KEY_PRESS ||
 			  event->type == GDK_KEY_RELEASE) ) {
@@ -438,7 +437,6 @@ ENTER_FUNC;
  			gdk_event_free(event); 
 		}
 	}
-LEAVE_FUNC;
 }
 
 extern	void
@@ -488,7 +486,7 @@ SetBGColor(GtkWidget *widget)
 #endif
 }
 
-static	void	
+static	WindowData*	
 CreateWindow(
 	const char	*wname,
 	const char	*gladedata)
@@ -498,10 +496,8 @@ CreateWindow(
 	GtkWidget	*window;
 	GtkWidget	*child;
 
-ENTER_FUNC;
 	if (GetWindowData(wname) != NULL) {
-		dbgprintf("%s already in WindowTable", wname);
-		return;
+		return NULL;
 	}
 	xml = glade_xml_new_from_memory((char*)gladedata,strlen(gladedata),NULL,NULL);
 	if ( xml == NULL ) {
@@ -517,7 +513,8 @@ ENTER_FUNC;
 	wdata->title = StrDup((char*)gtk_window_get_title(GTK_WINDOW(window)));
 	wdata->fAccelGroup = FALSE;
 	wdata->ChangedWidgetTable = NewNameHash();
-	wdata->TimerWidgetTable = NewNameHash();
+	wdata->Timers = NULL;
+	wdata->tmpl = NULL;
 	glade_xml_signal_autoconnect(xml);
 	g_hash_table_insert(WINDOWTABLE(Session),strdup(wname),wdata);
 
@@ -527,42 +524,36 @@ ENTER_FUNC;
 	}
 	g_object_ref(child);
 	gtk_widget_show_all(child);
-	gtk_container_forall(GTK_CONTAINER(child),
-		_RegistTimer,wdata->TimerWidgetTable);
+	RegisterWidgets(child,wdata);
 	if (IsDialog(window)) {
-		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
 		wdata->fWindow = FALSE;
 		SetWindowIcon(GTK_WINDOW(window));
 	} else {
-		dbgprintf("create window:%s\n", wname);
-		gtk_notebook_append_page(GTK_NOTEBOOK(TopNoteBook), 
-			child, gtk_label_new(wname));
 		wdata->fWindow = TRUE;
 	}
-LEAVE_FUNC;
+	return wdata;
 }
 
 static	void
 SwitchWindow(
 	GtkWidget *window)
 {
-	GtkWidget	*child;
+	GtkWidget	*child,*org;
 
-ENTER_FUNC;
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
 
-	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
-		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
-
-	gtk_widget_set_size_request(TopNoteBook,1,1);
+	org = gtk_bin_get_child(GTK_BIN(TopWindow));
+	if (org != NULL) {
+		gtk_container_remove(GTK_CONTAINER(TopWindow),org);
+	}
+	gtk_container_add(GTK_CONTAINER(TopWindow),child);
 	ScaleWidget(child,NULL);
 
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
 
 	gtk_widget_show(TopWindow);
-	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
 
 #ifdef LIBGTK_3_0_0
@@ -570,9 +561,6 @@ ENTER_FUNC;
 #else
 	gtk_window_set_resizable(GTK_WINDOW(TopWindow), TRUE);
 #endif
-
-
-LEAVE_FUNC;
 }
 
 extern	void
@@ -585,8 +573,6 @@ CloseWindow(
 	int			i;
 	GList		*wlist;
 
-ENTER_FUNC;
-	dbgprintf("close window:%s\n", wname);
 	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		fprintf(stderr,"%s:%d data %s is NULL\n", __FILE__, __LINE__, wname);
@@ -624,23 +610,24 @@ ENTER_FUNC;
 			}
 		}
 	}
-LEAVE_FUNC;
 }
 
-extern	void
-ResetTimer(
-	char	*wname)
+static	void
+ReDrawTopWindow(void)
 {
-	WindowData	*data;
-
-ENTER_FUNC;
-	if ((data = GetWindowData(wname)) == NULL) {
-		// FIXME sometimes comes here.
-		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
-		return;
+#define WINC (1)
+	static int i = 0;
+	int width,height;
+	
+	gtk_window_get_size(GTK_WINDOW(TopWindow),&width,&height);
+	g_signal_handlers_block_by_func(TopWindow,ConfigureWindow,NULL);
+	if (i%2 == 0) {
+		gtk_window_resize(GTK_WINDOW(TopWindow),width, height-WINC);
+	} else {
+		gtk_window_resize(GTK_WINDOW(TopWindow),width, height+WINC);
 	}
-	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
-LEAVE_FUNC;
+	 g_signal_handlers_unblock_by_func(TopWindow,ConfigureWindow,NULL);
+	i++;
 }
 
 extern	void
@@ -651,8 +638,6 @@ ShowWindow(
 	GtkWidget	*window;
 	GSList		*list;
 
-ENTER_FUNC;
-	dbgprintf("show window:%s\n", wname);
 	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
@@ -662,7 +647,6 @@ ENTER_FUNC;
 	g_return_if_fail(window != NULL);
 
 	if (data->fWindow) {
-	dbgmsg("show primari window\n");
 		gtk_widget_show(TopWindow);
 		gtk_widget_grab_focus(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
@@ -681,8 +665,10 @@ ENTER_FUNC;
 		}
 		SetTitle(TopWindow);
 		SetBGColor(TopWindow);
+		if (DelayDrawWindow) {
+			ReDrawTopWindow();
+		}
 	} else {
-	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
 		int i;
 
@@ -702,8 +688,12 @@ ENTER_FUNC;
 			gtk_window_set_transient_for(GTK_WINDOW(window), 
 				GTK_WINDOW(parent));
 		}
+		gtk_widget_show(window);
+		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		if (DelayDrawWindow) {
+			ReDrawTopWindow();
+		}
 	}
-LEAVE_FUNC;
 }
 
 
@@ -713,7 +703,7 @@ ShowBusyCursor(
 {
 	static GdkCursor *busycursor = NULL;
 	GtkWidget *window;
-ENTER_FUNC;
+
 	if (widget == NULL) {
 		return;
 	}
@@ -726,13 +716,11 @@ ENTER_FUNC;
 	gdk_window_set_cursor(window->window,busycursor);
 	gdk_flush ();
 #endif
-LEAVE_FUNC;
 }
 
 extern	void
 HideBusyCursor(GtkWidget *widget)
 {
-ENTER_FUNC;
 	GtkWidget	*window;
 	if (widget == NULL) {
 		return;
@@ -742,7 +730,6 @@ ENTER_FUNC;
 #ifndef LIBGTK_3_0_0
 	gdk_window_set_cursor(window->window,NULL);
 #endif
-LEAVE_FUNC;
 }
 
 static GtkWidget*
@@ -932,12 +919,10 @@ ConfigureWindow(GtkWidget *widget,
 	fprintf(stderr,"configure window[%d,%d][%d,%d]->[%d,%d][%d,%d]\n",
 		old_x,old_y,old_width,old_height,x,y,width,height);
 #endif
-	gtk_widget_set_size_request(TopNoteBook,1,1); 
 	if (old_width != width || old_height != height) {
-		TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
-		TopWindowScale.v = (height * 1.0) / 
-			(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
-		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
+		TopWindowScale.h = (width  * 1.0) / ORIGIN_WINDOW_WIDTH;
+		TopWindowScale.v = (height * 1.0) / ORIGIN_WINDOW_HEIGHT;
+		ScaleWidget(widget,NULL);
 		sprintf(buf,"%d",width);
 		SetWidgetCache("glclient.topwindow.width",buf);
 		sprintf(buf,"%d",height);
@@ -968,48 +953,48 @@ InitTopWindow(void)
 		width = atoi(pwidth); height = atoi(pheight);
 	} else {
 		width = DEFAULT_WINDOW_WIDTH;
-		height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
+		height = DEFAULT_WINDOW_HEIGHT;
 	}
 
-	TopWindowScale.v = (width * 1.0) / (DEFAULT_WINDOW_WIDTH );
-	TopWindowScale.h = (height * 1.0) / 
-		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+	TopWindowScale.h = (ORIGIN_WINDOW_WIDTH  * 1.0) / width;
+	TopWindowScale.v = (ORIGIN_WINDOW_HEIGHT * 1.0) / height;
+
+	if (CancelScaleWindow) {
+		width = ORIGIN_WINDOW_WIDTH;
+		height = ORIGIN_WINDOW_HEIGHT;
+		TopWindowScale.h = 1.0;
+		TopWindowScale.v = 1.0;
+	}
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_move(GTK_WINDOW(TopWindow),x,y); 
+	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
 #if LIBGTK_3_0_0
-#if 0
+#  if 0
     gtk_window_set_default_size(GTK_WINDOW(TopWindow),width,height);
-#else
+#  else
     gtk_window_set_default_size(GTK_WINDOW(TopWindow),
 		DEFAULT_WINDOW_WIDTH,
-		DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
-#endif
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
+		DEFAULT_WINDOW_HEIGHT);
+#  endif
 #else
 	gtk_widget_set_size_request(TopWindow,width, height);
 	GdkGeometry geometry;
 	geometry.min_width = DEFAULT_WINDOW_WIDTH;
-	geometry.min_height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
+	geometry.min_height = DEFAULT_WINDOW_HEIGHT;
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
 	gtk_window_set_wmclass(GTK_WINDOW(TopWindow),"Glclient","Glclient");
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_IMMEDIATE);
 #endif
 
 	g_signal_connect(G_OBJECT(TopWindow), 
 		"delete_event", G_CALLBACK(gtk_true), NULL);
-	g_signal_connect(G_OBJECT(TopWindow), 
-		"configure_event", G_CALLBACK(ConfigureWindow), NULL);
+	if (!CancelScaleWindow) {
+		g_signal_connect(G_OBJECT(TopWindow), 
+			"configure_event", G_CALLBACK(ConfigureWindow), NULL);
+	}
 
 	SetWindowIcon(GTK_WINDOW(TopWindow));
-
-	TopNoteBook = gtk_notebook_new();
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook),FALSE);
-	gtk_notebook_set_show_border(GTK_NOTEBOOK(TopNoteBook),FALSE);
-	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopNoteBook),GTK_RESIZE_IMMEDIATE);
-
 	DialogStack = NULL;
 }
 
@@ -1068,6 +1053,7 @@ UI_Init(int argc,
 	gtk_set_locale();
 #endif
 	glade_init();
+	SetErrorFunc(ErrorDialog);
 }
 
 extern	void
@@ -1100,13 +1086,26 @@ InitStyle(void)
 			"style \"glclient2\" {"
 			"  font_name = \"%s\""
 			"  fg[NORMAL] = \"#000000\""
+			"  fg[PRELIGHT] = \"#000000\""
 			"  text[NORMAL] = \"#000000\""
+			"  text[PRELIGHT] = \"#000000\""
 			"}"
 			"style \"tooltip\" {"
 			"  fg[NORMAL] = \"#000000\""
 			"  bg[NORMAL] = \"#ffffaf\""
 			"}"
+			"style \"panda-entry\" = \"entry\" {"
+			"  text[INSENSITIVE] = @text_color"
+			"  base[INSENSITIVE] = \"#ffffff\""
+			"}"
+			"style \"panda-clist\" {"
+			"  text[ACTIVE] = @selected_fg_color"
+			"  base[ACTIVE] = @selected_bg_color"
+			"}"
 			"widget_class \"*.*\" style \"glclient2\""
+			"widget_class \"*<GtkPandaEntry>\" style \"panda-entry\""
+			"widget_class \"*<GtkNumberEntry>\" style \"panda-entry\""
+			"widget_class \"*<GtkPandaCList>\" style \"panda-clist\""
 			"widget \"gtk-tooltip*\" style \"tooltip\""
 			,FontName);
 		gtk_rc_parse_string(rcstr);
@@ -1126,14 +1125,15 @@ AskPass(char	*buf,
 static void
 Ping()
 {
-	char *popup,*dialog,*abort;
+	char *dialog,*popup,*abort;
 
-	RPC_GetMessage(&popup,&dialog,&abort);
+	RPC_GetMessage(GLP(Session),&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
-		ShowInfoDialog(abort);
+		RPC_EndSession(GLP(Session));
+		InfoDialog(abort);
 		exit(1);
 	} else if (strlen(dialog)>0) {
-		ShowInfoDialog(dialog);
+		InfoDialog(dialog);
 	} else if (strlen(popup)>0) {
 		Notify(_("glclient message notify"),popup,"gtk-dialog-info",0);
 	}
@@ -1142,17 +1142,134 @@ Ping()
 	g_free(abort);
 }
 
+static	void
+PrintReport(
+	json_object *obj)
+{
+	json_object *child;
+	char *printer,*oid,*title;
+	gboolean showdialog;
+	LargeByteString *lbs;
+
+	printer = NULL;
+	title = "";
+	showdialog = FALSE;
+
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	if (json_object_object_get_ex(obj,"printer",&child)) {
+		printer = (char*)json_object_get_string(child);
+	}
+
+	if (json_object_object_get_ex(obj,"title",&child)) {
+		title = (char*)json_object_get_string(child);
+	}
+
+	if (json_object_object_get_ex(obj,"showdialog",&child)) {
+		showdialog = json_object_get_boolean(child);
+	}
+	if (getenv("GLCLIENT_PRINTREPORT_SHOWDIALOG")!=NULL) {
+		showdialog = TRUE;
+	}
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	if (printer == NULL || strlen(printer) <=0 ) {
+		showdialog = TRUE;
+	}
+
+	lbs = REST_GetBLOB(GLP(Session),oid);
+	if (lbs != NULL) {
+		if (LBS_Size(lbs) > 0) {
+			if (showdialog) {
+				ShowPrintDialog(title,lbs);
+			} else {
+				Print(oid,title,printer,lbs);
+			}
+		}
+		FreeLBS(lbs);
+	}
+}
+
+static	void
+DownloadFile(
+	json_object *obj)
+{
+	json_object *child;
+	char *oid,*filename,*desc;
+	LargeByteString *lbs;
+
+	filename = "foo.dat";
+	desc = "";
+
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	if (json_object_object_get_ex(obj,"filename",&child)) {
+		filename = (char*)json_object_get_string(child);
+	}
+
+	if (json_object_object_get_ex(obj,"description",&child)) {
+		desc = (char*)json_object_get_string(child);
+	}
+
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	lbs = REST_GetBLOB(GLP(Session),oid);
+	if (lbs != NULL) {
+		if (LBS_Size(lbs) > 0) {
+			ShowDownloadDialog(filename,desc,lbs);
+		}
+		FreeLBS(lbs);
+	}
+}
+
+static void
+ListDownloads()
+{
+	int i;
+	json_object *obj,*item,*result,*type;
+
+	obj = RPC_ListDownloads(GLP(Session));
+	if (!json_object_object_get_ex(obj,"result",&result)) {
+		Error(_("invalid list_report response"));
+	}
+
+	for (i=0;i<json_object_array_length(result);i++) {
+		item = json_object_array_get_idx(result,i);
+		if (!CheckJSONObject(item,json_type_object)) {
+			continue;
+		}
+		if (!json_object_object_get_ex(item,"type",&type)) {
+			continue;
+		}
+		if (!strcmp(json_object_get_string(type),"report")) {
+			PrintReport(item);
+		} else {
+			DownloadFile(item);
+		}
+	}
+	json_object_put(obj);
+}
+
 static gint
 PingTimerFunc(
 	gpointer data)
 {
+
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	RPC_ListDownloads();
-	if (strcmp(SERVERTYPE(Session),"ginbee")) {
-		Ping();
+	if (!UsePushClient) {
+		ListDownloads();
 	}
+	Ping();
 	return 1;
 }
 
@@ -1189,7 +1306,161 @@ SendEvent(
 	
 	params = json_object_new_object();
 	json_object_object_add(params,"event_data",event_data);
-	RPC_SendEvent(params);
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+	SCREENDATA(Session) = RPC_SendEvent(GLP(Session),params);
+}
+
+static	void
+CheckCloseWindow(
+	json_object *w,
+	int idx)
+{
+	json_object *child;
+	const char *put_type;
+	const char *wname;
+
+	if (!json_object_object_get_ex(w,"put_type",&child)) {
+		Error("invalid json part:put_type");
+	}
+	put_type = (char*)json_object_get_string(child);
+
+	if (!json_object_object_get_ex(w,"window",&child)) {
+		Error("invalid json part:window");
+	}
+	wname = json_object_get_string(child);
+
+	if (GetWindowData(wname) == NULL) {
+		return;
+	}
+	if (strcmp("new",put_type) && strcmp("current",put_type)) {
+		Debug("close window[%s] put_type[%s]",wname,put_type);
+		CloseWindow(wname);
+	}
+}
+
+static json_object *
+CopyJSON(
+	json_object *obj)
+{
+	json_object_iter iter;
+	json_object *ret;
+	int i,length;
+
+	ret = NULL;
+	switch(json_object_get_type(obj)) {
+	case json_type_boolean:
+		ret = json_object_new_boolean(json_object_get_boolean(obj));
+		break;
+	case json_type_double:
+		ret = json_object_new_double(json_object_get_double(obj));
+		break;
+	case json_type_int:
+		ret = json_object_new_int(json_object_get_int(obj));
+		break;
+	case json_type_string:
+		ret = json_object_new_string(json_object_get_string(obj));
+		break;
+	case json_type_array:
+		length = json_object_array_length(obj);
+		ret = json_object_new_array();
+		for(i=0;i<length;i++) {
+			json_object_array_add(ret,CopyJSON(json_object_array_get_idx(obj,i)));
+		}
+		break;
+	case json_type_object:
+		ret = json_object_new_object();
+		json_object_object_foreachC(obj,iter) {
+			json_object_object_add(ret,iter.key,CopyJSON(iter.val));
+		}
+		break;
+	default:
+		ret = json_object_new_object();
+		break;
+	}
+
+	return ret;
+}
+
+
+json_object *
+UpdateTemplate(
+	json_object *tmpl,
+	json_object *obj,
+	int level)
+{
+	json_object_iter iter;
+	json_object *ret,*c1,*c2;
+	int i;
+
+
+	ret = NULL;
+	if (tmpl == NULL) {
+		return NULL;
+	}
+	switch(json_object_get_type(tmpl)) {
+	case json_type_boolean:
+		if (CheckJSONObject(obj,json_type_boolean)) {
+			ret = json_object_new_boolean(json_object_get_boolean(obj));
+		} else {
+			ret = json_object_new_boolean(TRUE);
+		}
+		break;
+	case json_type_double:
+		if (CheckJSONObject(obj,json_type_double)) {
+			ret = json_object_new_double(json_object_get_double(obj));
+		} else {
+			ret = json_object_new_double(0.0);
+		}
+		break;
+	case json_type_int:
+		if (CheckJSONObject(obj,json_type_int)) {
+			ret = json_object_new_int(json_object_get_int(obj));
+		} else {
+			ret = json_object_new_int(0);
+		}
+		break;
+	case json_type_string:
+		if (CheckJSONObject(obj,json_type_string)) {
+			ret = json_object_new_string(json_object_get_string(obj));
+		} else {
+			ret = json_object_new_string("");
+		}
+		break;
+	case json_type_array:
+		ret = json_object_new_array();
+		if (CheckJSONObject(obj,json_type_array)) {
+			for(i=0;i<json_object_array_length(tmpl);i++) {
+				c1 = json_object_array_get_idx(tmpl,i);
+				c2 = json_object_array_get_idx(obj,i);
+				json_object_array_add(ret,UpdateTemplate(c1,c2,level+1));
+			}
+		} else {
+			for(i=0;i<json_object_array_length(tmpl);i++) {
+				c1 = json_object_array_get_idx(tmpl,i);
+				json_object_array_add(ret,UpdateTemplate(c1,NULL,level+1));
+			}
+		}
+		break;
+	case json_type_object:
+		ret = json_object_new_object();
+		if (CheckJSONObject(obj,json_type_object)) {
+			json_object_object_foreachC(tmpl,iter) {
+				c1 = iter.val;
+				json_object_object_get_ex(obj,iter.key,&c2);
+				json_object_object_add(ret,iter.key,UpdateTemplate(c1,c2,level+1));
+			}
+		} else {
+			json_object_object_foreachC(tmpl,iter) {
+				c1 = iter.val;
+				json_object_object_add(ret,iter.key,UpdateTemplate(c1,NULL,level+1));
+			}
+		}
+	default:
+		break;
+	}
+	return ret;
 }
 
 static	void
@@ -1197,55 +1468,56 @@ UpdateWindow(
 	json_object *w,
 	int idx)
 {
-	json_object *child,*obj,*result;
-	gboolean isdummy;
+	json_object *child,*obj,*result,*old;
 	const char *put_type;
 	const char *wname;
 	const char *gladedata;
+	WindowData *wdata;
 
-	child = json_object_object_get(w,"put_type");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(w,"put_type",&child)) {
 		Error("invalid json part:put_type");
 	}
 	put_type = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(w,"window");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(w,"window",&child)) {
 		Error("invalid json part:window");
 	}
 	wname = json_object_get_string(child);
-	isdummy = wname[0] == '_';
 
-	if (fMlog) {
-		MessageLogPrintf("window[%s] put_type[%s]\n",wname,put_type);
-	}
-
-	if (GetWindowData(wname) == NULL) {
-		obj = RPC_GetScreenDefine(wname);
-		result = json_object_object_get(obj,"result");
-		child = json_object_object_get(result,"screen_define");
-		if (child == NULL ||is_error(child)) {
+	wdata = GetWindowData(wname);
+	if (wdata == NULL) {
+		obj = RPC_GetScreenDefine(GLP(Session),wname);
+		json_object_object_get_ex(obj,"result",&result);
+		if (!json_object_object_get_ex(result,"screen_define",&child)) {
 			Error("can't get screen define:%s",wname);
 		}
 		gladedata = json_object_get_string(child);
-		CreateWindow(wname,gladedata);
+		wdata = CreateWindow(wname,gladedata);
 		json_object_put(obj);
 	}
+
+	if (json_object_object_get_ex(w,"screen_data",&child)) {
+		if (wdata->tmpl == NULL) {
+			if (json_object_object_length(child) > 0) {
+				wdata->tmpl = CopyJSON(child);
+			}
+		} else {
+			old = wdata->tmpl;
+			wdata->tmpl = UpdateTemplate(old,child,0);
+			json_object_put(old);
+		}
+	}
+
 	if (!strcmp("new",put_type)||!strcmp("current",put_type)) {
-		child = json_object_object_get(w,"screen_data");
 		if (child == NULL ||is_error(child)) {
 			Error("invalid json part:screeen_data");
 		}
-		UpdateWidget(wname,child);
-		if (isdummy) {
-			return;
-		}
+		UpdateWidget(GetWidgetByLongName(wname),wdata->tmpl);
 		if (!strcmp(wname,FOCUSEDWINDOW(Session))) {
 			ShowWindow(wname);
 		}
-		ResetTimer((char*)wname);
-	} else {
-		CloseWindow(wname);
+		ResetTimers((char*)wname);
+		Debug("show window[%s] put_type[%s]",wname,put_type);
 	}
 }
 
@@ -1256,18 +1528,14 @@ UpdateScreen()
 	const char *f_window,*f_widget;
 	int i;
 
-	if (fMlog) {
-		MessageLog("====");
-	}
+	Debug("====");
 	
-	result = json_object_object_get(SCREENDATA(Session),"result");
-	window_data = json_object_object_get(result,"window_data");
-	if (window_data == NULL ||is_error(window_data)) {
+	json_object_object_get_ex(SCREENDATA(Session),"result",&result);
+	if (!json_object_object_get_ex(result,"window_data",&window_data)) {
 		Error("invalid json part:window_data");
 	}
 
-	child = json_object_object_get(window_data,"focused_window");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(window_data,"focused_window",&child)) {
 		Error("invalid json part:focused_window");
 	}
 	f_window = json_object_get_string(child);
@@ -1276,29 +1544,35 @@ UpdateScreen()
 	}
 	THISWINDOW(Session) = g_strdup(f_window);
 	FOCUSEDWINDOW(Session) = (char*)f_window;
-	if (fMlog) {
-		MessageLogPrintf("focused_window[%s]",f_window);
-	}
+	Debug("focused_window[%s]",f_window);
 
-	child = json_object_object_get(window_data,"focused_widget");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(window_data,"focused_widget",&child)) {
 		Error("invalid json part:focused_widget");
 	}
 	f_widget = json_object_get_string(child);
 	FOCUSEDWIDGET(Session) = (char*)f_widget;
 
-	windows = json_object_object_get(window_data,"windows");
-	if (windows == NULL ||
-		is_error(windows) ||
-		json_object_get_type(windows) != json_type_array) {
+	if (!json_object_object_get_ex(window_data,"windows",&windows)) {
 		Error("invalid json part:windows");
+	}
+	for(i=0;i<json_object_array_length(windows);i++) {
+		child = json_object_array_get_idx(windows,i);
+		CheckCloseWindow(child,i);
 	}
 	for(i=0;i<json_object_array_length(windows);i++) {
 		child = json_object_array_get_idx(windows,i);
 		UpdateWindow(child,i);
 	}
 	if (f_window != NULL) {
+#ifdef GTK_2_24_23
+		if (!fKeyBuff) {
+			while(gtk_events_pending()) {
+				gtk_main_iteration();
+			}
+		}
+#endif
 		GrabFocus(f_window,f_widget);
+		PandaTableFocusCell(f_widget);
 	}
 }
 

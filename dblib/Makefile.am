@@ -26,6 +26,7 @@ libpandadb_la_LIBADD =
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	dblib.h \
+	dbutils.h \
 	dbgroup.h
 
 noinst_PROGRAMS		=
@@ -36,7 +37,8 @@ AM_CPPFLAGS 			=		\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(COMMON_CFLAGS)		\
+	-DBIN_DIR=\"$(bindir)\"
 
 libpandadb_la_CFLAGS = $(AM_CFLAGS)
 libpandadb_la_LDFLAGS	=			\
@@ -45,7 +47,10 @@ libpandadb_la_LDFLAGS	=			\
 
 libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h
+	dbutils.c	dbutils.h	\
+	redirect.c	redirect.h	\
+	monsys.c	monsys.h	\
+	bytea.c		bytea.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\
@@ -57,15 +62,19 @@ libpostgresqlutils_a_LIBADD =
 libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)
 libpostgresqlutils_a_SOURCES = \
 	PostgreSQLlib.c PostgreSQLlib.h	\
-	PostgreSQLutils.c audit.c
+	PostgreSQLutils.c PostgreSQLutils.h \
+	audit.c audit.h 
 
 DB_OBJECTS			=		\
 	PostgreSQL.la			\
 	Shell.la				\
 	System.la				\
 	NativeBLOB.la			\
+	MONBLOB.la				\
 	XMLIO.la				\
-	XMLIO2.la
+	XMLIO2.la				\
+	MSGIO.la				\
+	PushEvent.la
 
 PostgreSQL_la_LDFLAGS	=		\
 	-avoid-version				\
@@ -91,7 +100,8 @@ Shell_la_SOURCES		=	\
 	Shell.c
 Shell_la_LIBADD	= \
 	$(top_builddir)/libs/libpanda.la \
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/dblib/libpandadb.la \
+	-luuid
 
 System_la_LDFLAGS		=		\
 	-avoid-version				\
@@ -115,6 +125,16 @@ NativeBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/libpanda.la \
 	$(top_builddir)/dblib/libpandadb.la
 
+MONBLOB_la_LDFLAGS	=		\
+	-avoid-version				\
+	-module						\
+	-export-dynamic
+MONBLOB_la_SOURCES	=		\
+	MONBLOB.c
+MONBLOB_la_LIBADD	=		\
+	$(top_builddir)/libs/libpanda.la \
+	$(top_builddir)/dblib/libpandadb.la
+
 XMLIO_la_LDFLAGS	=	\
 	-avoid-version				\
 	-module						\
@@ -124,8 +144,7 @@ XMLIO_la_SOURCES	=	\
 	XMLIO.c
 XMLIO_la_LIBADD			=				\
 	$(top_builddir)/libs/libpanda.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
-	$(XML2_LIBS)
+	$(top_builddir)/dblib/libpandadb.la
 
 XMLIO2_la_LDFLAGS	=	\
 	-avoid-version				\
@@ -136,5 +155,26 @@ XMLIO2_la_SOURCES	=	\
 	XMLIO2.c
 XMLIO2_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
-	$(XML2_LIBS)
+	$(top_builddir)/dblib/libpandadb.la
+
+MSGIO_la_LDFLAGS	=	\
+	-avoid-version				\
+	-module						\
+	-export-dynamic
+MSGIO_la_SOURCES	=	\
+	sysdata.c	sysdata.h	\
+	MSGIO.c
+MSGIO_la_LIBADD			=			\
+	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la
+
+
+PushEvent_la_LDFLAGS	=				\
+	-avoid-version						\
+	-module								\
+	-export-dynamic
+PushEvent_la_SOURCES	=				\
+	PushEvent.c
+PushEvent_la_LIBADD			=			\
+	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la

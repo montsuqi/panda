@@ -12,4 +12,4 @@ EXTRA_DIST = 										\
 	event.doc	DBIO.tex	HAKAMA.tex				\
 	PostgreSQL.tex	Shell.tex	V2					\
 	dbs.tex		PGIO.tex	env.tex					\
-	memo.PostgreSQL	pgserver.tex 
+	memo.PostgreSQL	pgserver.tex  memo.dbreplication memo.source.replication

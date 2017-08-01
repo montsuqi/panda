@@ -36,14 +36,15 @@
 #include	<sys/wait.h>
 #include	<signal.h>
 #include	<errno.h>
+#include	<libmondai.h>
 
 #define		DESKTOP_MAIN
 
-#include	"glclient.h"
-#include	"desktop.h"
 #include	"gettext.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"tempdir.h"
+#include	"bd_config.h"
+#include	"desktop.h"
+#include	"logger.h"
 
 static char *
 GetSuffix(char *path)
@@ -74,7 +75,7 @@ InitDesktop(void)
 
 	DesktopAppTable = NewNameHash();
 	snprintf(fname, sizeof(fname), "%s/%s", 
-		ConfDir, DESKTOP_LIST);
+		gl_config_get_config_dir(), DESKTOP_LIST);
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
 		snprintf(fname, sizeof(fname), "%s/%s", 
@@ -93,7 +94,7 @@ InitDesktop(void)
 		}
 		fclose(fp);
 	} else {
-		MessageLog("cannot open applications list");
+		Warning("cannot open applications list");
 	}
 }
 
@@ -136,7 +137,7 @@ Exec(char *command,char *file)
 		}
 		argc++;
 		if (argc >= DESKTOP_MAX_ARGC) {
-			MessageLogPrintf("can't exec [%s]; over argc size",command);
+			Warning("can't exec [%s]; over argc size",command);
 			return;
 		}
 		if (*q == 0) {
@@ -162,13 +163,11 @@ Exec(char *command,char *file)
 extern void 
 OpenDesktop(char *filename,LargeByteString *binary)
 {
-	int fd;
 	int pid;
 	int status;
 	char *suffix;
 	char *template;
 	char path[SIZE_LONGNAME+1];
-	struct sigaction sa;
 
 	if (filename == NULL || strlen(filename) == 0) {
 		return;
@@ -177,18 +176,10 @@ OpenDesktop(char *filename,LargeByteString *binary)
 		return;
 	}
 
-	snprintf(path,SIZE_LONGNAME,"%s/%s",TempDir, filename);
+	snprintf(path,SIZE_LONGNAME,"%s/%s",GetTempDir(), filename);
 	path[SIZE_LONGNAME] = 0;
-	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
-	if (fd > 0) {
-		if ( write(fd, LBS_Body(binary), LBS_Size(binary) ) > 0){
-			close(fd);
-		} else {
-			MessageLogPrintf("write failure:%s",strerror(errno));
-			return;
-		}
-	} else {
-		MessageLogPrintf("open failure:%s",strerror(errno));
+	if (!g_file_set_contents(path,LBS_Body(binary),LBS_Size(binary),NULL)) {
+		Warning("could not create teporary file:%s",path);
 		return;
 	}
 	template = g_hash_table_lookup(DesktopAppTable, filename);
@@ -198,21 +189,15 @@ OpenDesktop(char *filename,LargeByteString *binary)
     }
 	if (template != NULL) {
 		if ((pid = fork()) == 0) {
-			memset(&sa, 0, sizeof(struct sigaction));
-			sa.sa_handler = SIG_IGN;
-			sa.sa_flags |= SA_RESTART;
-			if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-				Error("sigaction(2) failure");
-			}
 			if ((pid = fork()) == 0) {
 				Exec(template,path);
 			} else if (pid < 0) {
-				MessageLogPrintf("fork failure:%s",strerror(errno));
+				Warning("fork failure:%s",strerror(errno));
 			} else {
 				_exit(0);
 			}
 		} else if (pid < 0) {
-			MessageLogPrintf("fork failure:%s",strerror(errno));
+			Warning("fork failure:%s",strerror(errno));
 		} else {
 			wait(&status);
 		}

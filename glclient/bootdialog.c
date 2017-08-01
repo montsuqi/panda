@@ -36,8 +36,6 @@
 #include    "bootdialog.h"
 #include	"action.h"
 #include    "dialogs.h"
-#include    "message.h"
-#include    "debug.h"
 
 /*********************************************************************
  * EditDialog
@@ -420,7 +418,6 @@ boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
     gl_config_set_index(n);
     bd_component_value_to_config(self->component,n);
     gl_config_save();
-    LoadConfig(gl_config_get_index());
   }
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
@@ -512,9 +509,11 @@ boot_dialog_new ()
   label = gtk_label_new (_("Basic"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->basictable, label);
 
+#ifdef USE_SSL
   /* ssl tab */
   label = gtk_label_new (_("SSL"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->ssltable, label);
+#endif
 
   /* Other tab */
   label = gtk_label_new (_("Details"));

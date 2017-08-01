@@ -21,9 +21,9 @@
 #ifndef	_WIDGET_OPS_H
 #define	_WIDGET_OPS_H
 
-#include	<glade/glade.h>
 #include	<json.h>
 
-extern	void UpdateWidget(const char *longname,struct json_object *w);
+extern	void UpdateWidget(GtkWidget *,json_object *);
 extern	struct json_object*	MakeScreenData(const char *wname); 
+extern	void PandaTableFocusCell(const char *wname);
 #endif

@@ -56,6 +56,7 @@
 #include	"glserver.h"
 #include	"term.h"
 #include	"http.h"
+#include	"blobapi.h"
 #include	"blobreq.h"
 #include	"sysdataio.h"
 #include	"wfcio.h"
@@ -70,27 +71,7 @@
 #define REQUEST_TYPE_BLOB_IMPORT 2
 #define REQUEST_TYPE_BLOB_EXPORT 3
 #define REQUEST_TYPE_API         4
-
-typedef struct {
-	NETFILE			*fp;
-	int 			type;
-	char			host[SIZE_HOST];
-	PacketClass		method;
-	size_t			buf_size;
-	char			*buf;
-	char			*head;
-	char			*arguments;
-	int				body_size;
-	char			*body;
-	GHashTable		*header_hash;
-	char			*user;
-	char			*pass;
-	char			*ld;
-	char			*window;
-	char			*session_id;
-	char			*oid;
-	int				status;
-} HTTP_REQUEST;
+#define REQUEST_TYPE_BLOB_API    5
 
 HTTP_REQUEST *
 HTTP_Init(
@@ -107,18 +88,45 @@ HTTP_Init(
 	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
 	memset(req->buf, 0x0, MAX_REQ_SIZE);
 	req->body_size = 0;
-	req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
-	memset(req->body, 0x0, MAX_REQ_SIZE);
+	req->body = NULL;
 	req->arguments = NULL;
 	req->header_hash = NewNameiHash();
 	req->user = NULL;
 	req->pass = NULL;
+	req->agent = NULL;
 	req->ld = NULL;
 	req->window = NULL;
 	req->status = HTTP_OK;
 	req->session_id = NULL;
 	req->oid = 0;
+	req->require_auth = FALSE;
 	return req;
+}
+
+HTTP_RESPONSE *
+ResponseInit(void)
+{
+	HTTP_RESPONSE *res;
+
+	res = New(HTTP_RESPONSE);
+	res->body = NULL;
+	res->body_size = 0;
+	res->filename = NULL;
+	res->status = HTTP_SERVICE_UNAVAILABLE;
+	res->content_type = "application/octet-stream";
+	return res;
+}
+
+void
+ResponseFree(HTTP_RESPONSE *res)
+{
+	if (res == NULL) {
+		return;
+	}
+	if (res->body != NULL){
+		xfree(res->body);
+	}
+	xfree(res);
 }
 
 #define HTTP_CODE2REASON(x,y) case x: return y; break;
@@ -201,16 +209,19 @@ SendResponse(
 	time_t t = time(NULL);
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n",status,GetReasonPhrase(status));
-	Send(req->fp,buf,strlen(buf)); 
+	Send(req->fp,buf,strlen(buf));
+	if (fDebug) {
+		Warning("%s",buf);
+	}
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
 	if (strftime(date, sizeof(date),
 			"%a, %d %b %Y %H:%M:%S GMT", cur_p) != 0) {
 		sprintf(buf, "Date: %s\r\n", date);
-		Send(req->fp, buf, strlen(buf)); 
+		Send(req->fp, buf, strlen(buf));
 	}
-	
+
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
@@ -249,7 +260,7 @@ SendResponse(
 	}
 	Flush(req->fp);
 }
-	
+
 int
 TryRecv(
 	HTTP_REQUEST *req)
@@ -260,10 +271,10 @@ TryRecv(
 		SendResponse(req,HTTP_REQUEST_ENTITY_TOO_LARGE,NULL,0,NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
-	size = RecvAtOnce(req->fp, 
-		req->buf + req->buf_size , 
+	size = RecvAtOnce(req->fp,
+		req->buf + req->buf_size ,
 		MAX_REQ_SIZE - req->buf_size);
-	ON_IO_ERROR(req->fp,badio);	
+	ON_IO_ERROR(req->fp,badio);
 	if (size >= 0) {
 		req->buf_size += size;
 		req->buf[req->buf_size] = '\0';
@@ -306,6 +317,7 @@ GetNextLine(HTTP_REQUEST *req)
 	}
 }
 
+
 void
 ParseReqLine(HTTP_REQUEST *req)
 {
@@ -316,10 +328,31 @@ ParseReqLine(HTTP_REQUEST *req)
 
 	line = GetNextLine(req);
 
+	if (fDebug) {
+		Warning("%s",line);
+	}
+
 	/*jsonrpc*/
 	if (g_regex_match_simple("^post\\s+/rpc/*\\s",line,G_REGEX_CASELESS,0)) {
 		req->type = REQUEST_TYPE_JSONRPC;
 		req->method = HTTP_POST;
+		free(line);
+		return;
+	}
+
+	/* New blob api */
+	re = g_regex_new("^(get|post)\\s+/blobapi/([a-zA-Z0-9-]+)\\s",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		if (*line == 'g' || *line == 'G') {
+			req->method = HTTP_GET;
+		} else {
+			req->method = HTTP_POST;
+		}
+		req->session_id = g_match_info_fetch(match,2);
+		req->type = REQUEST_TYPE_BLOB_API;
+		req->require_auth = TRUE;
+		g_match_info_free(match);
+		g_regex_unref(re);
 		free(line);
 		return;
 	}
@@ -352,7 +385,7 @@ ParseReqLine(HTTP_REQUEST *req)
 	g_regex_unref(re);
 
 	/*api*/
-	re = g_regex_new("^(get|post)\\s+(/rest)?/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?(\\S+))\\s",G_REGEX_CASELESS,0,NULL);
+	re = g_regex_new("^(get|post)\\s+(/rest)?/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)(/*|\\?(\\S+))\\s",G_REGEX_CASELESS,0,NULL);
 	if (g_regex_match(re,line,0,&match)) {
 		if (*line == 'g' || *line == 'G') {
 			req->method = HTTP_GET;
@@ -363,6 +396,7 @@ ParseReqLine(HTTP_REQUEST *req)
 		req->window = g_match_info_fetch(match,4);
 		req->arguments = g_match_info_fetch(match,6);
 		req->type = REQUEST_TYPE_API;
+		req->require_auth = TRUE;
 		g_match_info_free(match);
 		g_regex_unref(re);
 		free(line);
@@ -409,7 +443,7 @@ void
 ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
-	size_t size,left_size;
+	size_t body_size,size,left;
 
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
 	if (value == NULL) {
@@ -417,13 +451,8 @@ ParseReqBody(HTTP_REQUEST *req)
 		Message("invalid Content-Length:%s", value);
 		return;
 	}
-	size = (size_t)atoi(value);
-	if (size <= 0) {
-		req->status = HTTP_BAD_REQUEST;
-		Message("invalid Content-Length:%s", value);
-		return;
-	}
-	if (size >= MAX_REQ_SIZE) {
+	body_size = (size_t)atoi(value);
+	if ((body_size + req->buf_size) >= MAX_REQ_SIZE) {
 		req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
 		Message("invalid Content-Length:%s", value);
 		return;
@@ -435,16 +464,21 @@ ParseReqBody(HTTP_REQUEST *req)
 		return;
 	}
 
-	left_size = size - (req->buf_size - (req->head - req->buf));
-	if (left_size>0) {
-		while(left_size>0) {
-			req->buf_size += TryRecv(req);
-			left_size = size - (req->buf_size - (req->head - req->buf));
+	left = body_size - (req->buf_size - (req->head - req->buf));
+	if (left > 0) {
+		while (left > 0) {
+			size = TryRecv(req);
+			if (left < size) {
+				left = 0;
+			} else {
+				left -= size;
+			}
 		}
 	}
-	memcpy(req->body, req->head, size);
-	req->head += size;
-	req->body_size = size;
+
+ 	req->body = req->head;
+	req->body_size = body_size;
+	req->head += body_size;
 
 	dbgprintf("body :%s\n", req->body);
 }
@@ -457,6 +491,13 @@ ParseReqAuth(HTTP_REQUEST *req)
 	gchar *head,*base64,*userpass;
 	gsize size;
 
+	head = (gchar *)g_hash_table_lookup(req->header_hash,"user-agent");
+	if (head != NULL) {
+		req->agent = strdup(head);
+	} else {
+		req->agent = strdup("unknown");
+	}
+
 #ifdef	USE_SSL
 	if (fSsl && fVerifyPeer){
 		if (!req->fp->peer_cert) {
@@ -464,15 +505,12 @@ ParseReqAuth(HTTP_REQUEST *req)
 			req->status = HTTP_FORBIDDEN;
 			return;
 		}
-		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
-		return;
 	}
 #endif
 
 	head = (gchar *)g_hash_table_lookup(req->header_hash,"authorization");
 	if (head == NULL) {
 		req->status = HTTP_UNAUTHORIZED;
-		Message("does not have Authorization");
 		return;
 	}
 
@@ -493,11 +531,11 @@ ParseReqAuth(HTTP_REQUEST *req)
 
 	if (userpass == NULL || strlen(userpass) <= 0) {
 		Warning("Invalid userpass");
-		req->status = HTTP_UNAUTHORIZED;
+		req->status = HTTP_FORBIDDEN;
 		return;
 	}
 
-	re = g_regex_new("^(\\w+):(\\S+)",0,0,NULL);
+	re = g_regex_new("^([\\w-]+):(.*)",0,0,NULL);
 	if (g_regex_match(re,userpass,0,&match)) {
 		req->user = g_match_info_fetch(match,1);
 		req->pass = g_match_info_fetch(match,2);
@@ -506,7 +544,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 		g_free(userpass);
 		g_regex_unref(re);
 		Warning("Invalid userpass");
-		req->status = HTTP_UNAUTHORIZED;
+		req->status = HTTP_FORBIDDEN;
 		return;
 	}
 	g_free(userpass);
@@ -525,11 +563,16 @@ ParseRequest(
 		ParseReqBody(req);
 	}
 	ParseReqAuth(req);
+
+	req->server_host = (gchar *)g_hash_table_lookup(req->header_hash,"host");
+	if (req->server_host == NULL) {
+		req->status = HTTP_BAD_REQUEST;
+		return;
+	}
 }
 
 static void timeout(int i)
 {
-	Warning("request timeout");
 	exit(0);
 }
 
@@ -542,15 +585,17 @@ ParseReqArguments(
 	int i;
 ENTER_FUNC;
 	obj = json_object_new_object();
-	kvs = g_strsplit(args,"&",128);
-	for(i=0;kvs[i]!=NULL;i++) {
-		kv = g_strsplit(kvs[i],"=",2);
-		if (kv[0] != NULL || kv[1] != NULL) {
-			json_object_object_add(obj,kv[0],json_object_new_string(kv[1]));
+	if (args != NULL && strlen(args) > 0) {
+		kvs = g_strsplit(args,"&",128);
+		for(i=0;kvs[i]!=NULL;i++) {
+			kv = g_strsplit(kvs[i],"=",2);
+			if (kv[0] != NULL || kv[1] != NULL) {
+				json_object_object_add(obj,kv[0],json_object_new_string(kv[1]));
+			}
+			g_strfreev(kv);
 		}
-		g_strfreev(kv);
+		g_strfreev(kvs);
 	}
-	g_strfreev(kvs);
 LEAVE_FUNC;
 	return obj;
 }
@@ -575,6 +620,7 @@ MakeAPIReqJSON(
 	json_object_object_add(meta,"ld",json_object_new_string(req->ld));
 	json_object_object_add(meta,"window",json_object_new_string(req->window));
 	json_object_object_add(meta,"host",json_object_new_string(req->host));
+	json_object_object_add(meta,"agent",json_object_new_string(req->agent));
 	json_object_object_add(params,"meta",meta);
 
 	arguments = ParseReqArguments(req->arguments);
@@ -608,43 +654,54 @@ APISendResponse(
 	HTTP_REQUEST *req,
 	json_object *obj)
 {
-	json_object *result,*http_status,*body,*ctype;
+	json_object *json_result,*json_status,*json_body,*json_ctype;
 	int status;
 	char *blob;
+	const char* ctype;
 	size_t blob_size;
 	MonObjectType mon;
 
 	if (!CheckJSONObject(obj,json_type_object)) {
-		Error("panda_api response json is invalid");
+		Warning("panda_api response json is invalid");
+		SendResponse(req,500,NULL,0,NULL);
+		return;
 	}
-	result = json_object_object_get(obj,"result");
-	if (!CheckJSONObject(result,json_type_object)) {
-		Error("panda_api response json result is invalid");
+	if (!json_object_object_get_ex(obj,"result",&json_result)) {
+		Warning("panda_api response json result is invalid");
+		SendResponse(req,500,NULL,0,NULL);
+		return;
 	}
-	http_status = json_object_object_get(result,"http_status");
-	if (!CheckJSONObject(http_status,json_type_int)) {
-		Error("panda_api response json http_status is invalid");
+
+	status = 200;
+	if (json_object_object_get_ex(json_result,"http_status",&json_status)) {
+		status = json_object_get_int(json_status);
 	}
-	status = json_object_get_int(http_status);
-	if (status == 200) {
-		ctype = json_object_object_get(result,"content_type");
-		if (!CheckJSONObject(ctype,json_type_string)) {
-			Error("panda_api response json content_type is invalid");
-		}
-		body = json_object_object_get(result,"body");
-		if (!CheckJSONObject(body,json_type_string)) {
-			Error("panda_api response json body is invalid");
-		}
-		mon = (MonObjectType)atoll(json_object_get_string(body));
+	if (json_object_object_get_ex(json_result,"httpstatus",&json_status)) {
+		status = json_object_get_int(json_status);
+	}
+
+	ctype = "";
+	if (json_object_object_get_ex(json_result,"content_type",&json_ctype)) {
+		ctype = (const char*)json_object_get_string(json_ctype);
+	}
+	if (json_object_object_get_ex(json_result,"contenttype",&json_ctype)) {
+		ctype = (const char*)json_object_get_string(json_ctype);
+	}
+	mon = 0;
+	if (json_object_object_get_ex(json_result,"body",&json_body)) {
+		mon = (MonObjectType)atoll(json_object_get_string(json_body));
+	}
+
+	if (status == 200 && mon != 0) {
 		GLExportBLOB(mon,&blob,&blob_size);
-		SendResponse(req,status,blob,blob_size,"Content-Type",json_object_get_string(ctype),NULL);
+		SendResponse(req,status,blob,blob_size,"Content-Type",ctype,NULL);
 		xfree(blob);
 	} else {
 		SendResponse(req,status,NULL,0,NULL);
 	}
 	json_object_put(obj);
 
-	MessageLogPrintf("api %d /%s/%s/%s %s@%s",status,req->ld,req->window,req->arguments,req->user,req->host);
+	MessageLogPrintf("api %d /%s/%s/%s %s@%s %s",status,req->ld,req->window,req->arguments,req->user,req->host,req->agent);
 }
 
 static gboolean
@@ -714,6 +771,37 @@ BLOBExportHandler(
 	return TRUE;
 }
 
+static gboolean
+BLOBAPIHandler(
+	HTTP_REQUEST *req)
+{
+	HTTP_RESPONSE *res;
+	char disposition[4096];
+
+	res = ResponseInit();
+	GetBlobAPI(req, res);
+
+	if (res->status == HTTP_SERVICE_UNAVAILABLE) {
+		SendResponse(req,HTTP_SERVICE_UNAVAILABLE,NULL,0,NULL);
+	}else
+	if (res->body == NULL || res->body_size == 0) {
+		SendResponse(req,HTTP_NOT_FOUND,NULL,0,NULL);
+	}else
+	if (res->filename == NULL) {
+		SendResponse(req,HTTP_OK,res->body,res->body_size,
+					 "Content-Type",res->content_type,
+					 NULL);
+	} else {
+		snprintf(disposition, sizeof(disposition), "attachment; filename=\"%s\"",res->filename);
+		SendResponse(req,HTTP_OK,res->body,res->body_size,
+					 "Content-Type",res->content_type,
+					 "Content-Disposition", disposition,
+					 NULL);
+	}
+	ResponseFree(res);
+	return TRUE;
+}
+
 static	json_object*
 MakeJSONResponseTemplate(
 	json_object *obj)
@@ -722,7 +810,7 @@ MakeJSONResponseTemplate(
 
 	res = json_object_new_object();
 	json_object_object_add(res,"jsonrpc",json_object_new_string("2.0"));
-	child = json_object_object_get(obj,"id");
+	json_object_object_get_ex(obj,"id",&child);
 	json_object_object_add(res,"id",json_object_new_int(json_object_get_int(child)));
 
 	return res;
@@ -779,8 +867,8 @@ GetScreenDefine(
 	json_object *params,*child,*result,*res,*error;
 	char *scrdef,*window;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	child = json_object_object_get(params,"window");
+	json_object_object_get_ex(obj,"params",&params);
+	json_object_object_get_ex(params,"window",&child);
 	if (CheckJSONObject(child,json_type_string)) {
 		window = (char*)json_object_get_string(child);
 	} else {
@@ -811,12 +899,11 @@ GetMessage(
 	json_object *params,*meta,*child,*result,*res,*error;
 	char *session_id,*popup,*dialog,*abort;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	meta = json_object_object_get(params,"meta");
+	json_object_object_get_ex(obj,"params",&params);
+	json_object_object_get_ex(params,"meta",&meta);
 	session_id = NULL;
 	if (CheckJSONObject(meta,json_type_object)) {
-		child = json_object_object_get(meta,"session_id");
-		if (CheckJSONObject(child,json_type_string)) {
+		if (json_object_object_get_ex(meta,"session_id",&child)) {
 			session_id = (char*)json_object_get_string(child);
 		}
 	}
@@ -846,7 +933,7 @@ static gboolean
 JSONRPCHandler(
 	HTTP_REQUEST *req)
 {
-	char *reqjson,*resjson,*method;
+	char *reqjson,*resjson,*method,*prefix;
 	json_object *obj,*params,*meta,*child,*res;
 
 	reqjson = StrnDup(req->body,req->body_size);
@@ -855,37 +942,42 @@ JSONRPCHandler(
 	if (!CheckJSONObject(obj,json_type_object)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
-	child = json_object_object_get(obj,"jsonrpc");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"jsonrpc",&child)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	if (strcmp(json_object_get_string(child),"2.0")) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
-	child = json_object_object_get(obj,"id");
-	if (!CheckJSONObject(child,json_type_int)) {
+	if (!json_object_object_get_ex(obj,"id",&child)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
-	child = json_object_object_get(obj,"method");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"method",&child)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	method = (char*)json_object_get_string(child);
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
+	}
+	if (fDebug) {
+		Warning("jsonrpc:%s",method);
 	}
 	if (!strcmp(method,"get_server_info")) {
 		res = GetServerInfo(obj);
@@ -903,14 +995,27 @@ JSONRPCHandler(
 		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
 		json_object_put(res);
 	} else {
-		meta = json_object_object_get(params,"meta");
-		if (!CheckJSONObject(meta,json_type_object)) {
+		if (!json_object_object_get_ex(params,"meta",&meta)) {
 			SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+			json_object_put(obj);
 			return FALSE;
 		}
 
+#ifdef  USE_SSL
+		if (fSsl) {
+			prefix = g_strdup_printf("https://%s",req->server_host);
+		} else {
+			prefix = g_strdup_printf("http://%s",req->server_host);
+		}
+#else
+		prefix = g_strdup_printf("http://%s",req->server_host);
+#endif
+
 		json_object_object_add(meta,"host",json_object_new_string(req->host));
 		json_object_object_add(meta,"user",json_object_new_string(req->user));
+		json_object_object_add(meta,"agent",json_object_new_string(req->agent));
+		json_object_object_add(meta,"server_url_prefix",json_object_new_string(prefix));
+		g_free(prefix);
 
 		if ((res = WFCIO_JSONRPC(obj)) != NULL) {
 			resjson = (char*)json_object_to_json_string(res);
@@ -965,12 +1070,10 @@ AuthAPI(
 	if (!CheckJSONObject(res,json_type_object)) {
 		Error("panda_api response json is invalid");
 	}
-	result = json_object_object_get(res,"result");
-	if (!CheckJSONObject(result,json_type_object)) {
+	if (!json_object_object_get_ex(res,"result",&result)) {
 		Error("panda_api response json result is invalid");
 	}
-	http_status = json_object_object_get(result,"http_status");
-	if (!CheckJSONObject(http_status,json_type_int)) {
+	if (!json_object_object_get_ex(result,"http_status",&http_status)) {
 		Error("panda_api response json http_status is invalid");
 	}
 	status = json_object_get_int(http_status);
@@ -985,8 +1088,6 @@ GLAuth(
 #ifdef	USE_SSL
 	if (fSsl && fVerifyPeer){
         if (!req->fp->peer_cert) return FALSE;
-		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
-		return TRUE;
 	}
 #endif
 	if (!strncmp(Auth.protocol,"api",strlen("api"))) {
@@ -994,6 +1095,27 @@ GLAuth(
 	} else {
 		return AuthUser(&Auth,req->user,req->pass,"",NULL);
 	}
+}
+
+void
+CheckJSONRPCMethod(
+	HTTP_REQUEST *req)
+{
+	char *reqjson,*method;
+	json_object *obj,*child;
+
+	reqjson = StrnDup(req->body,req->body_size);
+	obj = json_tokener_parse(reqjson);
+	xfree(reqjson);
+	if (json_object_object_get_ex(obj,"method",&child)) {
+		method = (char*)json_object_get_string(child);
+		if (!strcmp(method,"start_session")) {
+			req->require_auth = TRUE;
+		} else {
+			req->require_auth = FALSE;
+		}
+	}
+	json_object_put(obj);
 }
 
 static gboolean
@@ -1007,11 +1129,18 @@ _HTTP_Method(
 		SendResponse(req,req->status,NULL,0,NULL);
 		return FALSE;
 	}
-	if (!GLAuth(req)) {
-		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
-		req->status = HTTP_FORBIDDEN;
-		SendResponse(req,req->status,NULL,0,NULL);
-		return FALSE;
+
+	if (req->type == REQUEST_TYPE_JSONRPC) {
+		CheckJSONRPCMethod(req);
+	}
+
+	if (req->require_auth) {
+		if (!GLAuth(req)) {
+			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
+			req->status = HTTP_FORBIDDEN;
+			SendResponse(req,req->status,NULL,0,NULL);
+			return FALSE;
+		}
 	}
 
 	switch(req->type) {
@@ -1023,6 +1152,8 @@ _HTTP_Method(
 		return BLOBImportHandler(req);
 	case REQUEST_TYPE_BLOB_EXPORT:
 		return BLOBExportHandler(req);
+	case REQUEST_TYPE_BLOB_API:
+		return BLOBAPIHandler(req);
 	}
 	Error("do not reach");
 }
@@ -1055,9 +1186,11 @@ PrepareNextRequest(
 	XFree(&(req->pass));
 	XFree(&(req->ld));
 	XFree(&(req->window));
+	XFree(&(req->agent));
 	XFree(&(req->session_id));
 	req->status = HTTP_OK;
 	req->body_size = 0;
+	req->require_auth = FALSE;
 	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
 
 	if (req->head != NULL && strlen(req->head)> 1) {
@@ -1070,7 +1203,7 @@ PrepareNextRequest(
 		req->buf_size = 0;
 		req->head = req->buf;
 		memset(req->buf , 0, MAX_REQ_SIZE);
-		ON_IO_ERROR(req->fp,badio);	
+		ON_IO_ERROR(req->fp,badio);
 	}
 	return TRUE;
 badio:
@@ -1084,13 +1217,13 @@ HTTP_Method(
 	HTTP_REQUEST *req;
 	struct sigaction sa;
 
-	memset(&sa, 0, sizeof(struct sigaction));  
+	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = timeout;
 	sa.sa_flags |= SA_RESTART;
 	sigemptyset (&sa.sa_mask);
 	if(sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
-	} 
+	}
 
 	req = HTTP_Init(fpComm);
 	while (_HTTP_Method(req)) {

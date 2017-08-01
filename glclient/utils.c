@@ -28,14 +28,44 @@
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	<sys/types.h>
+#include	<sys/file.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<fcntl.h>
 #include	<sys/time.h>
+#include	<sys/wait.h>
+#include	<dirent.h>
+#include	<time.h>
 #include	<errno.h>
 
 #include	"utils.h"
+
+static char *LockFile = NULL;
+static int   LockFD   = -1;
+
+void gl_lock()
+{
+	if (LockFile == NULL) {
+		LockFile = g_strconcat(g_get_home_dir(), "/.glclient/.lock", NULL);
+		LockFD = open(LockFile,O_CREAT|O_WRONLY|O_TRUNC,644);
+		if (LockFD == -1) {
+			fprintf(stderr,"open failure:%s\n",strerror(errno));
+			exit(1);
+		}
+	}
+	if (LockFile != NULL && LockFD != -1) {
+		flock(LockFD,LOCK_EX);
+	}
+}
+
+void gl_unlock()
+{
+	if (LockFile != NULL && LockFD != -1) {
+		flock(LockFD,LOCK_UN);
+	}
+}
 
 void
 get_human_bytes(size_t size, char *str)
@@ -86,4 +116,47 @@ CheckAlreadyFile(
 		}
 	}
 	return (rc);
+}
+
+void
+rm_r_old(
+	const char *name,
+	unsigned int elapsed)
+{
+
+	DIR *dir;
+	struct dirent *ent;
+	struct stat st;
+	time_t now;
+	char path[4096];
+
+	if (name == NULL) {
+		return;
+	}
+
+	now = time(NULL);
+
+	if (stat(name,&st) == 0) {
+		if (S_ISDIR(st.st_mode)) {
+			/* directory */
+			if ((dir = opendir(name)) != NULL) {
+				while((ent = readdir(dir)) != NULL) {
+					if (ent->d_name[0] != '.') {
+						snprintf(path,sizeof(path),"%s/%s",name,ent->d_name);
+						path[sizeof(path)-1] = 0;
+						rm_r_old(path,elapsed);
+					}
+				}
+				closedir(dir);
+				if ((now - st.st_ctim.tv_sec) > elapsed) {
+					remove(name);
+				}
+			}
+		} else {
+			/* file */
+			if ((now - st.st_ctim.tv_sec) > elapsed) {
+				remove(name);
+			}
+		}
+	}
 }

@@ -201,14 +201,66 @@ LEAVE_FUNC;
 	return	(ctrl.rc);
 }
 
+extern	ValueStruct *
+ExecDBESCAPE(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_FUNC	func;
+	ValueStruct	*ret = NULL;
+
+	func = LookupFUNC(dbg, "DBESCAPE");
+	if		(  func !=  NULL  ) {
+		ret = (*func)(dbg,ctrl,rec,args);
+	}
+	return ret;
+}
+
+extern	ValueStruct *
+ExecDBESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_FUNC	func;
+	ValueStruct	*ret = NULL;
+
+	func = LookupFUNC(dbg, "DBESCAPEBYTEA");
+	if		(  func !=  NULL  ) {
+		ret = (*func)(dbg,ctrl,rec,args);
+	}
+	return ret;
+}
+
+extern	ValueStruct *
+ExecDBUNESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_FUNC	func;
+	ValueStruct	*ret = NULL;
+
+	func = LookupFUNC(dbg, "DBUNESCAPEBYTEA");
+	if		(  func !=  NULL  ) {
+		ret = (*func)(dbg,ctrl,rec,args);
+	}
+	return ret;
+}
+
 extern	int
 ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql,
+	Bool		fRed,
 	int			usage)
 {
 	int		rc;
-	rc = dbg->func->primitive->exec(dbg,sql,TRUE, usage);
+	rc = dbg->func->primitive->exec(dbg,sql,fRed, usage);
 	return	(rc);
 }
 
@@ -216,12 +268,24 @@ extern	int
 ExecRedirectDBOP(
 	DBG_Struct	*dbg,
 	char		*sql,
+	Bool		fRed,
 	int			usage)
 {
 	int		rc;
-
-	rc = dbg->func->primitive->exec(dbg,sql,FALSE, usage);
+	rc = dbg->func->primitive->exec(dbg,sql,fRed, usage);
 	return	(rc);
+}
+
+extern 	ValueStruct	*
+ExecDBQuery(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	ValueStruct *ret;
+	ret = dbg->func->primitive->query(dbg,sql,fRed, usage);
+	return	ret;
 }
 
 extern	ValueStruct	*
@@ -566,6 +630,21 @@ GetDB_Pass(
 		}
 	}
 	return	(pass);
+}
+
+extern	char	*
+GetDB_Crypt(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	char	*crypto = NULL;
+
+	if		(  ThisEnv->CryptoPass  !=  NULL  ) {
+		crypto = ThisEnv->CryptoPass;
+	} else {
+		crypto = GetMONDB_ENV(dbg, "CRYPTOPASS");
+	}
+	return	(crypto);
 }
 
 extern	char	*

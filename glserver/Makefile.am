@@ -19,9 +19,6 @@
 
 sbin_PROGRAMS = glserver
 
-EXTRA_DIST = 							\
-	passwd
-
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
 	-lm 								\
@@ -39,10 +36,12 @@ AM_CPPFLAGS 			= 		\
 	-I$(top_srcdir)/libs	\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(COMMON_CFLAGS)		\
+	-DBIN_DIR=\"$(bindir)\"
 
 glserver_SOURCES	=				\
 	glserver.c		glserver.h		\
 	http.c			http.h			\
 	wfcio.c			wfcio.h			\
-	sysdataio.c		sysdataio.h
+	sysdataio.c		sysdataio.h		\
+	blobapi.c		blobapi.h

@@ -42,14 +42,17 @@
 #define	APS_BLOB			(PacketClass)0x80
 
 #define	APS_NOT				(PacketClass)0xF0
+#define	APS_CHECK			(PacketClass)0xF1
 #define	APS_STOP			(PacketClass)0xF3
 #define	APS_REQ				(PacketClass)0xF4
 #define	APS_API				(PacketClass)0xF5
+#define	APS_WAIT			(PacketClass)0xFD
 #define	APS_OK				(PacketClass)0xFE
 #define	APS_END				(PacketClass)0xFF
 
 #define SESSION_TYPE_TERM	0
 #define SESSION_TYPE_API	1
+#define SESSION_TYPE_CHECK	2
 
 #define	SESSION_STATUS_NORMAL 	0
 #define	SESSION_STATUS_END 		1
@@ -107,29 +110,31 @@ typedef struct {
 }	APIData;
 
 typedef	struct _SessionData	{
-	int				type;
-	char			agent[SIZE_NAME+1];
-	TermNode		*term;
-	int				apsid;
-	Bool			fInProcess;
-	LD_Node			*ld;
-	size_t			cWindow;
-	int				retry;
-	int				status;
-	MessageHeader	*hdr;
-	GHashTable		*spadata;
-	GHashTable		*scrpool;
-	LargeByteString	*spa;
-	LargeByteString	*linkdata;
-	LargeByteString	**scrdata;
-	APIData			*apidata;
-	struct timeval	create_time;
-	struct timeval	access_time;
-	struct timeval	process_time;
-	struct timeval	total_process_time;
-	int				count;
-	ValueStruct		*sysdbval;
-	WindowStack		w;
+	int					type;
+	TermNode			*term;
+	int					apsid;
+	Bool				fInProcess;
+	LD_Node				*ld;
+	size_t				cWindow;
+	int					retry;
+	int					status;
+	char				*agent;
+	MessageHeader		*hdr;
+	GHashTable			*spadata;
+	GHashTable			*scrpool;
+	GHashTable			*window_table;
+	LargeByteString		*spa;
+	LargeByteString		*linkdata;
+	LargeByteString		**scrdata;
+	APIData				*apidata;
+	struct timeval		create_time;
+	struct timeval		access_time;
+	struct timeval		process_time;
+	struct timeval		total_process_time;
+	int					count;
+	ValueStruct			*sysdbval;
+	WindowStack			w;
+	struct _SessionData	*next;
 }	SessionData;
 
 typedef enum _SessionCtrlType {
@@ -162,7 +167,6 @@ typedef struct _SessionCtrl {
 	SessionData		*session;
 	ValueStruct		*sysdbval;
 	ValueStruct		*sysdbvals;
-	Queue			*waitq;
 }	SessionCtrl;
 
 #define SYSDBVAL_DEF ""												\

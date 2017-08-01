@@ -16,8 +16,11 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-bin_PROGRAMS = 	\
-	glclient2
+bin_PROGRAMS = 			\
+	glclient2			\
+	cpanda				\
+	gl-push-client		\
+	gl-push-action
 
 base_sources =						\
 	client.c		glclient.h		\
@@ -37,9 +40,10 @@ base_sources =						\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
 	widgetOPS.c		widgetOPS.h		\
-	toplevel.h
+	tempdir.c		tempdir.h		\
+	logger.c		logger.h
 
-base_dependencies =						\
+base_dependencies =					\
 	$(top_builddir)/libs/libpanda.la
 
 base_CFLAGS =					\
@@ -63,17 +67,104 @@ base_LDADD =									\
 glclient2_SOURCES =		\
 	$(base_sources)
 
-glclient2_DEPENDENCIES =						\
+glclient2_DEPENDENCIES =	\
 	$(base_dependencies)
 
 glclient2_CFLAGS =			\
 	$(base_CFLAGS)			\
 	$(GLCLIENT_CFLAGS)
 
-glclient2_LDADD =								\
-	$(GLCLIENT_LIBS)							\
+glclient2_LDADD =			\
+	$(GLCLIENT_LIBS)		\
 	$(base_LDADD)
 
+#################################################
+# cpanda
+#################################################
+
+cpanda_sources =	\
+	glclient.h						\
+	protocol.c		protocol.h		\
+	logger.c		logger.h		\
+	utils.c			utils.h			\
+	tempdir.c		tempdir.h		\
+	cpanda.c
+
+cpanda_SOURCES =		\
+	$(cpanda_sources)
+
+cpanda_DEPENDENCIES =	\
+	$(base_dependencies)
+
+cpanda_CFLAGS =			\
+	$(base_CFLAGS)			\
+	$(GLCLIENT_CFLAGS)
+
+cpanda_LDADD =			\
+	$(GLCLIENT_LIBS)		\
+	$(base_LDADD)
+
+#################################################
+# gl-push-client
+#################################################
+
+gl_push_client_sources =	\
+	logger.c		logger.h		\
+	utils.c			utils.h			\
+	tempdir.c		tempdir.h		\
+	push_client.c
+
+gl_push_client_SOURCES =		\
+	$(gl_push_client_sources)
+
+gl_push_client_DEPENDENCIES =	\
+	$(base_dependencies)
+
+gl_push_client_CFLAGS =		\
+	$(base_CFLAGS)			\
+	$(LWS_CFLAGS)			\
+	$(GLCLIENT_CFLAGS)
+
+gl_push_client_LDADD =		\
+	$(GLCLIENT_LIBS)		\
+	$(LWS_LIBS)		\
+	$(base_LDADD)
+
+#################################################
+# gl-push-action
+#################################################
+
+gl_push_action_sources =	\
+	desktop.c		desktop.h		\
+	protocol.c		protocol.h		\
+	widgetcache.c	widgetcache.h	\
+	download.c		download.h		\
+	bd_config.c		bd_config.h		\
+	print.c			print.h			\
+	notify.c		notify.h		\
+	utils.c			utils.h			\
+	logger.c		logger.h		\
+	tempdir.c		tempdir.h		\
+	push_action.c
+
+gl_push_action_SOURCES =		\
+	$(gl_push_action_sources)
+
+gl_push_action_DEPENDENCIES =	\
+	$(base_dependencies)
+
+gl_push_action_CFLAGS =		\
+	$(base_CFLAGS)			\
+	$(GLCLIENT_CFLAGS)
+
+gl_push_action_LDADD =		\
+	$(GLCLIENT_LIBS)		\
+	$(base_LDADD)
+
+#################################################
+# 
+#################################################
+
 AM_CPPFLAGS = 					\
-	-DLOCALEDIR=\"$(localedir)\"\
+	-DLOCALEDIR=\"$(localedir)\" \
 	-DGLCLIENT_DATADIR=\"$(datadir)/panda-client\"

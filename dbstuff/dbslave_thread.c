@@ -287,7 +287,7 @@ PatchLogRecord(
 	Bool update_ok = TRUE;
 	
 ENTER_FUNC;	
-	rc = ExecRedirectDBOP(ctx->dbg, LBS_Body(rec->data), DB_UPDATE);
+	rc = ExecRedirectDBOP(ctx->dbg, LBS_Body(rec->data), TRUE, DB_UPDATE);
 	if (rc == MCP_OK) {
 		if ((!ctx->no_checksum) && (LBS_Size(rec->checkdata) > 0)) {
 			ret = CheckRedirectData(ctx->dbg->checkData, rec->checkdata);
@@ -496,10 +496,9 @@ LEAVE_FUNC;
 	if (!ret) {
 		Warning("truncate failed");
 	}
-	
 end_tran:
 	Close_DBLog(&log);
-LEAVE_FUNC;	
+LEAVE_FUNC;
 	return ret;
 }
 
@@ -512,19 +511,15 @@ DBSlaveThreadMain(
 	struct timespec interval;
 	Bool processing = TRUE;
 	Bool ret;
-	int rc;
 ENTER_FUNC;
-
 	pthread_cleanup_push(UnsetActiveFlagMain, ctx);
 	ctx->main_thread_active = TRUE;
-	
 	do {
 		pthread_mutex_lock(&ctx->mutex);
-		
 		dbgmsg("wait for timeout.. ");
 		interval.tv_sec = time(NULL) + ctx->replication_sec;
 		interval.tv_nsec = 0;
-		rc = pthread_cond_timedwait(&ctx->timer, &ctx->mutex, &interval);
+		pthread_cond_timedwait(&ctx->timer, &ctx->mutex, &interval);
 		if (ctx->shutdown) {
 			processing = FALSE;
 		} else {
@@ -543,7 +538,6 @@ ENTER_FUNC;
 		}
 		pthread_mutex_unlock(&ctx->mutex);
 	} while (processing);
-	
 	pthread_cleanup_pop(1);
 LEAVE_FUNC;
 	return NULL;

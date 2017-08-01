@@ -30,51 +30,37 @@
 #include	<stdlib.h>
 #include	<stdarg.h>
 #include	<gtk/gtk.h>
+#include	<libmondai.h>
 
-#include	"glclient.h"
 #include	"gettext.h"
-#include	"action.h"
-#include	"dialogs.h"
 #include	"desktop.h"
 #include	"utils.h"
 #include	"download.h"
 #include	"widgetcache.h"
 #include	"notify.h"
-#include	"message.h"
-#include	"debug.h"
+
+#define LAST_DIR_KEY "__glclient2_download__"
 
 static void
 show_save_dialog(
-	GtkWidget *widget,
 	char *filename,
 	LargeByteString *binary)
 {
-	GtkWindow *parent;
 	GtkWidget *dialog,*error_dialog;
 	GError *error = NULL;
-	gchar *fname,*lname,*msg;
+	gchar *fname,*msg;
 	const gchar *dirname;
 
-	parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1);
-	if (parent == NULL) {
-		parent = GTK_WINDOW(TopWindow);
-	}
 	dialog = gtk_file_chooser_dialog_new(_("Specify filename..."),
-		parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+		NULL, GTK_FILE_CHOOSER_ACTION_SAVE,
     	GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
     	GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 		NULL);
-	gtk_file_chooser_set_do_overwrite_confirmation (
+	gtk_file_chooser_set_do_overwrite_confirmation(
 		GTK_FILE_CHOOSER (dialog), TRUE);
+	gtk_window_set_keep_above(GTK_WINDOW(dialog),TRUE);
 
-	if (widget == NULL) {
-		lname = "__glcient2_download_";
-	} else {
-		lname = (char*)glade_get_widget_long_name(widget);
-	}
-    
-	dirname = GetWidgetCache(lname);
+	dirname = GetWidgetCache(LAST_DIR_KEY);
 	if (dirname != NULL) {
 		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), dirname);
 	}
@@ -87,14 +73,15 @@ show_save_dialog(
 			msg =g_strdup_printf(_("%s saved"),fname);
 			Notify(_("save complete"),msg,"gtk-dialog-info",0);
 			g_free(msg);
-			SetWidgetCache(lname,g_path_get_dirname(fname));
+			SetWidgetCache(LAST_DIR_KEY,g_path_get_dirname(fname));
 		} else {
-			error_dialog = gtk_message_dialog_new (GTK_WINDOW(dialog),
-				GTK_DIALOG_MODAL,
-				GTK_MESSAGE_ERROR,
-				GTK_BUTTONS_CLOSE,
-				"%s",
-				error->message);
+			error_dialog = 
+				gtk_message_dialog_new (GTK_WINDOW(dialog),
+					GTK_DIALOG_MODAL,
+					GTK_MESSAGE_ERROR,
+					GTK_BUTTONS_CLOSE,
+					"%s",
+					error->message);
 			gtk_dialog_run(GTK_DIALOG (error_dialog));
 			gtk_widget_destroy(GTK_WIDGET(error_dialog));
 			g_error_free(error);
@@ -106,7 +93,6 @@ show_save_dialog(
 
 typedef struct {
 	GtkWidget *dialog;
-	GtkWidget *widget;
 	char *filename;
 	LargeByteString *binary;
 }FileInfo;
@@ -125,7 +111,7 @@ cb_save(
 	GtkWidget *button,
 	FileInfo *info)
 {
-	show_save_dialog(info->widget,info->filename,info->binary);
+	show_save_dialog(info->filename,info->binary);
 	gtk_widget_show_all(info->dialog);
 }
 
@@ -140,12 +126,10 @@ cb_close(
 
 void
 ShowDownloadDialog(
-	GtkWidget		*widget,
 	char			*filename,
 	char			*description,
 	LargeByteString	*binary)
 {
-	GtkWindow *parent;
 	GtkWidget *dialog;
 	GtkWidget *open_button;
 	GtkWidget *save_button;
@@ -153,16 +137,9 @@ ShowDownloadDialog(
 	char hbytes[64];
 	FileInfo *info;
 
-	
-	parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1);
-	if (parent == NULL) {
-		parent = GTK_WINDOW(TopWindow);
-	}
-
 	get_human_bytes(LBS_Size(binary), hbytes);
 	if (description && strlen(description) > 0) {
-		dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
+		dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL,
 			GTK_MESSAGE_INFO,
 			GTK_BUTTONS_NONE,
 			_("Do you open this file or save it?\n\n"
@@ -170,17 +147,17 @@ ShowDownloadDialog(
 			"Description: %s\n"
 			"Size: %s"),filename,description,hbytes);
 	} else {
-		dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
+		dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL,
 			GTK_MESSAGE_INFO,
 			GTK_BUTTONS_NONE,
 			_("Do you open this file or save it?\n\n"
 			"File Name: %s\n"
 			"Size: %s"),filename,hbytes);
 	}
+	gtk_window_set_keep_above(GTK_WINDOW(dialog),TRUE);
 
 	info = g_new0(FileInfo,1);
 	info->dialog = dialog;
-	info->widget = widget;
 	info->filename = filename;
 	info->binary = binary;
 

@@ -105,6 +105,7 @@
 #define	T_SUMCHECK		(T_YYBASE +53)
 
 #define	T_INITIAL_LD	(T_YYBASE +54)
+#define	T_CRYPTOPASS	(T_YYBASE +55)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -127,6 +128,7 @@ static	TokenTable	tokentable[] = {
 	{	"file"				,T_FILE		},
 	{	"redirect"			,T_REDIRECT	},
 	{	"redirect_port"		,T_REDIRECTPORT	},
+	{	"crypto_password"	,T_CRYPTOPASS	},
 	{	"ddir"				,T_DDIR		},
 	{	"record"			,T_RECDIR	},
 	{	"base"				,T_BASEDIR	},
@@ -149,7 +151,6 @@ static	TokenTable	tokentable[] = {
 	{	"update"			,T_UPDATE	},
 	{	"readonly"			,T_READONLY	},
 	{	"blob"				,T_BLOB		},
-	
 	{	"logdb_name"			,T_LOGDBNAME	},
 	{	"logtable_name"			,T_LOGTABLENAME	},
 	{	"logport"			,T_LOGPORT	},
@@ -160,9 +161,6 @@ static	TokenTable	tokentable[] = {
 	{	"dbmaster"			,T_DBMASTER	},
 	{	"auditlog"			,T_AUDITLOG	},
 	{	"sumcheck"			,T_SUMCHECK	},
-
-	{	"sumcheck"			,T_SUMCHECK	},
-	
 	{	""					,0			}
 };
 
@@ -735,6 +733,7 @@ NewDBG_Struct(
 	dbg->func = NULL;
 	dbg->nServer = 0;
 	dbg->server = NULL;
+	dbg->transaction_id = NULL;
 	dbg->file = NULL;
 	dbg->sumcheck = 1;
 	dbg->appname = NULL;
@@ -1230,6 +1229,7 @@ NewEnv(
 	env->DBMasterAuth = NULL;
 	env->DBMasterLogDBName = NULL;
 	env->InitialLD = NULL;
+	env->CryptoPass = NULL;
 
 	return	(env);
 }
@@ -1492,6 +1492,10 @@ ENTER_FUNC;
 			} else {
 				ParError("syntax error in dbmaster directive");
 			}
+			break;
+		  case	T_CRYPTOPASS:
+			GetName;
+			ThisEnv->CryptoPass = StrDup(ComSymbol);
 			break;
 		  default:
 			ParErrorPrintf("misc syntax error [%X][%s]\n",ComToken,ComSymbol);

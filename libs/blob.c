@@ -39,7 +39,6 @@
 #include	"libmondai.h"
 #include	"net.h"
 #include	"blob.h"
-#include	"blob.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -129,9 +128,9 @@ LEAVE_FUNC;
 
 static gboolean
 RemoveKeyTable(
-	gpointer key, 
+	gpointer key,
 	gpointer value,
-	gpointer data) 
+	gpointer data)
 {
 	if (data == value) {
 		xfree(key);
@@ -159,7 +158,7 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	xfree(ent);
-}	
+}
 
 extern	BLOB_State	*
 ConnectBLOB(

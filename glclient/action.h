@@ -21,9 +21,10 @@
 #ifndef	_INC_ACTION_H
 #define	_INC_ACTION_H
 
-#define	DEFAULT_WINDOW_WIDTH	1024
-#define	DEFAULT_WINDOW_HEIGHT	768
-#define	DEFAULT_WINDOW_FOOTER	24
+#define	ORIGIN_WINDOW_WIDTH		1024
+#define	ORIGIN_WINDOW_HEIGHT	744
+#define	DEFAULT_WINDOW_WIDTH	1000
+#define	DEFAULT_WINDOW_HEIGHT	720
 
 #undef	GLOBAL
 #ifdef	ACTION_MAIN
@@ -38,7 +39,6 @@ typedef struct {
 } WindowScale;
 
 GLOBAL	GtkWidget	*TopWindow;
-GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
 
@@ -48,11 +48,11 @@ extern	void		UnblockChangedHandlers(void);
 extern	GtkWidget	*GetWindow(	GtkWidget	*widget);
 extern	char		*GetWindowName(	GtkWidget	*widget);
 extern	void		ClearKeyBuffer(void);
-extern	void		ResetTimer(char *wname);
+extern	void		ResetTimers(char *wname);
 extern	void		_AddChangedWidget(GtkWidget *widget);
 extern	void		AddChangedWidget(GtkWidget *widget);
 extern	void		ShowBusyCursor(GtkWidget *widget);
-extern	void		StopTimerWidgetAll(void);
+extern	void		StopTimersAll(void);
 extern	void		HideBusyCursor(GtkWidget *widget);
 extern  void		SetTitle(GtkWidget *window);
 extern  void		SetBGColor(GtkWidget *window);
@@ -70,8 +70,7 @@ extern	void		InitStyle(void);
 extern	int			AskPass(char *buf, size_t buflen,const char	*prompt);
 extern	void		SetPingTimerFunc();
 extern	WindowData	*GetWindowData(const char *wname);
-extern	void		SendEvent(const char*window,const char*widget,
-						const char*event);
+extern	void		SendEvent(const char*window,const char*widget,const char*event);
 extern	void		UpdateScreen();
 extern	void		TimeSet(const char*);
 #endif

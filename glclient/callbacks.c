@@ -40,7 +40,9 @@
 #include	"glclient.h"
 #include	"action.h"
 #include	"protocol.h"
-#include	"debug.h"
+#include	"dialogs.h"
+#include	"message.h"
+#include	"logger.h"
 
 extern	gboolean
 select_all(
@@ -48,11 +50,9 @@ select_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
-ENTER_FUNC;
 	GtkSettings *set = gtk_widget_get_settings(widget);
 	gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 1, 
 		"glclient2");
-LEAVE_FUNC;
 	return (FALSE);
 }
 
@@ -63,11 +63,9 @@ unselect_all(
 	gpointer		user_data)
 {
 
-ENTER_FUNC;
 	GtkSettings *set = gtk_widget_get_settings(widget);
 	gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 0, 
 		"glclient2");
-LEAVE_FUNC;
 	return (FALSE);
 }
 
@@ -79,7 +77,6 @@ keypress_filter(
 {
 	GtkWidget	*nextWidget;
 
-ENTER_FUNC;
 #ifdef LIBGTK_3_0_0
 	if (event->keyval == GDK_KEY_KP_Enter) {
 #else
@@ -92,7 +89,6 @@ ENTER_FUNC;
 		g_signal_stop_emission_by_name (G_OBJECT(widget), 
 			"key_press_event");
 	}
-LEAVE_FUNC;
 	return	(FALSE);
 }
 
@@ -103,7 +99,6 @@ press_filter(
 	gpointer		user_data)
 {
 	gboolean	rc;
-ENTER_FUNC;
 	/* If WIDGET already has focus, do the default action */
 	if (gtk_widget_has_focus(widget)) {
 		rc = FALSE;
@@ -114,26 +109,7 @@ ENTER_FUNC;
 			"button_press_event");
 		rc = TRUE;
 	}
-LEAVE_FUNC;
 	return	(rc);
-}
-
-G_MODULE_EXPORT static GtkWidget*
-find_widget_ancestor(
-	GtkWidget	*w,
-	GType		t)
-{
-	GtkWidget	*widget;
-	GType		type;
-	widget = w;
-	while (widget) {
-		type = (long)G_OBJECT_TYPE(widget);
-		if	(type == t){
-			return widget;
-		}
-		widget = gtk_widget_get_parent(widget);
-	}
-	return NULL;
 }
 
 static int TimerID = 0;
@@ -146,21 +122,17 @@ StartEventTimer(
 	GSourceFunc	function,
 	GtkWidget	*widget)
 {
-ENTER_FUNC;
 	TimerEvent = event;
 	TimerID = g_timeout_add (timeout, function, widget);
-LEAVE_FUNC;
 }
 
 static	void
 StopEventTimer(void)
 {
-ENTER_FUNC;	
 	if (TimerID != 0) {
 		g_source_remove(TimerID);
 		TimerID = 0;
 	}
-LEAVE_FUNC;
 }
 
 extern	void
@@ -168,9 +140,9 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	char		*window_name;
-	char		*widget_name;
-ENTER_FUNC;
+	char	*window_name;
+	char	*widget_name;
+	long	t1,t2,t3,t4,t5;
 	window_name = GetWindowName(widget);
 	widget_name = (char *)gtk_widget_get_name(widget);
 	event = event != NULL ? event : widget_name;
@@ -183,26 +155,38 @@ ENTER_FUNC;
 	}
 	if (!ISRECV(Session)) {
 		ISRECV(Session) = TRUE;
+		t1 = GetNowTime();
 
 		StopEventTimer();
-		StopTimerWidgetAll();
+		StopTimersAll();
 
-		ShowBusyCursor(widget);
+		ShowBusyCursor(TopWindow);
 		BlockChangedHandlers();
 
+		Warning("windowName:%s widgetName:%s event:%s",window_name,widget_name,event);
+	
+		#if 0
+		fprintf(stderr,"==== \"%s\",\"%s\",\"%s\"\n",window_name,widget_name,event);
+		#endif
+
+		t2 = GetNowTime();
 		SendEvent(window_name,widget_name,event);
+		t3 = GetNowTime();
 		UpdateScreen();
+		t4 = GetNowTime();
 
 		if (!fKeyBuff) {
 			ClearKeyBuffer();
 		}
-
 		UnblockChangedHandlers();
-		HideBusyCursor(widget); 
+		HideBusyCursor(TopWindow); 
 
 		ISRECV(Session) = FALSE;
+		t5 = GetNowTime();
+		if (getenv("GLCLIENT_DO_PROFILE")!=NULL) {
+			fprintf(stderr,"total:%ldms SendEvent:%ldms UpdateScreen:%ldms\n",(t5-t1),(t3-t2),(t4-t3));
+		}
 	}
-LEAVE_FUNC;
 }
 
 static gint
@@ -210,13 +194,11 @@ send_event_if_kana (gpointer widget)
 {
 	guchar *text = (guchar *)gtk_entry_get_text (GTK_ENTRY (widget));
 	int len = strlen (text);
-ENTER_FUNC;
 	if (len == 0 || text[len - 1] >= 0x80)
 	{
 		entry_changed (widget, TimerEvent);
 		send_event (widget, TimerEvent);
 	}
-LEAVE_FUNC;
 	return FALSE;
 }
 
@@ -229,7 +211,6 @@ send_event_when_idle(
 	static int timeout = -1;
 	static int openchanged = 0;
 
-ENTER_FUNC;
 	StopEventTimer();
 	if (!registed) {
 		RegisterChangedHandler(G_OBJECT(widget), 
@@ -252,7 +233,6 @@ ENTER_FUNC;
 	} else {
 		entry_changed (widget, event);
 	}
-LEAVE_FUNC;
 }
 
 extern void
@@ -327,20 +307,6 @@ selection_changed(
 	AddChangedWidget(widget);
 }
 
-extern void
-fileentry_changed(
-	GtkWidget	*widget,
-	gpointer	user_data)
-{
-	GtkWidget	*fileentry;
-
-    fileentry = find_widget_ancestor(widget, GTK_PANDA_TYPE_FILE_ENTRY);
-    if (fileentry != NULL) {
-	  AddChangedWidget(fileentry);
-	  AddChangedWidget(widget);
-    }
-}
-
 extern	void
 click_column(
 	GtkWidget	*button,
@@ -362,8 +328,6 @@ set_focus(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-ENTER_FUNC;
-LEAVE_FUNC;
 }
 
 extern	void
@@ -442,13 +406,11 @@ window_close(
 	GtkWidget	*window;
 	char		*name;
 
-ENTER_FUNC;
 	name = (char *)gtk_widget_get_name(widget);
 	window = GetWidgetByLongName(name);
 	if (window != NULL) {
 		gtk_widget_hide(GTK_WIDGET(window));
 	}
-LEAVE_FUNC;
 }
 
 extern	void
@@ -467,8 +429,6 @@ open_browser(
 	void *data1,
 	void *data2)
 {
-ENTER_FUNC;
 	// do nothing
-LEAVE_FUNC;
 }
 #endif

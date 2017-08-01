@@ -28,6 +28,7 @@
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
@@ -38,20 +39,26 @@
 
 #define		WIDGETCACHE
 
-#include	"glclient.h"
 #include	"widgetcache.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"utils.h"
+#include	"logger.h"
 
-static json_object *obj;
+static json_object *obj = NULL;
 
-void
+static char*
+get_path(void)
+{
+	return g_strconcat(g_get_home_dir(),"/.glclient/widgetcache.json",NULL);
+}
+
+static void
 LoadWidgetCache(void)
 {
 	gchar *path,*buf;
 	size_t size;
 
-	path = g_strdup_printf("%s/widgetcache.json",ConfDir);
+	gl_lock();
+	path = get_path();
 	if (!g_file_get_contents(path,&buf,&size,NULL)) {
 		obj = json_object_new_object();
 	} else {
@@ -61,20 +68,23 @@ LoadWidgetCache(void)
 			obj = json_object_new_object();
 		}
 	}
+	gl_unlock();
 	g_free(path);
 }
 
-void
+static void
 SaveWidgetCache(void)
 {
 	gchar *path;
 	const char *jsonstr;
 
 	jsonstr = json_object_to_json_string(obj);
-	path = g_strdup_printf("%s/widgetcache.json",ConfDir);
+	path = get_path();
+	gl_lock();
 	if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
 		Error("could not create %s",path);
 	}
+	gl_unlock();
 	g_free(path);
 }
 
@@ -83,7 +93,11 @@ SetWidgetCache(
 	const char *key,
 	const char *value)
 {
+	if (obj == NULL) {
+		LoadWidgetCache();
+	}
 	json_object_object_add(obj,key,json_object_new_string(value));
+	SaveWidgetCache();
 }
 
 const char *
@@ -92,8 +106,11 @@ GetWidgetCache(
 {
 	json_object *val;
 
-	val = json_object_object_get(obj,key);
-	if (val == NULL || is_error(val) || !json_object_is_type(val,json_type_string)) {
+	if (obj == NULL) {
+		LoadWidgetCache();
+	}
+
+	if (!json_object_object_get_ex(obj,key,&val)) {
 		return NULL;
 	} else {
 		return json_object_get_string(val);

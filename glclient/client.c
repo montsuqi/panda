@@ -38,6 +38,10 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<dirent.h>
+#include	<uuid/uuid.h>
+#include	<time.h>
+#include	<libgen.h>
+
 #include	<gtk/gtk.h>
 
 #define		MAIN
@@ -48,35 +52,12 @@
 #include	"widgetcache.h"
 #include	"desktop.h"
 #include	"bootdialog.h"
-#include	"message.h"
-#include	"debug.h"
 #include	"action.h"
-#include	"dialogs.h"
 #include	"gettext.h"
-
-static void GLMessage(int level, char *file, int line, char *msg);
-
-static	void
-MakeDirs(void)
-{
-#if 1
-	gchar *template;
-	gchar *tmpdir;
-	gchar *p;
-
-	tmpdir = g_strconcat(g_get_home_dir(),"/.glclient/tmp",NULL);
-	MakeDir(tmpdir,0700);
-	template = g_strconcat(tmpdir,"/XXXXXX",NULL);
-	g_free(tmpdir);
-	if ((p = mkdtemp(template)) == NULL) {
-		Error(_("mkdtemp failure"));
-	}
-	TempDir = p; 
-#else
-	/* glib >= 2.26*/
-	TempDir = g_mkdtemp(g_strdup("glclient_XXXXXX"));
-#endif
-}
+#include	"logger.h"
+#include	"utils.h"
+#include	"tempdir.h"
+#include	"dialogs.h"
 
 extern	void 
 SetSessionTitle(
@@ -98,16 +79,84 @@ SetSessionBGColor(
 	BGCOLOR(Session) = StrDup(bgcolor);
 }
 
-static gboolean
-StartClient ()
+static void
+StartPushClient()
 {
-	InitProtocol();
-	LoadWidgetCache();
+	pid_t pid;
+	char *pusher;
+
+	pusher = getenv("GLPUSH_PUSHER_URI");
+	if (pusher == NULL) {
+		pusher = GLP_GetPusherURI(GLP(Session));
+	}
+	if (pusher == NULL || strlen(pusher) <= 0 ) {
+		UsePushClient = FALSE;
+		return;
+	}
+	setenv("GLPUSH_PUSHER_URI"   ,pusher,1);
+	setenv("GLPUSH_REST_URI"     ,GLP_GetRESTURI(GLP(Session)),1);
+	setenv("GLPUSH_SESSION_ID"   ,GLP_GetSessionID(GLP(Session)),1);
+	setenv("GLPUSH_API_USER"     ,User,1);
+	setenv("GLPUSH_API_PASSWORD" ,Pass,1);
+
+	setenv("GLPUSH_LOGFILE" ,GetLogFile(),1);
+	setenv("GLPUSH_TEMPDIR" ,GetTempDir(),1);
+
+	if (fSSL) {
+		setenv("GLPUSH_CERT"              ,CertFile,1);
+		setenv("GLPUSH_CERT_KEY"          ,CertKeyFile,1);
+		setenv("GLPUSH_CERT_KEY_PASSWORD" ,CertPass,1);
+		setenv("GLPUSH_CA_FILE"           ,CAFile,1);
+	}
+
+	pid = fork();
+	if (pid == 0) {
+		execl(PushClientCMD,PushClientCMD,NULL);
+	} else if (pid < 0) {
+		Warning("fork error:%s",strerror(errno));
+	} else {
+		Info("%s(%d) fork",PushClientCMD,(int)pid);
+		PushClientPID = pid;
+		UsePushClient = TRUE;
+	}
+}
+
+static void
+StopPushClient()
+{
+	if (!UsePushClient) {
+		return ;
+	}
+	if (kill(PushClientPID,SIGINT) == 0) {
+		Info("%s(%d) kill",PushClientCMD,(int)PushClientPID);
+	} else {
+		Info("kill error:%s",strerror(errno));
+	}
+}
+
+static gboolean
+StartClient()
+{
+	GLP(Session) = InitProtocol(AuthURI,User,Pass);
+#if USE_SSL
+	if (fPKCS11) {
+		GLP_SetSSLPKCS11(GLP(Session),PKCS11Lib,PIN);
+	} else if (fSSL) {
+		GLP_SetSSL(GLP(Session),CertFile,CertKeyFile,CertPass,CAFile);
+	}
+#endif
+	THISWINDOW(Session) = NULL;
+	WINDOWTABLE(Session) = NewNameHash();
+	SCREENDATA(Session) = NULL;
 	InitTopWindow();
 
-	RPC_GetServerInfo();
-	RPC_StartSession();
-	RPC_GetWindow();
+	RPC_GetServerInfo(GLP(Session));
+	RPC_StartSession(GLP(Session));
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+	StartPushClient();
+	SCREENDATA(Session) = RPC_GetWindow(GLP(Session));
 	UpdateScreen();
 	SetPingTimerFunc();
 	UI_Main();
@@ -118,38 +167,28 @@ StartClient ()
 static void
 StopClient ()
 {
-	RPC_EndSession();
-	SaveWidgetCache();
+	RPC_EndSession(GLP(Session));
 }
 
-static void 
-GLMessage(int level, char *file, int line, char *msg)
-{
-	switch(level){
-	  case MESSAGE_WARN:
-		__Message(level, file, line, msg);
-		break;
-	  case MESSAGE_ERROR:
-		ShowErrorDialog(msg);
-		break;
-	  default:
-		__Message(level, file, line, msg);
-		break;
-	}
-}
-
-#define DEFAULT_PING_TIMER_PERIOD   (10000)
 static	void
 InitSystem()
 {
 	char *p;
 	int delay;
 
-	InitMessage("glclient",NULL);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	InitTempDir();
+	InitLogger("glclient2");
+	InitDesktop();
 
-	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
+	Session = g_new0(GLSession,1);
+
+	if ((p = getenv("GLCLINET_LOG_LEVEL")) != NULL) {
+		if (!strcasecmp(p,"debug")) {
+			SetLogLevel(GL_LOG_DEBUG);
+		}
+	}
 
 	if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
 		PingTimerPeriod = atoi(p) * 1000;
@@ -171,41 +210,133 @@ InitSystem()
 		}
 	}
 
-	MakeDirs();
-	InitDesktop();
 
-	Session = g_new0(GLSession,1);
-	RPCID(Session) = 0;
+	if (getenv("GLCLIENT_DELAY_DRAW_WINDOW") != NULL) {
+		DelayDrawWindow = TRUE;
+	} else {
+		DelayDrawWindow = FALSE;
+	}
+	if (getenv("GLCLIENT_CANCEL_SCALE_WINDOW") != NULL) {
+		CancelScaleWindow = TRUE;
+	} else {
+		CancelScaleWindow = FALSE;
+	}
 }
 
 static	void
 FinalSystem(void)
 {
+	FinalProtocol(GLP(Session));
+	FinalLogger();
+	StopPushClient();
 	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
-		rm_r(TempDir);
+		rm_r(GetTempDir());
 	}
 }
 
+
 static	void
-ThisAskPass(
-	gboolean fDialog)
+ThisAskPass()
 {
-	if (fPKCS11) {
-		Pass = ShowAskPassDialog(_("pin:"));
+	if (fSSL) {
+		if (fPKCS11) {
+			if (!fSavePIN) {
+				PIN = AskPINDialog(_("pin:"));
+			}
+			if (PIN == NULL) {
+				exit(0);
+			}
+		} else {
+			if (!SaveCertPass) {
+				CertPass = AskPassDialog(_("certificate password:"));
+			}
+		}
 	}
-	if (fDialog) {
-		return;
-	} else {
-		if (fSSL && !SaveCertPass) {
-			Pass = ShowAskPassDialog(_("certificate password:"));
-		}
-		if (!fSSL && !SavePass) {
-			Pass = ShowAskPassDialog(_("password:"));
-		}
+	if (!SavePass) {
+		Pass = AskPassDialog(_("password:"));
 	}
 	if (Pass == NULL) {
 		exit(0);
 	}
+}
+
+extern void
+LoadConfig (
+	int n)
+{
+	if (!gl_config_have_config(n)) {
+		Error("no server setting:%d",n);
+	}
+
+	AuthURI = g_strdup(gl_config_get_string(n,"authuri"));
+	Style = g_strdup(gl_config_get_string(n,"style"));
+	Gtkrc = g_strdup(gl_config_get_string(n,"gtkrc"));
+	fDebug = gl_config_get_boolean(n,"debug");
+	fKeyBuff = gl_config_get_boolean(n,"keybuff");
+	User = g_strdup(gl_config_get_string(n,"user"));
+	fIMKanaOff = gl_config_get_boolean(n,"im_kana_off");
+	SavePass = gl_config_get_boolean(n,"savepassword");
+	if (SavePass) {
+		Pass = g_strdup(gl_config_get_string(n,"password"));
+	} else {
+		Pass = g_strdup("");
+	} 
+
+	fSSL = gl_config_get_boolean(n,"ssl");
+	{
+		gchar *oldauth;
+		GRegex *reg;
+
+		oldauth = AuthURI;
+		reg = g_regex_new("http://",0,0,NULL);
+		AuthURI = g_regex_replace(reg,oldauth,-1,0,"",0,NULL);
+		g_free(oldauth);
+		g_regex_unref(reg);
+
+		oldauth = AuthURI;
+		reg = g_regex_new("https://",0,0,NULL);
+		AuthURI = g_regex_replace(reg,oldauth,-1,0,"",0,NULL);
+		g_free(oldauth);
+		g_regex_unref(reg);
+
+		oldauth = AuthURI;
+		if (fSSL) {
+			AuthURI = g_strdup_printf("https://%s",oldauth);
+		} else {
+			AuthURI = g_strdup_printf("http://%s",oldauth);
+		}
+		g_free(oldauth);
+	}
+	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
+	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
+	CertKeyFile = g_strdup(gl_config_get_string(n,"certkeyfile"));
+	Ciphers = g_strdup(gl_config_get_string(n,"ciphers"));
+	SaveCertPass = gl_config_get_boolean(n,"savecertpassword");
+	if (SaveCertPass) {
+		CertPass = g_strdup(gl_config_get_string(n,"certpassword"));
+	}
+
+	fPKCS11 = gl_config_get_boolean(n,"pkcs11");
+	PKCS11Lib = g_strdup(gl_config_get_string(n,"pkcs11lib"));
+	PIN = g_strdup(gl_config_get_string(n,"pin"));
+	fSavePIN = gl_config_get_boolean(n,"savepin");
+
+	fTimer = gl_config_get_boolean(n,"timer");
+	TimerPeriod = gl_config_get_int(n,"timerperiod");
+	FontName = g_strdup(gl_config_get_string(n,"fontname"));
+}
+
+extern void
+LoadConfigByDesc (
+	const char *desc)
+{
+	int n;
+
+	n = GetConfigIndexByDesc(desc);
+	if (n == -1) {
+		Error("could not found setting:%s",desc);
+	}
+	LoadConfig(n);
 }
 
 static gboolean fListConfig = FALSE;
@@ -224,8 +355,8 @@ main(
 	char **argv)
 {
 	GOptionContext *ctx;
-	gboolean fDialog;
 	struct sigaction sa;
+	char *dname;
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
@@ -237,6 +368,9 @@ main(
 	ctx = g_option_context_new("");
 	g_option_context_add_main_entries(ctx, entries, NULL);
 	g_option_context_parse(ctx,&argc,&argv,NULL);
+
+	dname = dirname(argv[0]);
+	PushClientCMD = g_strdup_printf("%s/gl-push-client",dname);
 
 	InitSystem();
 	gl_config_init();
@@ -251,13 +385,17 @@ main(
 	UI_Init(argc,argv);
 	if (fDialog) {
 		BootDialogRun();
+    	LoadConfig(gl_config_get_index());
 	} else {
 		LoadConfigByDesc(ConfigName);
 	}
-	ThisAskPass(fDialog);
+
+	if (fDebug) {
+		SetLogLevel(GL_LOG_DEBUG);
+	}
 
 	InitStyle();
-	SetMessageFunction(GLMessage);
+	ThisAskPass();
 
 	StartClient();
 	StopClient();

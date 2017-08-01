@@ -57,7 +57,7 @@
 #include	"termthread.h"
 #include	"controlthread.h"
 #include	"sysdatathread.h"
-#include	"sessionthread.h"
+#include	"sessionctrl.h"
 #include	"dbgroup.h"
 #include	"blob.h"
 #include	"option.h"
@@ -152,12 +152,8 @@ ENTER_FUNC;
 					newld->info->sparec->value);
 			}
 		} else {
-			if (getenv("FORCE_CLEAR_SPA")) {
-				Warning("FORCE_CLEAR_SPA for %s",newld->info->name);
-				InitializeValue(newld->info->sparec->value);
-				NativePackValue(NULL,
-					LBS_Body(data->spa),newld->info->sparec->value);
-			}
+			InitializeValue(newld->info->sparec->value);
+			NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
 		}
 		if (data->scrdata != NULL) {
 			xfree(data->scrdata);
@@ -243,14 +239,6 @@ LEAVE_FUNC;
 }
 
 static	void
-SetUpTempDirRoot()
-{
-	if (!MakeDir(TempDirRoot,0700)) {
-		Error("cannot make TempDirRoot:%s",TempDirRoot);
-	}
-}
-
-static	void
 InitSystem(void)
 {
 ENTER_FUNC;
@@ -258,7 +246,6 @@ ENTER_FUNC;
 	fShutdown = FALSE;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","",P_LD);
-	SetUpTempDirRoot();
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
@@ -296,7 +283,7 @@ ENTER_FUNC;
 	SetupMessageQueue();
 	InitTerm();
 	StartCoreThread();
-	StartSessionThread();
+	InitSessionCtrl();
 	InitControl();
 LEAVE_FUNC;
 }
@@ -308,11 +295,6 @@ CleanUp(void)
 		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
 	}
-#if 0
-	if (!getenv("WFC_KEEP_TEMPDIR")) {
-		rm_r(TempDirRoot);
-	}
-#endif
 	CleanUNIX_Socket(ApsPort);
  	CleanUNIX_Socket(WfcPort);
  	CleanUNIX_Socket(ControlPort);
@@ -344,9 +326,6 @@ static	ARG_TABLE	option[] = {
 		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
-	{	"tempdirroot",STRING,	TRUE,	(void*)&TempDirRoot,
-		"root of temporary directory" 					},
-
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"maximun retry count"							},
 	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
@@ -366,7 +345,10 @@ ENTER_FUNC;
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
-	TempDirRoot = "/tmp/panda_root/";
+	TempDirRoot = getenv("MCP_TEMPDIR_ROOT");
+	if (TempDirRoot == NULL) {
+		TempDirRoot = "/tmp/panda_root/";
+	}
 	MaxTransactionRetry = 0;
 	ControlPort = NULL;
 	SesNum = 0;
@@ -381,6 +363,7 @@ main(
 	int			rc;
     sigset_t sigmask;
 	struct sigaction sa;
+	char *stdout_path,*stderr_path;
 
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGUSR1);
@@ -408,6 +391,17 @@ main(
 	if (sigaction(SIGUSR2, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
+
+	stdout_path = getenv("WFC_DEBUG_STDOUT_PATH");
+	if (stdout_path != NULL) {
+		freopen(stdout_path,"w",stdout);
+	}
+
+	stderr_path = getenv("WFC_DEBUG_STDERR_PATH");
+	if (stderr_path != NULL) {
+		freopen(stderr_path,"w",stderr);
+	}
+
 	InitMessage("wfc",NULL);
 ENTER_FUNC;
 
@@ -415,7 +409,7 @@ ENTER_FUNC;
 	GetOption(option,argc,argv,NULL);
 
 	InitSystem();
-	Message("wfc start");
+	MessageLogPrintf("wfc start %s %s",PACKAGE_VERSION,PACKAGE_DATE);
 	ExecuteServer();
 	Message("wfc stop");
 	CleanUp();

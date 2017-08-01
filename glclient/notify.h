@@ -20,8 +20,6 @@
 #ifndef	_POPUP_NOTIFY_H
 #define	_POPUP_NOTIFY_H
 
-#include <libnotify/notify.h>
-
 extern void Notify(gchar *summary,gchar *body,gchar *icon,gint timeout);
 
 #endif

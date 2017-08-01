@@ -55,6 +55,7 @@ static	char	*GlserverPath;
 static	char	*DBLoggerPath;
 static	char	*DBMasterPath;
 static	char	*DBSlavePath;
+static	char	*MONSetupPath;
 static	char	*DDir;
 static	char	*RecDir;
 static	char	*ScrDir;
@@ -162,7 +163,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"DBSlavePath",	STRING,		TRUE,	(void*)&DBSlavePath,
 		"dbslave command path"							},
-
+	{	"MONSetupPath",	STRING,		TRUE,	(void*)&MONSetupPath,
+		"monsetup command path"							},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"directory file name"		 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
@@ -270,9 +272,9 @@ SetDefault(void)
 	DBLoggerPath = NULL;
 	DBMasterPath = NULL;
 	DBSlavePath = NULL;
-	
+	MONSetupPath = NULL;
 	Directory = "./directory";
-	TempDir = NULL;
+	TempDir = "/tmp/panda_root/";
 	DDir = NULL;
 	RecDir = NULL;
 	ScrDir = NULL;
@@ -315,6 +317,10 @@ ENTER_FUNC;
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
+	if (!MakeDir(TempDir,0700)) {
+		Error("cannot make TempDirRoot:%s",TempDir);
+	}
+	setenv("MCP_TEMPDIR_ROOT",TempDir,1);
 LEAVE_FUNC;
 }
 
@@ -327,7 +333,7 @@ _execv(
 	DumpCommand(argv);
 #endif
  	if (execv(cmd,argv) < 0 ){
- 		int errsv = errno;	
+ 		int errsv = errno;
  		Error("%s: %s", strerror(errsv), cmd);
  	}
 }
@@ -337,21 +343,35 @@ StartProcess(
 	Process	*proc)
 {
 	pid_t	pid;
-#ifdef	DEBUG
+	char	*msg,*p;
 	int		i;
-#endif
+	size_t	size;
 
 ENTER_FUNC;
   retry:
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		proc->state = STATE_RUN;
-#ifdef	DEBUG
-		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
-			dbgprintf("%s ",proc->argv[i]);
+
+		if (getenv("MONITOR_START_PROCESS_LOGGING") != NULL) {
+			size = 0;
+			for(i=0;proc->argv[i]!=NULL;i++) {
+				size += strlen(proc->argv[i]) + 1;
+			}
+			msg = malloc(size+10);
+			memset(msg,0,size+10);
+			p = msg;
+			sprintf(p,"(%d) ",pid);
+			p += strlen(p);
+			for(i=0;proc->argv[i]!=NULL;i++) {
+				memcpy(p,proc->argv[i],strlen(proc->argv[i]));
+				p += strlen(proc->argv[i]);
+				memcpy(p," ",1);
+				p += 1;
+			}
+			Warning(msg);
+			free(msg);
 		}
-		dbgprintf("(%d)\n",pid);
-#endif
 	} else
 	if		(  pid  ==  0  ) {
 		if		(  proc->interval  >  0  ) {
@@ -801,10 +821,6 @@ ENTER_FUNC;
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
 		}
-		if		(  TempDir  !=  NULL  ) {
-			argv[argc ++] = "-tempdirroot";
-			argv[argc ++] = TempDir;
-		}
 		if		(  DDir  !=  NULL  ) {
 			argv[argc ++] = "-ddir";
 			argv[argc ++] = DDir;
@@ -889,6 +905,43 @@ ENTER_FUNC;
 		proc = g_list_nth_data(ProcessList,i);
 		kill(proc->pid,SIGKILL);
 	}
+LEAVE_FUNC;
+}
+
+static	void
+StartSetup()
+{
+	pid_t	pid;
+	char	*cmd;
+	int		argc;
+	char	**argv;
+	int 	status;
+
+ENTER_FUNC;
+	if (MONSetupPath) {
+		cmd = MONSetupPath;
+	} else {
+		cmd = BIN_DIR "/monsetup";
+	}
+	argv = (char **)xmalloc(sizeof(char *) * 4);
+	argc = 0;
+	argv[argc ++] = cmd;
+	argv[argc ++] = "-dir";
+	argv[argc ++] = Directory;
+	argv[argc ++] = NULL;
+
+	if		(  ( pid = fork() )  >  0  ) {
+		waitpid(pid,&status,0);
+		if (!WIFEXITED(status)) {
+			Error("monsetup failure");
+		}
+	} else
+	if		(  pid  ==  0  ) {
+		_execv(cmd, argv);
+	} else {
+		Error("can't start monsetup");
+	}
+	xfree(argv);
 LEAVE_FUNC;
 }
 
@@ -1068,23 +1121,17 @@ main(
 	}
 
 	InitSystem();
-	MessagePrintf("%s %s",PACKAGE_STRING, PACKAGE_DATE);
 	Message("start system");
 
 	InitServers();
-
-	memset(&sa, 0, sizeof(struct sigaction));
-	sa.sa_handler = (void *)StopSystem;
-	sa.sa_flags |= SA_RESTART;
-	if (sigaction(SIGUSR1, &sa, NULL) != 0) {
-		Error("sigaction(2) failure");
-	}
 
 	sa.sa_handler = (void *)RestartSystem;
 	sa.sa_flags |= SA_RESTART;
 	if (sigaction(SIGHUP, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
+
+	StartSetup();
 
 	while (fLoop) {
 		fRestart = TRUE;

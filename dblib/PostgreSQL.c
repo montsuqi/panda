@@ -127,6 +127,21 @@ EscapeBytea(
 
 }
 
+static ValueStruct	*
+UnEscapeBytea(
+	unsigned char *from)
+{
+	ValueStruct	*bin;
+	unsigned char *bintext;
+	size_t to_length;
+
+	bin = NewValue(GL_TYPE_BINARY);
+	bintext = PQunescapeBytea(from, &to_length);
+	SetValueBinary(bin, bintext, to_length);
+	PQfreemem(bintext);
+	return bin;
+}
+
 static void
 NoticeMessage(
 	void * arg,
@@ -149,6 +164,25 @@ cmdTuples(
 	return ret;
 }
 
+static Bool
+ExistFunc(
+	PGconn	*conn,
+	char *func )
+{
+	char	sql[SIZE_SQL+1];
+	PGresult	*res;
+	Bool ret = FALSE;
+
+	sprintf(sql, "SELECT proname FROM pg_proc WHERE proname = '%s';", func);
+	res = PQexec(conn, sql);
+	if ( (res != NULL) || (PQresultStatus(res) == PGRES_TUPLES_OK) ) {
+		if (PQntuples(res) > 0) {
+			ret = TRUE;
+		}
+		PQclear(res);
+	}
+	return ret;
+}
 
 static	void
 PgInitConnect(
@@ -170,6 +204,24 @@ PgInitConnect(
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}
 	PQclear(res);
+
+}
+
+static void
+CryptoMode(
+	DBG_Struct	*dbg)
+{
+	char	*crypto;
+	char	sql[SIZE_SQL+1];
+	PGresult	*res;
+
+	if ( (crypto = GetDB_Crypt(dbg,DB_UPDATE)) != NULL ) {
+		if ( ExistFunc(PGCONN(dbg, DB_UPDATE), "crypto_mode") ) {
+			sprintf(sql, "SELECT crypto_mode('%s');", crypto);
+			res = PQexec(PGCONN(dbg, DB_UPDATE), sql);
+			PQclear(res);
+		}
+	}
 }
 
 static	void
@@ -840,6 +892,54 @@ PGresToValue(
 	return ret;
 }
 
+static	ValueStruct *
+_PGresToValue2(
+	DBG_Struct	*dbg,
+	int		tnum,
+	PGresult *res)
+{
+	ValueStruct	*value
+	,			*tuple;
+	int i, fnum;
+	char *str;
+
+	fnum = PQnfields(res);
+	tuple = NewValue(GL_TYPE_RECORD);
+	for (i=0; i<fnum; i++){
+		value = NewValue(GL_TYPE_VARCHAR);
+		str = PQgetvalue(res,tnum,i);
+		SetValueString(value, str, dbg->coding);
+		ValueAddRecordItem(tuple, PQfname(res,i), value);
+	}
+	return tuple;
+}
+
+static	ValueStruct *
+PGresToValue2(
+	DBG_Struct	*dbg,
+	PGresult *res)
+{
+	ValueStruct	*ret
+	,			*tuple;
+	int		i, tnum;
+
+	tnum = PQntuples(res);
+	if (tnum <= 0) {
+		return NULL;
+	}
+	if (tnum == 1) {
+		ret = _PGresToValue2(dbg, 0, res);
+	} else {
+		ret = NewValue(GL_TYPE_ARRAY);
+		for (i=0; i<tnum; i++){
+			tuple = _PGresToValue2(dbg, i, res);
+			ValueAddArrayItem(ret, i, tuple);
+		}
+	}
+	return ret;
+}
+
+
 static	void
 UpdateValue(
 	DBG_Struct	*dbg,
@@ -1079,8 +1179,8 @@ _PQexec(
 	PGresult	*res;
 
 ENTER_FUNC;
-	dbgprintf("%s;",sql);
-	res = PQexec(PGCONN(dbg,usage),sql);
+	dbgprintf("%s",sql);
+	res = PQexecParams(PGCONN(dbg,usage),sql,0,NULL,NULL,NULL,NULL,0);
 	if ( res != NULL) {
 		if		(	(  fRed                  )
 				&&	(  IsUsageUpdate(usage)  )
@@ -1090,7 +1190,9 @@ ENTER_FUNC;
 			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 		}
 	}
-	LBS_String(dbg->last_query,sql);
+	if (sql) {
+		LBS_String(dbg->last_query,sql);
+	}
 LEAVE_FUNC;
 	return	(res);
 }
@@ -1208,7 +1310,6 @@ ENTER_FUNC;
 						xfree(tuple);
 					}
 					tuple = (ValueStruct **)xmalloc(sizeof(ValueStruct *) * n);
-					printf("malloc(%d)\n", n);
 					items = 0;
 					fIntoAster = FALSE;
 				} else {
@@ -1331,25 +1432,52 @@ _EXEC(
 	int			rc = MCP_OK;
 
 ENTER_FUNC;
-	LBS_EmitStart(dbg->checkData);
 	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
-			if		( rc == MCP_OK ) {
+			if		( (rc == MCP_OK) && fRed ) {
 				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-				if		( fRed ) {
-					PutDB_Redirect(dbg,sql);
-				}
 			}
 			_PQclear(res);
+		}
+		if		( fRed ) {
+			PutDB_Redirect(dbg,sql);
 		}
 	} else {
 		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 	}
-	LBS_EmitEnd(dbg->checkData);
 LEAVE_FUNC;
 	return	rc;
+}
+
+static	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	PGresult	*res;
+	ValueStruct	*ret;
+	ExecStatusType	status;
+
+ENTER_FUNC;
+	ret = NULL;
+
+	res = _PQexec(dbg, sql, fRed, usage);
+	if ( ( res ==  NULL)
+		 ||	(  ( status = PQresultStatus(res) ) == PGRES_BAD_RESPONSE )
+		 ||	(  status  ==  PGRES_FATAL_ERROR     )
+		 ||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
+		Warning("PostgreSQL: %s:%s", sql, PQerrorMessage(PGCONN(dbg,usage)));
+		ret = NULL;
+	} else {
+		ret = PGresToValue2(dbg, res);
+	}
+	_PQclear(res);
+LEAVE_FUNC;
+	return	ret;
 }
 
 static	ValueStruct	*
@@ -1389,6 +1517,7 @@ ENTER_FUNC;
 			if (dbg->redirectPort != NULL) {
 				LockRedirectorConnect(conn);
 			}
+			CryptoMode(dbg);
 			rc = MCP_OK;
 		} else {
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
@@ -1404,9 +1533,11 @@ ENTER_FUNC;
 		dbgmsg("READONLY SERVER is none.");
 #if	1
 		dbgmsg("using UPDATE SERVER.");
-		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
-		rc = MCP_OK;
+		if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
+			dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+			rc = MCP_OK;
+		}
 #else
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_BAD_CONN;
@@ -1527,6 +1658,7 @@ ENTER_FUNC;
 		if ( (fCommit == TRUE) && (rc == MCP_OK) ) {
 			CommitDB_Redirect(dbg);
 		} else {
+			rc = MCP_NONFATAL;
 			AbortDB_Redirect(dbg);
 		}
 	} else {
@@ -1867,6 +1999,66 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+    LargeByteString	*lbs;
+	ValueStruct	*ret, *bytea;
+	ValueStruct	*val;
+ENTER_FUNC;
+	if (ValueType(args) == GL_TYPE_RECORD) {
+		if ( (val = GetItemLongName(args,"dbescapebytea")) == NULL) {
+			Warning("dbescapebytea is not found.");
+			return args;
+		}
+		ret = NewValue(GL_TYPE_RECORD);
+		lbs = NewLBS();
+		EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
+		LBS_EmitEnd(lbs);
+		bytea = NewValue(GL_TYPE_TEXT);
+		SetValueString(bytea, LBS_Body(lbs), dbg->coding);
+		ValueAddRecordItem(ret, "dbescapebytea", bytea);
+		FreeLBS(lbs);
+	} else {
+		lbs = NewLBS();
+		EscapeBytea(dbg, lbs, ValueByte(args), ValueByteLength(args));
+		LBS_EmitEnd(lbs);
+		ret = NewValue(GL_TYPE_TEXT);
+		SetValueString(ret, LBS_Body(lbs), dbg->coding);
+		FreeLBS(lbs);
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	ValueStruct	*
+_DBUNESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*bin, *val, *ret;
+ENTER_FUNC;
+	if (ValueType(args) == GL_TYPE_RECORD) {
+		if ( (val = GetItemLongName(args,"dbunescapebytea")) == NULL) {
+			Warning("dbunescapebytea is not found.");
+			return args;
+		}
+		bin = UnEscapeBytea(ValueStringPointer(val));
+		ValueAddRecordItem(args, "dbunescapebytea", bin);
+		ret = args;
+	} else {
+		ret = UnEscapeBytea(ValueStringPointer(args));
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	ValueStruct	*
 _DBLOCK(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -1977,6 +2169,8 @@ static	DB_OPS	Operations[] = {
 	{	"DBINSERT",		_DBINSERT },
 	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
 	{	"DBESCAPE",		_DBESCAPE },
+	{	"DBESCAPEBYTEA",	_DBESCAPEBYTEA },
+	{	"DBUNESCAPEBYTEA",	_DBUNESCAPEBYTEA },
 	{	"DBLOCK",			_DBLOCK },
 	{	"DBAUDITLOG",		_DBAUDITLOG },
 
@@ -1986,6 +2180,7 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	_QUERY,
 	NULL,
 };
 

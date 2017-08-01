@@ -563,10 +563,8 @@ main(
 	int		argc,
 	char	**argv)
 {
-	FILE_LIST	*fl;
-
 	SetDefault();
-	fl = GetOption(option,argc,argv,NULL);
+	GetOption(option,argc,argv,NULL);
 	InitMessage("checkdir",NULL);
 
 	DumpDirectory();

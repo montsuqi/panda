@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2009 JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,16 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_SESSIONTHREAD_H
-#define	_INC_SESSIONTHREAD_H
+#ifndef	_BLOBAPI_H
+#define	_BLOBAPI_H
 
-#include	"wfcdata.h"
+#undef	GLOBAL
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
 
-extern	SessionCtrl	*NewSessionCtrl(SessionCtrlType type);
-extern	void		FreeSessionCtrl(SessionCtrl *ctrl);
-extern	void		SessionEnqueue(SessionCtrl *ctrl);
-extern	void		StartSessionThread(void);
+extern void GetBlobAPI(	HTTP_REQUEST *req,	HTTP_RESPONSE *res);
 
 #endif

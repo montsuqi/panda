@@ -562,7 +562,7 @@ ForeachUnapplied_DBLog(
 ENTER_FUNC;
 
 	pthread_mutex_lock(&log->mutex);
-	
+
 	snprintf(sql, SIZE_BUFF,
 		 "SELECT no, data, checkdata, EXTRACT(epoch from applydate) "
 		 "FROM \"%s\" "
@@ -575,16 +575,13 @@ ENTER_FUNC;
 		goto _end;
 	}
 	ntuples = PQntuples(res);
-	
+
 	for (i = 0; i < ntuples; ++i) {
 		Bool procret;
-		
 		SetRecord(res, &rec, i);
-		
 		dbgmsg("call foreach func");
 		procret = (*func)(userdata, &rec);
 		ClearRecord(&rec);
-		
 		if (!procret) {
 			dbgmsg("foreach func stop");
 			ret = FALSE;
@@ -600,7 +597,7 @@ _end:
 		pg_disconnect(log->dbg);
 	}
 LEAVE_FUNC;
-	return TRUE;
+	return ret;
 }
 
 

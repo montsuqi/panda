@@ -36,7 +36,7 @@ AC_SUBST(CONFDIR)
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE","")
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION","")
 AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR","")
-AC_DEFINE_UNQUOTED(PACKAGE_DATE, "`date '+%F %T %z'`","")
+AC_DEFINE_UNQUOTED(PACKAGE_DATE, "`date '+%Y%m%d'`","")
 
 AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
@@ -101,7 +101,7 @@ AC_CHECK_FUNCS([dup2 getcwd gethostbyname gettimeofday memchr memset mkdir munma
 # gettext
 AC_CANONICAL_HOST
 AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION(0.16.1)
+AM_GNU_GETTEXT_VERSION([0.18.3])
 
 dnl ***************************************************************************
 dnl Find pkg-config
@@ -117,7 +117,16 @@ dnl ***************************************************************************
 PKG_CHECK_MODULES(COMMON,
 [
 	uuid		>= 2.17.0
-	libmondai 	>= 1.4.8
+	libmondai 	>= 2.0.0
+	librabbitmq	>= 0.4.1
+])
+
+dnl ***************************************************************************
+dnl checking for amqp library
+dnl ***************************************************************************
+PKG_CHECK_MODULES(AMQP,
+[
+	librabbitmq	>= 0.4.1
 ])
 
 dnl ***************************************************************************
@@ -140,16 +149,29 @@ if test "x$enable_client" = "xyes"; then
 	[
 		libglade-panda-2.0	>= 2.0.3
 		libcurl             >= 7.0.5
-		libnotify			>= 0.4.5
 		gmodule-2.0			>= 2.0.0
 		gconf-2.0			>= 2.28.1
 		libp11				>= 0.2.8
 	])
+
 	PKG_CHECK_MODULES(LIBGTKCHECK, libglade-panda-2.0 >= 3.0.0,
 	[AC_DEFINE(LIBGTK_3_0_0,1,"")],
 	[
 		PKG_CHECK_MODULES(LIBGTKCHECK,libglade-panda-2.0 >= 2.0.3,
 		[])
+	])
+
+	PKG_CHECK_MODULES(CHECK_GTK_VER,gtk+-2.0 >= 2.24.23,
+	[
+		AC_DEFINE(GTK_2_24_23,1,"")
+	], [
+		PKG_CHECK_MODULES(CHECK_GTK_VER,gtk+-2.0 >= 2.24.10,
+		[])
+	])
+
+	PKG_CHECK_MODULES(LWS,
+	[
+		libwebsockets	>= 1.7.1
 	])
 fi
 
@@ -259,7 +281,10 @@ enable_ssl="no"
 AC_ARG_WITH(ssl,
 	[  --with-ssl=<directory>  use SSL in <directory>],[
 	if test x$withval = xyes; then
-		PKG_CHECK_MODULES(SSL,[libssl >= 0.9.8])
+		PKG_CHECK_MODULES(SSL,[
+			libssl >= 0.9.8
+			libcrypto
+		])
 		AC_SUBST(SSL_LIBS) 
 		AC_SUBST(SSL_CFLAGS) 
 		AC_DEFINE(USE_SSL,1,"")
@@ -335,7 +360,6 @@ glauth/Makefile
 cobol/Makefile
 dblib/Makefile
 dbstuff/Makefile
-fdd/Makefile
 glclient/Makefile
 glserver/Makefile
 include/Makefile

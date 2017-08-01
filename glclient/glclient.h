@@ -28,9 +28,12 @@
 #include	<glib.h>
 #include	<json.h>
 #include	<curl/curl.h>
+#ifdef USE_SSL
 #include	<openssl/engine.h>
+#endif
+#include	<libmondai.h>
 
-#include	"libmondai.h"
+#include	"protocol.h"
 
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -38,13 +41,10 @@
 #define	GLOBAL		extern
 #endif
 
+#define DEFAULT_PING_TIMER_PERIOD   (7000) //7sec
+
 typedef struct {
-	char			*AuthURI;
-	char			*RPCURI;
-	char			*RESTURI;
-	char			*ProtocolVersion;
-	char			*AppVersion;
-	char			*ServerType;
+	GLProtocol 		*protocol;
 	char			*title;
 	char			*bgcolor;
 	Bool			IsRecv;
@@ -52,17 +52,12 @@ typedef struct {
 	char			*FocusedWidget;
 	char			*ThisWindow;
 	GHashTable		*WindowTable;
-	unsigned int	RPCID;
-	char			*SessionID;
 	json_object		*ScreenData;
 }	GLSession;
 
-#define	AUTHURI(session)		((session)->AuthURI)
-#define RPCURI(session)			((session)->RPCURI)
-#define RESTURI(session)		((session)->RESTURI)
-#define PROTOVER(session)		((session)->ProtocolVersion)
-#define APPVER(session)			((session)->AppVersion)
-#define SERVERTYPE(session)		((session)->ServerType)
+#define	GLP(session)			((session)->protocol)
+#define	SESSIONID(session)		(GLP_GetSessionID(session->protocol))
+#define	GINBEE(session)			(GLP_GetfGinbee(session->protocol))
 #define	TITLE(session)			((session)->title)
 #define	BGCOLOR(session)		((session)->bgcolor)
 #define	ISRECV(session)			((session)->IsRecv)
@@ -70,8 +65,6 @@ typedef struct {
 #define	FOCUSEDWIDGET(session)	((session)->FocusedWidget)
 #define	THISWINDOW(session)		((session)->ThisWindow)
 #define	WINDOWTABLE(session)	((session)->WindowTable)
-#define	RPCID(session)			((session)->RPCID)
-#define	SESSIONID(session)		((session)->SessionID)
 #define	SCREENDATA(session)		((session)->ScreenData)
 
 typedef struct {
@@ -81,7 +74,8 @@ typedef struct {
 	Bool		fWindow;
 	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
-	GHashTable	*TimerWidgetTable;
+	GList		*Timers;
+	json_object	*tmpl;
 }	WindowData;
 
 extern	void		ExitSystem(void);
@@ -89,19 +83,18 @@ extern  void		SetSessionTitle(const char *title);
 extern  void		SetSessionBGColor(const char *color);
 
 GLOBAL	char		*ConfigName;
+GLOBAL	Bool		DelayDrawWindow;
+GLOBAL	Bool		CancelScaleWindow;
 
-GLOBAL	char		*CurrentApplication;
-GLOBAL	Bool		fV47;
-GLOBAL	char		*TempDir;
-GLOBAL	char		*ConfDir;
 GLOBAL	GLSession	*Session;
 
+GLOBAL	char		*AuthURI;
 GLOBAL	char		*User;
 GLOBAL	char		*Pass;
 GLOBAL	Bool		SavePass;
 GLOBAL	char		*Style; 
 GLOBAL	char		*Gtkrc; 
-GLOBAL	Bool		fMlog;
+GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fKeyBuff;
 GLOBAL	Bool		fIMKanaOff;
 GLOBAL	Bool		fTimer;
@@ -109,8 +102,11 @@ GLOBAL	int			TimerPeriod;
 GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
 
+GLOBAL	Bool		fDialog;
+
 GLOBAL	Bool		fSSL;
 GLOBAL	char		*CertFile;
+GLOBAL	char		*CertKeyFile;
 GLOBAL	char		*CertPass;
 GLOBAL	Bool		SaveCertPass;
 GLOBAL	char		*CAFile;
@@ -118,8 +114,11 @@ GLOBAL	char		*Ciphers;
 
 GLOBAL	Bool		fPKCS11;
 GLOBAL	char		*PKCS11Lib;
-GLOBAL	ENGINE		*Engine;
-GLOBAL	CURL		*Curl;
-GLOBAL	char		*Pin;
+GLOBAL	char		*PIN;
+GLOBAL	Bool		fSavePIN;
+
+GLOBAL	Bool		UsePushClient;
+GLOBAL	pid_t		PushClientPID;
+GLOBAL	char		*PushClientCMD;
 
 #endif

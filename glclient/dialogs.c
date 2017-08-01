@@ -30,12 +30,14 @@
 #include	<stdlib.h>
 #include	<stdarg.h>
 #include	<gtk/gtk.h>
-#include	"gettext.h"
 
+#include	"glclient.h"
 #include	"dialogs.h"
+#include	"gettext.h"
+#include	"logger.h"
 
-#ifndef SIZE_BUFF
-#define SIZE_BUFF               8192 
+#ifndef	SIZE_BUFF
+#define	SIZE_BUFF	8192 
 #endif
 
 static GtkWidget*
@@ -64,7 +66,7 @@ MessageDialog(
 }
 
 void
-ShowInfoDialog(
+InfoDialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -73,12 +75,13 @@ ShowInfoDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
+	Info(buf);
     MessageDialog(GTK_MESSAGE_INFO, buf);
 	g_free(buf);
 }
 
 void
-ShowWarnDialog(
+WarnDialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -87,12 +90,13 @@ ShowWarnDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
+	Warning(buf);
     MessageDialog(GTK_MESSAGE_WARNING, buf);
 	g_free(buf);
 }
 
 void
-ShowErrorDialog(
+ErrorDialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -102,7 +106,7 @@ ShowErrorDialog(
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
    	MessageDialog(GTK_MESSAGE_ERROR,buf);
-	exit(1);
+	_Error(buf);
 }
 
 void
@@ -125,7 +129,7 @@ askpass_entry_activate(GtkEntry *entry, gpointer user_data)
 }
 
 char*
-ShowAskPassDialog(
+AskPassDialog(
 	const char *prompt)
 {
 	GtkWidget *dialog,*entry;
@@ -155,6 +159,49 @@ ShowAskPassDialog(
 
 	if (response == GTK_RESPONSE_OK) {
 		ret = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+	}
+    gtk_widget_destroy(dialog);
+    return ret;
+}
+
+char*
+AskPINDialog()
+{
+	GtkWidget *dialog,*entry,*check,*vbox;
+	gint response;
+	char *ret;
+
+	ret = NULL;
+
+	dialog = gtk_message_dialog_new(NULL,
+		GTK_DIALOG_MODAL,
+		GTK_MESSAGE_OTHER,
+		GTK_BUTTONS_OK_CANCEL,
+		"%s",_("pin:"));
+
+	entry = gtk_entry_new();
+	gtk_entry_set_visibility(GTK_ENTRY (entry), FALSE);
+	gtk_widget_grab_focus(entry);
+	g_signal_connect(G_OBJECT(entry), "activate", 
+		G_CALLBACK(askpass_entry_activate), dialog);
+
+	check = gtk_check_button_new_with_label(_("save pin"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check),FALSE);
+
+	vbox = gtk_vbox_new(FALSE,5);
+	gtk_box_pack_start(GTK_BOX(vbox),entry,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(vbox),check,TRUE,TRUE,0);
+
+	gtk_box_pack_start(
+		GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+		vbox, TRUE, TRUE, 0);
+
+	gtk_widget_show_all(dialog);
+    response = gtk_dialog_run(GTK_DIALOG(dialog));
+
+	if (response == GTK_RESPONSE_OK) {
+		ret = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+		fSavePIN = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check));
 	}
     gtk_widget_destroy(dialog);
     return ret;
