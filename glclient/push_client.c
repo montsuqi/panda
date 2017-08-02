@@ -22,6 +22,8 @@
 
 #define BUF_SIZE (10*1024)
 
+static unsigned int conn_wait = 2;
+
 static volatile int force_exit;
 static struct lws *wsi_pr;
 
@@ -398,9 +400,13 @@ Execute()
 
 	while (!force_exit) {
 
-		if (!wsi_pr && ratelimit_connects(&rl_pr, 2u)) {
+		if (!wsi_pr && ratelimit_connects(&rl_pr, conn_wait)) {
 			i.protocol = protocols[0].name;
 			wsi_pr = lws_client_connect_via_info(&i);
+			if (conn_wait < 3600) {
+				conn_wait *= 2;
+			}
+fprintf(stderr,"%u\n",conn_wait);
 		}
 
 		lws_service(context, 500);
