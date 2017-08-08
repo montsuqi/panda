@@ -406,7 +406,6 @@ Execute()
 			if (conn_wait < 3600) {
 				conn_wait *= 2;
 			}
-fprintf(stderr,"%u\n",conn_wait);
 		}
 
 		lws_service(context, 500);
