@@ -272,6 +272,7 @@ callback_push_receive(
 			"\"session_id\" : \"%s\""
 		"}",reqid,SessionID);
 		websocket_write_back(wsi, buf, -1);
+		conn_wait = 2;
 		break;
 
 	case LWS_CALLBACK_CLOSED:
