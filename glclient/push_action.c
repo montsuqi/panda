@@ -89,6 +89,13 @@ _Download()
 	FreeLBS(lbs);
 }
 
+static gboolean
+push_action_exit(gpointer data)
+{
+	exit(0);
+	return FALSE;
+}
+
 int
 main(
 	int argc,
@@ -129,6 +136,9 @@ main(
 	} else if (!strcmp(Action,"download")) {
 		_Download();
 	}
+
+	gtk_timeout_add(10*1000,push_action_exit,NULL);
+	gtk_main();
 
 	return 0;
 }

@@ -86,7 +86,7 @@ Notify(gchar *summary,
 
 	gtk_window_get_size(GTK_WINDOW(widget),&w,&h);
 	gtk_window_move(GTK_WINDOW(widget),gdk_screen_get_width(scr) - w,yy);
-	gtk_widget_show(widget);
+	gtk_widget_show_all(widget);
 	if (timeout < 1) {
 		timeout = 5;
 	}
