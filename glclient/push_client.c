@@ -22,7 +22,9 @@
 
 #define BUF_SIZE (10*1024)
 
-static unsigned int conn_wait = 2;
+#define CONN_WAIT_INIT 2
+#define CONN_WAIT_MAX  600
+static unsigned int conn_wait = CONN_WAIT_INIT;
 
 static volatile int force_exit;
 static struct lws *wsi_pr;
@@ -272,7 +274,7 @@ callback_push_receive(
 			"\"session_id\" : \"%s\""
 		"}",reqid,SessionID);
 		websocket_write_back(wsi, buf, -1);
-		conn_wait = 2;
+		conn_wait = CONN_WAIT_INIT;
 		break;
 
 	case LWS_CALLBACK_CLOSED:
@@ -404,8 +406,9 @@ Execute()
 		if (!wsi_pr && ratelimit_connects(&rl_pr, conn_wait)) {
 			i.protocol = protocols[0].name;
 			wsi_pr = lws_client_connect_via_info(&i);
-			if (conn_wait < 3600) {
-				conn_wait *= 2;
+			conn_wait *= 2;
+			if (conn_wait > CONN_WAIT_MAX) {
+				conn_wait = CONN_WAIT_MAX;
 			}
 		}
 
