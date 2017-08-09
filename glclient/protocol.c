@@ -212,6 +212,7 @@ REST_PostBLOB(
 	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
 	}
+	http_code = 0;
 	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
@@ -220,8 +221,11 @@ REST_PostBLOB(
 		case 403:
 			Error(_("authentication error:incorrect user or password"));
 			break;
+		case 503:
+			Error(_("server maintenance error"));
+			break;
 		default:
-			Error(_("http status code[%d]"),http_code);
+			Error(_("http status code[%ld]"),http_code);
 			break;
 		}
 	} else {
@@ -264,6 +268,7 @@ REST_GetBLOB(
 		Warning(_("comm error:can not get blob:%s"),oid);
 		return NULL;
 	}
+	http_code = 0;
 	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
@@ -272,8 +277,11 @@ REST_GetBLOB(
 		case 403:
 			Warning(_("authentication error:incorrect user or password"));
 			return NULL;
+		case 503:
+			Error(_("server maintenance error"));
+			break;
 		default:
-			Warning(_("http status code[%d]"),http_code);
+			Warning(_("http status code[%ld]"),http_code);
 			return NULL;
 		}
 	} else {
@@ -422,6 +430,7 @@ JSONRPC(
 	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
 	}
+	http_code = 0;
 	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
@@ -429,6 +438,9 @@ JSONRPC(
 		case 401:
 		case 403:
 			Error(_("authentication error:incorrect user or password"));
+			break;
+		case 503:
+			Error(_("server maintenance error"));
 			break;
 		default:
 			Error(_("http status code[%d]"),http_code);
