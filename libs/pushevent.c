@@ -217,7 +217,7 @@ PushEvent_via_ValueStruct(
 		Warning("invalid argument value: need 'body'");
 		return FALSE;
 	}
-	obj = MakeBodyJSON(v);
+	obj = MakeBodyJSON(body);
 	return PushEvent_via_json(event,obj);
 }
 
