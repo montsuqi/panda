@@ -88,6 +88,9 @@ blob_export(
 {
 	static char	*filename;
 
+	if (export_file == NULL) {
+		export_file = monblob_getfilename(dbg, id);
+	}
 	filename = monblob_export(dbg, id, export_file);
 
 	return filename;

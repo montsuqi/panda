@@ -61,9 +61,8 @@ blob_import(
 	ValueStruct *value = NULL;
 	char	longname[SIZE_LONGNAME+1];
 
-	monblob = NewMonblob_struct(NULL);
-	monblob->blobid = (int)obj;
-	snprintf(longname,SIZE_LONGNAME,"blob-%d",(int)obj);
+	monblob = NewMonblob_struct(dbg, NULL, obj);
+	snprintf(longname,SIZE_LONGNAME,"blob-%u",(unsigned int)monblob->blobid);
 	monblob->filename = StrDup(longname);
 	monblob->size = size;
 	monblob->status = 403;
@@ -84,16 +83,39 @@ blob_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM monblob WHERE blobid = %d AND now() < importtime + CAST('%d days' AS INTERVAL);", (int)obj, BLOBEXPIRE);
+			 "SELECT file_data FROM monblob WHERE blobid = %u AND now() < importtime + CAST('%d days' AS INTERVAL);", (unsigned int)obj, BLOBEXPIRE);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
 	if (!ret) {
-		fprintf(stderr,"ERROR: [%d] is not registered\n", (int)obj);
+		fprintf(stderr,"ERROR: [%d] is not registered\n", (unsigned int)obj);
 		return NULL;
 	}
 	retval = unescape_bytea(dbg, GetItemLongName(ret,"file_data"));
 	return retval;
+}
+
+static size_t
+blob_size(
+	MonObjectType	obj)
+{
+	size_t	ssize;
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	ValueStruct	*ret;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "SELECT size FROM monblob WHERE blobid = %u AND now() < importtime + CAST('%d days' AS INTERVAL);", (unsigned int)obj, BLOBEXPIRE);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (!ret) {
+		return -1;
+	}
+	ssize = ValueToInteger(GetItemLongName(ret,"size"));
+	FreeValueStruct(ret);
+	return ssize;
+
 }
 
 static void
@@ -105,7 +127,7 @@ blob_delete(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE blobid = %d AND lifetype = 0 AND now() < importtime + CAST('%d days' AS INTERVAL);", (int)obj, BLOBEXPIRE);
+			 "DELETE FROM monblob WHERE blobid = %u AND lifetype = 0 AND now() < importtime + CAST('%d days' AS INTERVAL);", (unsigned int)obj, BLOBEXPIRE);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }
@@ -129,7 +151,7 @@ BLOBCREATE(
 	int				mode;
 	dbgmsg("BLOB_CREATE");
 	mode = RecvInt(fp);			ON_IO_ERROR(fp,badio);
-	if		(  ( obj = NewBLOB(blob,mode) )  !=  GL_OBJ_NULL  ) {
+	if		(  ( obj = new_blobid(dbg) )  !=  GL_OBJ_NULL  ) {
 		CloseBLOB(blob,obj);
 		SendPacketClass(fp,BLOB_OK);	ON_IO_ERROR(fp,badio);
 		SendObject(fp,obj);				ON_IO_ERROR(fp,badio);
@@ -151,7 +173,7 @@ BLOBWRITE(
 
 	dbgmsg("BLOB_WRITE");
 	obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
-	if		(  OpenBLOB(blob,obj,BLOB_OPEN_WRITE)  >=  0  ) {
+	if		(  blob_size(obj)  >=  0  ) {
 		SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			ON_IO_ERROR(fp,badio);
@@ -179,7 +201,7 @@ BLOBREAD(
 
 	dbgmsg("BLOB_READ");
 	obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
-	if		(  OpenBLOB(blob,obj,BLOB_OPEN_READ)  >=  0  ) {
+	if		(  blob_size(obj) >=  0  ) {
 		SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
 		value = blob_export(obj);
 		CloseBLOB(blob,obj);
@@ -208,8 +230,9 @@ BLOBEXPORT(
 	ValueStruct *value;
 	dbgmsg("BLOB_EXPORT");
 	obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
-	if		(  ( ssize = OpenBLOB(blob,obj,BLOB_OPEN_READ) )  >=  0  ) {
+	if		(  ( ssize = blob_size(obj) )  >=  0  ) {
 		SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
+
 		value = blob_export(obj);
 		SendLength(fp,ValueByteLength(value));		ON_IO_ERROR(fp,badio);
 		Send(fp, ValueByte(value),ValueByteLength(value));
@@ -235,7 +258,7 @@ BLOBIMPORT(
 	unsigned char	*buff;
 
 	dbgmsg("BLOB_IMPORT");
-	if		(  ( obj = NewBLOB(blob,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
+	if		(  ( obj = new_blobid(dbg) )  !=  GL_OBJ_NULL  ) {
 		SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
 		SendObject(fp,obj);						ON_IO_ERROR(fp,badio);
 		ssize = RecvLength(fp);					ON_IO_ERROR(fp,badio);
@@ -261,7 +284,7 @@ BLOBCHECK(
 	MonObjectType	obj;
 	dbgmsg("BLOB_CHECK");
 	obj = RecvObject(fp);				ON_IO_ERROR(fp,badio);
-	if		(  OpenBLOB(blob,obj,BLOB_OPEN_READ)  >=  0  ) {
+	if		(  blob_size(obj)  >=  0  ) {
 		SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
 		CloseBLOB(blob,obj);
 	} else {
