@@ -44,7 +44,6 @@
 #include	"dbutils.h"
 #include	"monsys.h"
 #include	"gettext.h"
-#include	"option.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -61,12 +60,6 @@ typedef struct {
 	LargeByteString	*name;
 	LargeByteString *value;
 } name_value_t;
-
-static	ARG_TABLE	option[] = {
-	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		N_("directory file name")						},
-	{	NULL,		0,			FALSE,	NULL,	NULL 	}
-};
 
 void
 signal_handler (int signo )
@@ -257,29 +250,66 @@ clog_db(
 	CloseDB(dbg);
 }
 
-static int
+static	GHashTable *
+get_batch_info(
+	char *batch_id,
+	pid_t pgid)
+{
+	char	pid_s[10];
+	char	starttime[50];
+	GHashTable *batch;
+
+	batch = NewNameHash();
+
+	g_hash_table_insert(batch, "id", batch_id);
+	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
+	g_hash_table_insert(batch, "pgid", StrDup(pid_s));
+
+	timestamp(starttime, sizeof(starttime));
+	g_hash_table_insert(batch, "starttime", StrDup(starttime));
+
+	g_hash_table_insert(batch, "tenant", getenv("MCP_TENANT"));
+	g_hash_table_insert(batch, "name", getenv("MON_BATCH_NAME"));
+	g_hash_table_insert(batch, "comment", getenv("MON_BATCH_COMMENT"));
+	g_hash_table_insert(batch, "groupname", getenv("MON_BATCH_GROUPNAME"));
+	g_hash_table_insert(batch, "extra", getenv("MON_BATCH_EXTRA"));
+	g_hash_table_insert(batch, "exwindow", getenv("MCP_WINDOW"));
+	g_hash_table_insert(batch, "exwidget", getenv("MCP_WIDGET"));
+	g_hash_table_insert(batch, "exevent", getenv("MCP_EVENT"));
+	g_hash_table_insert(batch, "exterm", getenv("MCP_TERM"));
+	g_hash_table_insert(batch, "exuser", getenv("MCP_USER"));
+	g_hash_table_insert(batch, "exhost", getenv("MCP_HOST"));
+	return batch;
+}
+
+static char *
 registdb(
 	DBG_Struct	*dbg,
-	GHashTable *table)
+	char *batch_id,
+	pid_t pgid)
 {
+	GHashTable *batch;
 	char *sql;
 	size_t sql_len = SIZE_SQL;
 	name_value_t kv;
-
-	if (!dbg) {
-		return 0;
-	}
-
-	dbg->dbt = table;
+	char *id;
 
 	OpenDB(dbg);
 	TransactionStart(dbg);
+
+	if ((batch_id != NULL)
+		&& (BatchIDExist(dbg, batch_id) == FALSE) ) {
+			id = StrDup(batch_id);
+	} else {
+		id = GenUUID();
+	}
+	batch = get_batch_info(id, pgid);
 
 	kv.dbg = dbg;
 	kv.name = NewLBS();
 	kv.value = NewLBS();
 
-	g_hash_table_foreach(table, (GHFunc)insert_table, &kv);
+	g_hash_table_foreach(batch, (GHFunc)insert_table, &kv);
 	LBS_EmitEnd(kv.name);
 	LBS_EmitEnd(kv.value);
 
@@ -297,11 +327,10 @@ registdb(
 	xfree(sql);
 	FreeLBS(kv.name);
 	FreeLBS(kv.value);
-
 	TransactionEnd(dbg);
 	CloseDB(dbg);
 
-	return 0;
+	return id;
 }
 
 static int
@@ -352,38 +381,6 @@ unregistdb(
 	CloseDB(dbg);
 
 	return 0;
-}
-
-static	GHashTable *
-get_batch_info(
-	char *batch_id,
-	pid_t pgid)
-{
-	char	pid_s[10];
-	char	starttime[50];
-	GHashTable *batch;
-
-	batch = NewNameHash();
-
-	g_hash_table_insert(batch, "id", batch_id);
-	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
-	g_hash_table_insert(batch, "pgid", StrDup(pid_s));
-
-	timestamp(starttime, sizeof(starttime));
-	g_hash_table_insert(batch, "starttime", StrDup(starttime));
-
-	g_hash_table_insert(batch, "tenant", getenv("MCP_TENANT"));
-	g_hash_table_insert(batch, "name", getenv("MON_BATCH_NAME"));
-	g_hash_table_insert(batch, "comment", getenv("MON_BATCH_COMMENT"));
-	g_hash_table_insert(batch, "groupname", getenv("MON_BATCH_GROUPNAME"));
-	g_hash_table_insert(batch, "extra", getenv("MON_BATCH_EXTRA"));
-	g_hash_table_insert(batch, "exwindow", getenv("MCP_WINDOW"));
-	g_hash_table_insert(batch, "exwidget", getenv("MCP_WIDGET"));
-	g_hash_table_insert(batch, "exevent", getenv("MCP_EVENT"));
-	g_hash_table_insert(batch, "exterm", getenv("MCP_TERM"));
-	g_hash_table_insert(batch, "exuser", getenv("MCP_USER"));
-	g_hash_table_insert(batch, "exhost", getenv("MCP_HOST"));
-	return batch;
 }
 
 static int
@@ -544,14 +541,12 @@ main(
 	int		argc,
 	char	**argv)
 {
-	FILE_LIST	*fl;
-
 	struct sigaction sa;
 	DBG_Struct	*dbg;
 	char *batch_id;
+	char *id;
 	uuid_t uu;
 	pid_t pgid;
-	GHashTable *batch;
 	json_object *cmd_results;
 
 	memset(&sa, 0, sizeof(struct sigaction));
@@ -578,26 +573,27 @@ main(
 	}
 	alarm(BATCH_TIMEOUT);
 
-	fl = GetOption(option,argc,argv,NULL);
 	InitSystem();
 
-	if ((fl == NULL) || (fl->name == NULL)) {
-		PrintUsage(option,argv[0],NULL);
+	if (argc < 2) {
+		Error("Argument required");
 	}
 
-	if ((batch_id = getenv("MON_BATCH_ID")) == NULL) {
-		Error("MON_BATCH_ID has not been set");
-	}
-	if (uuid_parse(batch_id, uu) == -1) {
+	batch_id = getenv("MON_BATCH_ID");
+
+	if ((batch_id != NULL)
+		&& (uuid_parse(batch_id, uu) == -1)) {
 		Error("MON_BATCH_ID is invalid");
 	}
-	dbg = GetDBG_monsys();
 	pgid = getpgrp();
-	batch = get_batch_info(batch_id, pgid);
-	registdb(dbg, batch);
+	dbg = GetDBG_monsys();
+	dbg->dbt = 	NewNameHash();
 
-	cmd_results = exec_shell(dbg, pgid, batch_id, argc, argv);
+	id = registdb(dbg, batch_id, pgid);
+	cmd_results = exec_shell(dbg, pgid, id, argc, argv);
 
-	unregistdb(dbg, batch_id, cmd_results);
+	unregistdb(dbg, id, cmd_results);
+	xfree(id);
+
 	return 0;
 }
