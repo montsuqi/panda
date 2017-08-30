@@ -22,6 +22,7 @@
 #define	TRACE
 */
 
+#include	<uuid/uuid.h>
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -29,6 +30,7 @@
 #include	"dbgroup.h"
 #include	"monsys.h"
 #include	"debug.h"
+
 
 extern void
 CheckBatchExist(
@@ -136,4 +138,39 @@ Escape_monsys(
 	FreeValueStruct(retval);
 	FreeValueStruct(recval);
 	return dest;
+}
+
+extern Bool
+BatchIDExist(
+	DBG_Struct		*dbg,
+	char *id)
+{
+	size_t sql_len = SIZE_SQL;
+	char *sql;
+	ValueStruct	*ret;
+	Bool rc;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "SELECT 1 FROM %s WHERE id='%s';",
+				 BATCH_TABLE, id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (ret) {
+		rc = TRUE;
+		FreeValueStruct(ret);
+	} else {
+		rc = FALSE;
+	}
+	return rc;
+}
+
+extern char *
+GenUUID(void)
+{
+	uuid_t	u;
+	static char *uuid;
+	uuid = xmalloc(SIZE_TERM+1);
+	uuid_generate(u);
+	uuid_unparse(u, uuid);
+	return uuid;
 }

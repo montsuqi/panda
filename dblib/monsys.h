@@ -31,7 +31,9 @@
 extern	DBG_Struct *GetDBG_monsys(void);
 extern	void		CheckBatchExist(DBG_Struct	*dbg,int pgid);
 extern	void		CheckBatchPg(void);
-extern	char	   *Coding_monsys(DBG_Struct *dbg,const char *src);
+extern	char	   *Coding_monsys(DBG_Struct *dbg, const char *src);
 extern	char       *Escape_monsys(DBG_Struct *dbg, const char *src);
+extern	Bool		BatchIDExist(DBG_Struct	*dbg, char *id);
+extern	char	   *GenUUID(void);
 
 #endif

@@ -32,7 +32,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<signal.h>
-#include	<uuid/uuid.h>
 #include 	<errno.h>
 #include	<string.h>
 
@@ -487,7 +486,6 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
@@ -501,9 +499,7 @@ ENTER_FUNC;
 
 	if (dbg->count == 0) {
 		SetBatchEnv(dbg, args);
-		dbg->transaction_id = xmalloc(SIZE_TERM+1);
-		uuid_generate(u);
-		uuid_unparse(u, dbg->transaction_id);
+		dbg->transaction_id = GenUUID();
 		setenv("MON_BATCH_ID", dbg->transaction_id, 1);
 	}
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -591,7 +587,6 @@ _EXCOMMAND(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
@@ -603,9 +598,7 @@ _EXCOMMAND(
 
 ENTER_FUNC;
 	SetBatchEnv(dbg, args);
-	uuid = xmalloc(SIZE_TERM+1);
-	uuid_generate(u);
-	uuid_unparse(u, uuid);
+	uuid = GenUUID();
 	setenv("MON_BATCH_ID", uuid, 1);
 	repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
 	setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", repos_name, 1);
