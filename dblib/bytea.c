@@ -187,6 +187,45 @@ monblob_idcheck(
 
 }
 
+static void
+reset_blobid(
+		DBG_Struct	*dbg)
+{
+	char *sql;
+	ValueStruct *ret;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT setval('%s', 1, false);", SEQMONBLOB);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	FreeValueStruct(ret);
+}
+
+extern MonObjectType
+new_blobid(
+		DBG_Struct	*dbg)
+{
+	MonObjectType oid;
+	ValueStruct	*ret, *val;
+	char *sql;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT nextval('%s') AS id;", SEQMONBLOB);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ret) {
+		val = GetItemLongName(ret,"id");
+		oid = (MonObjectType )ValueToInteger(val);
+		printf("%u %u\n", (unsigned int)oid, (unsigned int)UINT_MAX);
+		FreeValueStruct(ret);
+	} else {
+		oid = 0;
+	}
+	xfree(sql);
+	if ((unsigned int)oid >= UINT_MAX) {
+		reset_blobid(dbg);
+	}
+	return oid;
+}
+
 extern char *
 new_id()
 {
