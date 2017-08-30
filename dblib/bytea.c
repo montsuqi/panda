@@ -147,6 +147,20 @@ recreate_monblob(
 	return (rc == MCP_OK);
 }
 
+static Bool
+create_sequence(
+        DBG_Struct      *dbg)
+{
+	char *sql;
+	int rc;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "CREATE SEQUENCE %s;", SEQMONBLOB);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	return (rc == MCP_OK);
+}
+
 extern Bool
 monblob_setup(
 	DBG_Struct	*dbg)
@@ -159,6 +173,9 @@ monblob_setup(
 	}
 	if ( column_exist(dbg, MONBLOB, "blobid") != TRUE ) {
 		recreate_monblob(dbg);
+	}
+	if ( sequence_exist(dbg, SEQMONBLOB) != TRUE) {
+		create_sequence(dbg);
 	}
 	rc = TransactionEnd(dbg);
 	return (rc == MCP_OK);
@@ -185,6 +202,44 @@ monblob_idcheck(
 	}
 	return rc;
 
+}
+
+static void
+reset_blobid(
+		DBG_Struct	*dbg)
+{
+	char *sql;
+	ValueStruct *ret;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT setval('%s', 1, false);", SEQMONBLOB);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	FreeValueStruct(ret);
+}
+
+extern MonObjectType
+new_blobid(
+		DBG_Struct	*dbg)
+{
+	MonObjectType oid;
+	ValueStruct	*ret, *val;
+	char *sql;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT nextval('%s') AS id;", SEQMONBLOB);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ret) {
+		val = GetItemLongName(ret,"id");
+		oid = (MonObjectType )ValueToInteger(val);
+		FreeValueStruct(ret);
+	} else {
+		oid = 0;
+	}
+	xfree(sql);
+	if ((unsigned int)oid >= USHRT_MAX) {
+		reset_blobid(dbg);
+	}
+	return oid;
 }
 
 extern char *
