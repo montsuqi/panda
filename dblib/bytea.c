@@ -236,7 +236,7 @@ new_blobid(
 		oid = 0;
 	}
 	xfree(sql);
-	if ((unsigned int)oid >= UINT_MAX) {
+	if ((unsigned int)oid >= USHRT_MAX) {
 		reset_blobid(dbg);
 	}
 	return oid;
