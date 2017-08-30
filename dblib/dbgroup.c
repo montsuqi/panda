@@ -124,6 +124,22 @@ SetDBAudit(
 		}
 	}
 }
+static	void
+CheckErrCount(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+	if (ctrl->rc >= 0) {
+		dbg->errcount = 0;
+	} else if (ctrl->rc < 0) {
+		dbg->errcount++;
+		printf("errcount : %d\n", dbg->errcount);
+	}
+	if (dbg->errcount >= MAX_ERR_COUNT) {
+		Warning("Error count reached limit\n");
+		exit(2);
+	}
+}
 
 static	void
 _DBRecordFunc(
@@ -317,6 +333,7 @@ ENTER_FUNC;
 				func = (DB_FUNC)dbg->func->primitive->access;
 			}
 			ret = (*func)(dbg,ctrl,rec,args);
+			CheckErrCount(dbg, ctrl);
 			SetDBAudit(dbg);
 		}
 		if		(  ctrl->rc  <  0  ) {

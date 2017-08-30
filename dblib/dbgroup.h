@@ -25,6 +25,7 @@
 #include	"dblib.h"
 
 #define	SIZE_SQL		1024
+#define MAX_ERR_COUNT	1000
 
 #define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
 #define MONDB	"mondb_"

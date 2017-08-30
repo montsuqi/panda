@@ -749,6 +749,7 @@ NewDBG_Struct(
 	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;
+	dbg->errcount = 0;
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	dbg->process[PROCESS_UPDATE].conn = NULL;
 	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
