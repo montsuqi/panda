@@ -147,6 +147,20 @@ recreate_monblob(
 	return (rc == MCP_OK);
 }
 
+static Bool
+create_sequence(
+        DBG_Struct      *dbg)
+{
+	char *sql;
+	int rc;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "CREATE SEQUENCE %s;", SEQMONBLOB);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	return (rc == MCP_OK);
+}
+
 extern Bool
 monblob_setup(
 	DBG_Struct	*dbg)
@@ -159,6 +173,9 @@ monblob_setup(
 	}
 	if ( column_exist(dbg, MONBLOB, "blobid") != TRUE ) {
 		recreate_monblob(dbg);
+	}
+	if ( sequence_exist(dbg, SEQMONBLOB) != TRUE) {
+		create_sequence(dbg);
 	}
 	rc = TransactionEnd(dbg);
 	return (rc == MCP_OK);
@@ -214,7 +231,6 @@ new_blobid(
 	if (ret) {
 		val = GetItemLongName(ret,"id");
 		oid = (MonObjectType )ValueToInteger(val);
-		printf("%u %u\n", (unsigned int)oid, (unsigned int)UINT_MAX);
 		FreeValueStruct(ret);
 	} else {
 		oid = 0;

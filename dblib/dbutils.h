@@ -24,6 +24,8 @@
 #include	"dbgroup.h"
 
 extern	Bool	table_exist(DBG_Struct	*dbg, char *table_name);
+extern	Bool	sequence_exist(DBG_Struct *dbg,	char *sequence_name);
+
 extern	Bool	column_exist(DBG_Struct *dbg, char *table_name, char *column_name);
 extern	void	timestamp(char *daytime, size_t size);
 

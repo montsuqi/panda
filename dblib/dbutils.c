@@ -29,17 +29,18 @@
 #include	"dblib.h"
 #include	"dbgroup.h"
 
-extern Bool
-table_exist(
+static Bool
+rel_exist(
 	DBG_Struct	*dbg,
-	char *table_name)
+	char *name,
+	char *relkind)
 {
 	ValueStruct *ret;
 	char *sql;
 	sql = (char *)xmalloc(SIZE_SQL);
 	Bool 	rc;
 
-	snprintf(sql, SIZE_SQL, "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = 'r';", table_name);
+	snprintf(sql, SIZE_SQL, "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = '%s';", name, relkind);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (ret) {
@@ -49,6 +50,22 @@ table_exist(
 		rc = FALSE;
 	}
 	return rc;
+}
+
+extern Bool
+table_exist(
+	DBG_Struct	*dbg,
+	char *table_name)
+{
+	return rel_exist(dbg, table_name, "r");
+}
+
+extern Bool
+sequence_exist(
+	DBG_Struct	*dbg,
+	char *sequence_name)
+{
+	return rel_exist(dbg, sequence_name, "S");
 }
 
 extern Bool
