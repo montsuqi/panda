@@ -88,6 +88,9 @@ blob_export(
 {
 	static char	*filename;
 
+	if (export_file == NULL) {
+		export_file = monblob_getfilename(dbg, id);
+	}
 	filename = monblob_export(dbg, id, export_file);
 
 	return filename;
@@ -144,7 +147,7 @@ blob_list(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, filename FROM monblob ORDER BY importtime;");
+			 "SELECT importtime, id, filename FROM %s ORDER BY importtime;", MONBLOB);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
