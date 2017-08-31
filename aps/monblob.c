@@ -147,7 +147,7 @@ blob_list(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, filename FROM monblob ORDER BY importtime;");
+			 "SELECT importtime, id, filename FROM %s ORDER BY importtime;", MONBLOB);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);

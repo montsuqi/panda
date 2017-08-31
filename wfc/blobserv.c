@@ -83,7 +83,7 @@ blob_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM monblob WHERE blobid = %u AND now() < importtime + CAST('%d days' AS INTERVAL);", (unsigned int)obj, BLOBEXPIRE);
+			 "SELECT file_data FROM %s WHERE blobid = %u AND now() < importtime + CAST('%d days' AS INTERVAL);", MONBLOB, (unsigned int)obj, BLOBEXPIRE);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -106,7 +106,7 @@ blob_size(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT size FROM monblob WHERE blobid = %u AND now() < importtime + CAST('%d days' AS INTERVAL);", (unsigned int)obj, BLOBEXPIRE);
+			 "SELECT size FROM %s WHERE blobid = %u AND now() < importtime + CAST('%d days' AS INTERVAL);", MONBLOB, (unsigned int)obj, BLOBEXPIRE);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
@@ -127,7 +127,7 @@ blob_delete(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE blobid = %u AND lifetype = 0 AND now() < importtime + CAST('%d days' AS INTERVAL);", (unsigned int)obj, BLOBEXPIRE);
+			 "DELETE FROM %s WHERE blobid = %u AND lifetype = 0 AND now() < importtime + CAST('%d days' AS INTERVAL);", MONBLOB, (unsigned int)obj, BLOBEXPIRE);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }
