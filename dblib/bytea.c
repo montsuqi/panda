@@ -98,21 +98,23 @@ create_monblob(
 	p = sql;
 	p += sprintf(p, "CREATE TABLE %s (", MONBLOB);
 	for (i = 0; columns[i][0] != NULL; i++) {
-		if (i == 0) {
-			p += sprintf(p, "%s %s primary key",columns[i][0],columns[i][1]);
-		} else {
+		if (i != 0) {
 			p += sprintf(p, ", ");
-			p += sprintf(p, "%s %s",columns[i][0],columns[i][1]);
 		}
+		p += sprintf(p, "%s %s",columns[i][0],columns[i][1]);
 	}
 	sprintf(p, ");");
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc == MCP_OK) {
+		sprintf(sql, "ALTER TABLE ONLY %s ADD CONSTRAINT %s_pkey PRIMARY KEY(id);",MONBLOB, MONBLOB);
+		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	}
 	if (rc == MCP_OK) {
 		sprintf(sql, "CREATE INDEX %s_blobid ON %s (blobid);",MONBLOB, MONBLOB);
 		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	}
 	if (rc == MCP_OK) {
-		sprintf(sql, "CREATE INDEX %s_importime ON %s (importtime);",MONBLOB, MONBLOB);
+		sprintf(sql, "CREATE INDEX %s_importtime ON %s (importtime);",MONBLOB, MONBLOB);
 		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	}
 	xfree(sql);
@@ -127,7 +129,13 @@ recreate_monblob(
 	char	sql[SIZE_SQL+1];
 
 	if ( table_exist(dbg, "monblob__bak") == TRUE) {
-		sprintf(sql, "DROP TABLE %s__bak;", MONBLOB);
+		sprintf(sql, "DROP TABLE %s__bak CASCADE;", MONBLOB);
+		if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+			return FALSE;
+		}
+	}
+	if ( index_exist(dbg, "monblob_pkey") == TRUE){
+		sprintf(sql, "ALTER TABLE %s DROP CONSTRAINT %s_pkey;", MONBLOB, MONBLOB);
 		if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
 			return FALSE;
 		}
@@ -136,13 +144,25 @@ recreate_monblob(
 	if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
 		return FALSE;
 	}
+	int i;
+	char *index[] = {
+		"monblob_blobid",
+		"monblob_importtime",
+		NULL
+	};
+	for ( i = 0; index[i] != NULL; i++) {
+		sprintf(sql, "DROP INDEX IF EXISTS %s;", index[i]);
+		if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+			return FALSE;
+		}
+	}
 	if (!create_monblob(dbg)) {
 		return FALSE;
 	}
 	if (!migration_monblob(dbg)) {
 		return FALSE;
 	}
-	sprintf(sql, "DROP TABLE %s__bak;", MONBLOB);
+	sprintf(sql, "DROP TABLE %s__bak CASCADE;", MONBLOB);
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	return (rc == MCP_OK);
 }
@@ -163,7 +183,8 @@ create_sequence(
 
 extern Bool
 monblob_setup(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	Bool recreate)
 {
 	int 	rc;
 
@@ -171,7 +192,7 @@ monblob_setup(
 	if ( table_exist(dbg, MONBLOB) != TRUE) {
 		create_monblob(dbg);
 	}
-	if ( column_exist(dbg, MONBLOB, "blobid") != TRUE ) {
+	if ( (column_exist(dbg, MONBLOB, "blobid") != TRUE) || recreate ) {
 		recreate_monblob(dbg);
 	}
 	if ( sequence_exist(dbg, SEQMONBLOB) != TRUE) {
