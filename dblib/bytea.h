@@ -38,22 +38,33 @@ typedef struct _monblob_struct {
 	size_t 	bytea_len;
 } monblob_struct;
 
-extern Bool monblob_setup(DBG_Struct *dbg);
-extern char *new_id(void);
-extern monblob_struct *NewMonblob_struct(DBG_Struct *dbg, char *id, MonObjectType blobid);
-extern MonObjectType new_blobid(DBG_Struct	*dbg);
+extern Bool 			monblob_setup(DBG_Struct *dbg);
+extern char*			new_id(void);
+extern MonObjectType	new_blobid(DBG_Struct *dbg);
+extern monblob_struct*	new_monblob_struct(DBG_Struct *dbg,char *id,MonObjectType blobid);
+extern void 			free_monblob_struct(monblob_struct *monblob);
+extern ValueStruct*		escape_bytea(DBG_Struct *dbg,char *src, size_t len);
+extern ValueStruct*		unescape_bytea(DBG_Struct *dbg,ValueStruct *value);
+extern Bool 			monblob_insert(DBG_Struct *dbg,monblob_struct *monblob, Bool update);
+extern int 				file_to_bytea(DBG_Struct *dbg,char *filename, ValueStruct **value);
+extern char*  			value_to_file(char *filename, ValueStruct *value);
 
-extern void FreeMonblob_struct(monblob_struct *monblob);
-extern ValueStruct *escape_bytea(DBG_Struct *dbg, unsigned char *src, size_t len);
-extern ValueStruct *unescape_bytea(DBG_Struct *dbg, ValueStruct *value);
-extern Bool monblob_insert(DBG_Struct	*dbg, monblob_struct *monblob, Bool update);
-extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);
-extern	char *monblob_import(DBG_Struct *dbg, char *id, int persist, char *filename, char *content_type, unsigned int lifetype);
-extern char *value_to_file(char *filename, ValueStruct *value);
-extern char *monblob_export(DBG_Struct *dbg, char *id, char *filename);
-extern	void monblob_persist(DBG_Struct *dbg, char *id,  char *filename, char *content_type, unsigned int lifetype);
-extern	char *monblob_getfilename(DBG_Struct *dbg, char *id);
-extern	char *monblob_getid(DBG_Struct *dbg, MonObjectType blobid);
-extern	void monblob_delete(DBG_Struct	*dbg, char *id);
+extern char*			monblob_import(DBG_Struct *dbg,char *id, int persist,char *filename,char *content_type, unsigned int lifetype);
+extern char*			monblob_import_mem(DBG_Struct *dbg,char *id,int persist,char *filename,char *content_type,unsigned int lifetype,char *buf,size_t size);
+extern MonObjectType	blob_import(DBG_Struct *dbg,int persist,char *filename,char *content_type,unsigned int lifetype);
+extern MonObjectType	blob_import_mem(DBG_Struct *dbg,int persist,char *filename,char *content_type,unsigned int lifetype,char *buf,size_t size);
+
+extern Bool				monblob_export(DBG_Struct *dbg,char *id,char *filename);
+extern Bool				monblob_export_mem(DBG_Struct *dbg,char *id,char **buf,size_t *size);
+extern Bool				blob_export(DBG_Struct *dbg,MonObjectType oid,char *filename);
+extern Bool				blob_export_mem(DBG_Struct *dbg,MonObjectType oid,char **buf,size_t *size);
+
+extern void 			monblob_persist(DBG_Struct *dbg,char *id,char *filename,char *content_type,unsigned int lifetype);
+extern void 			blob_persist(DBG_Struct *dbg,MonObjectType);
+extern char*			monblob_get_filename(DBG_Struct *dbg,char *id);
+extern char*			monblob_get_id(DBG_Struct *dbg, MonObjectType blobid);
+extern MonObjectType 	monblob_get_blobid(DBG_Struct *dbg,char *id);
+extern void 			monblob_delete(DBG_Struct *dbg,char *id);
+extern void 			blob_delete(DBG_Struct *dbg,MonObjectType blobid);
 
 #endif

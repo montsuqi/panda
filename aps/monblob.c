@@ -80,20 +80,16 @@ InitSystem(void)
 	}
 }
 
-static	char *
-blob_export(
+static Bool
+_monblob_export(
 	DBG_Struct	*dbg,
 	char *id,
 	char *export_file)
 {
-	static char	*filename;
-
 	if (export_file == NULL) {
-		export_file = monblob_getfilename(dbg, id);
+		export_file = monblob_get_filename(dbg, id);
 	}
-	filename = monblob_export(dbg, id, export_file);
-
-	return filename;
+	return monblob_export(dbg, id, export_file);
 }
 
 static char *
@@ -163,6 +159,7 @@ main(
 	DBG_Struct	*dbg;
 	char *id;
 	char *filename;
+	Bool rc;
 
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
@@ -197,9 +194,9 @@ main(
 		xfree(id);
 	} else if (ExportID) {
 		TransactionStart(dbg);
-		filename = blob_export(dbg, ExportID, OutputFile);
+		rc = _monblob_export(dbg, ExportID, OutputFile);
 		TransactionEnd(dbg);
-		if ( !filename ) {
+		if (!rc) {
 			exit(1);
 		}
 		printf("export: %s\n", filename);

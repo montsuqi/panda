@@ -272,7 +272,7 @@ file_export(
 }
 
 static	char *
-blob_import(
+_monblob_import(
 	DBG_Struct	*dbg,
 	char *id,
 	char *filename,
@@ -290,7 +290,7 @@ blob_import(
 }
 
 static	char *
-blob_export(
+_monblob_export(
 	DBG_Struct	*dbg,
 	char *id,
 	char *socket)
@@ -358,9 +358,9 @@ main(
 	}
 	monblob_setup(dbg);
 	if (ImportFile) {
-		blob_import(dbg, ImportID, ImportFile, Socket);
+		_monblob_import(dbg, ImportID, ImportFile, Socket);
 	} else {
-		blob_export(dbg, ExportID, Socket);
+		_monblob_export(dbg, ExportID, Socket);
 	}
 	CloseDB(dbg);
 

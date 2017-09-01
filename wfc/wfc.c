@@ -59,7 +59,6 @@
 #include	"sysdatathread.h"
 #include	"sessionctrl.h"
 #include	"dbgroup.h"
-#include	"blob.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"
@@ -78,7 +77,6 @@ static	char	*Directory;
 static	Port	*ApsPort;
 static	Port	*WfcPort;
 static	Port	*ControlPort;
-static	BLOB_Space	*Blob;
 
 static	sigset_t SigMask;
 
@@ -269,15 +267,6 @@ ENTER_FUNC;
 	}
 	InitNET();
 	InitSysData();
-	if		(  ThisEnv->sysdata       !=  NULL  ) {
-		if 		(  ThisEnv->sysdata->dir  !=  NULL  ) {
-			Blob = InitBLOB(ThisEnv->sysdata->dir);
-			BlobState = ConnectBLOB(Blob);
-		}
-	} else {
-		Blob = NULL;
-		BlobState = NULL;
-	}
 	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
@@ -291,10 +280,6 @@ LEAVE_FUNC;
 static	void
 CleanUp(void)
 {
-	if (BlobState != NULL) {
-		DisConnectBLOB(BlobState);
-		FinishBLOB(Blob);
-	}
 	CleanUNIX_Socket(ApsPort);
  	CleanUNIX_Socket(WfcPort);
  	CleanUNIX_Socket(ControlPort);

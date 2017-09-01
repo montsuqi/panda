@@ -44,14 +44,8 @@
 #include	"dbgroup.h"
 #include	"monsys.h"
 #include	"bytea.h"
-#include	"blobreq.h"
-#include	"sysdata.h"
-#include	"comm.h"
-#include	"comms.h"
-#include	"redirect.h"
+#include	"dbops.h"
 #include	"debug.h"
-
-#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
 static	ValueStruct	*
 _NewBLOB(
@@ -66,7 +60,7 @@ _NewBLOB(
 	DBG_Struct		*mondbg;
 	monblob_struct *monblob;
 ENTER_FUNC;
-	monblob = NewMonblob_struct(dbg, NULL, 0);
+	monblob = new_monblob_struct(dbg, NULL, 0);
 	mondbg = GetDBG_monsys();
 	sql = xmalloc(sql_len);
 	snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, monblob->id , 503);
@@ -76,7 +70,7 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		SetValueString(val, monblob->id, dbg->coding);
 	}
-	FreeMonblob_struct(monblob);
+	free_monblob_struct(monblob);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -202,7 +196,7 @@ ENTER_FUNC;
 	} else {
 		if ((obj = GetItemLongName(args,"blobid")) != NULL) {
 			blobid = (int)ValueObjectId(obj);
-			if ((id = monblob_getid(mondbg, blobid)) != NULL) {
+			if ((id = monblob_get_id(mondbg, blobid)) != NULL) {
 				val = GetItemLongName(args,"id");
 				SetValueStringWithLength(val, id, strlen(id), NULL);
 				xfree(id);
@@ -245,48 +239,18 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-static	int
-_EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_DBACCESS(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
 	{	"MONBLOBNEW",		_NewBLOB		},
 	{	"MONBLOBIMPORT",	_ImportBLOB		},
 	{	"MONBLOBEXPORT",	_ExportBLOB		},
 	{	"MONBLOBPERSIST",	_PersistBLOB	},
-	{	"MONBLOBGETID",		_GETID		},
+	{	"MONBLOBGETID",		_GETID			},
 	{	"MONBLOBDESTROY",	_DestroyBLOB	},
 	{	NULL,			NULL }
 };

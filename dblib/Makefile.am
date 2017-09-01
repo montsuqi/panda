@@ -50,6 +50,7 @@ libpandadb_la_SOURCES	=	\
 	dbutils.c	dbutils.h	\
 	redirect.c	redirect.h	\
 	monsys.c	monsys.h	\
+	dbops.c		dbops.h	\
 	bytea.c		bytea.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
@@ -119,7 +120,6 @@ NativeBLOB_la_LDFLAGS	=		\
 	-module						\
 	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
-	sysdata.c	sysdata.h		\
 	NativeBLOB.c
 NativeBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/libpanda.la \
@@ -140,7 +140,6 @@ XMLIO_la_LDFLAGS	=	\
 	-module						\
 	-export-dynamic
 XMLIO_la_SOURCES	=	\
-	sysdata.c	sysdata.h	\
 	XMLIO.c
 XMLIO_la_LIBADD			=				\
 	$(top_builddir)/libs/libpanda.la	\
@@ -151,7 +150,6 @@ XMLIO2_la_LDFLAGS	=	\
 	-module						\
 	-export-dynamic
 XMLIO2_la_SOURCES	=	\
-	sysdata.c	sysdata.h	\
 	XMLIO2.c
 XMLIO2_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
@@ -162,12 +160,10 @@ MSGIO_la_LDFLAGS	=	\
 	-module						\
 	-export-dynamic
 MSGIO_la_SOURCES	=	\
-	sysdata.c	sysdata.h	\
 	MSGIO.c
 MSGIO_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/dblib/libpandadb.la
-
 
 PushEvent_la_LDFLAGS	=				\
 	-avoid-version						\

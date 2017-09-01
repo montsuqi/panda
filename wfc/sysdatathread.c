@@ -69,11 +69,11 @@ ENTER_FUNC;
 		switch(c) {
 		case SYSDATA_BLOB:
 			dbgmsg("Call ServeBLOB");
-			ServeBLOB(fp,BlobState);	ON_IO_ERROR(fp,badio);
+			ServeBLOB(fp);	ON_IO_ERROR(fp,badio);
 			break;
 		case SYSDATA_SYSDB:
 			dbgmsg("Call ServeSysDB");
-			ServeSysDB(fp);		ON_IO_ERROR(fp,badio);
+			ServeSysDB(fp);	ON_IO_ERROR(fp,badio);
 			break;
 		case SYSDATA_END:
 			dbgmsg("SYSDATA_END");

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2009 NaCl.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,71 +28,102 @@
 
 #include	<stdio.h>
 #include	<stdlib.h>
-#include	<errno.h>
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
 #include	<signal.h>
-#include	<time.h>
-#include	<sys/time.h>
 
 #include	"const.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"directory.h"
-#include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"dbops.h"
-#include	"pushevent.h"
-#include	"message.h"
 #include	"debug.h"
 
-static	ValueStruct	*
-_PushEvent(
+extern	ValueStruct	*
+_DBOPEN(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+ENTER_FUNC;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+extern	ValueStruct	*
+_DBDISCONNECT(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+ENTER_FUNC;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+extern	ValueStruct	*
+_DBSTART(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+ENTER_FUNC;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+extern	ValueStruct	*
+_DBCOMMIT(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+ENTER_FUNC;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+extern	int
+_EXEC(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return	(MCP_OK);
+}
+
+extern	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return NULL;
+}
+
+extern	ValueStruct	*
+_DBACCESS(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	ValueStruct	*ret;
+
 ENTER_FUNC;
-	if (ctrl == NULL) {
-		return NULL;
-	}
-	if (rec->type  !=  RECORD_DB) {
+	ret = NULL;
+	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if (PushEvent_via_ValueStruct(args)) {
-		ctrl->rc = MCP_OK;
 	} else {
-		ctrl->rc = MCP_BAD_OTHER;
+		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
-	return	NULL;
+	return	(ret);
 }
-
-static	DB_OPS	Operations[] = {
-	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
-	/*	table operations	*/
-	{	"PUSHEVENT",	_PushEvent		},
-
-	{	NULL,			NULL }
-};
-
-static	DB_Primitives	Core = {
-	_EXEC,
-	_DBACCESS,
-	_QUERY,
-	NULL,
-};
-
-extern	DB_Func	*
-InitPushEvent(void)
-{
-	return	(EnterDB_Function("PushEvent",Operations,DB_PARSER_NULL,&Core,"",""));
-}
-

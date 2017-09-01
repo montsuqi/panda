@@ -37,7 +37,6 @@
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"
-#include	"blob.h"
 #include	"blobreq.h"
 #include	"message.h"
 #include	"debug.h"
@@ -59,115 +58,29 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-extern	MonObjectType
-RequestNewBLOB(
-	NETFILE	*fp,
-	int		mode)
-{
-	MonObjectType	obj;
-
-ENTER_FUNC;
-	obj = GL_OBJ_NULL;
-	RequestBLOB(fp,BLOB_CREATE);		ON_IO_ERROR(fp,badio);
-	SendInt(fp,mode);					ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		obj = RecvObject(fp);			ON_IO_ERROR(fp,badio);
-	}
-  badio:
-LEAVE_FUNC;
-	return	(obj);
-}
-
-extern	size_t
-RequestWriteBLOB(
-	NETFILE	*fp,
-	MonObjectType	obj,
-	unsigned char	*buff,
-	size_t	size)
-{
-	size_t	wrote;
-ENTER_FUNC;
-	wrote = 0;
-	RequestBLOB(fp,BLOB_WRITE);			ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		SendLength(fp,size);				ON_IO_ERROR(fp,badio);
-		if (size > 0) {
-			Send(fp,buff,size);					ON_IO_ERROR(fp,badio);
-			wrote = RecvLength(fp);				ON_IO_ERROR(fp,badio);
-		}
-	}
-  badio:
-LEAVE_FUNC;
-	return	(wrote);
-}
-
-extern	size_t
-RequestReadBLOB(
-	NETFILE	*fp,
-	MonObjectType	obj,
-	unsigned char	**ret,
-	size_t	*size)
-{
-	unsigned char 	*buff;
-	size_t	red;
-
-ENTER_FUNC;
-	red = 0;
-	*ret = NULL;
-	RequestBLOB(fp,BLOB_READ);			ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		*size = RecvLength(fp);				ON_IO_ERROR(fp,badio);
-		if (*size > 0) {
-			buff = xmalloc(*size);
-			red = Recv(fp,buff,*size);
-			*ret = buff;
-		}
-	}
-  badio:
-LEAVE_FUNC;
-	return	(red);
-}
-
 extern	Bool
 RequestExportBLOB(
 	NETFILE	*fp,
 	MonObjectType	obj,
 	char		*fname)
 {
-	Bool	rc;
-	char	buff[SIZE_BUFF];
-	FILE	*fpf;
-	size_t	size
-		,	left;
-
+	char *buff;
+	size_t size;
 ENTER_FUNC;
-	rc = FALSE;
-	RequestBLOB(fp,BLOB_EXPORT);		ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		if ((fpf = Fopen(fname,"w")) != NULL) {
-			fchmod(fileno(fpf),0600);
-			left = RecvLength(fp);
-			while (left > 0) {
-				size = (left > SIZE_BUFF) ? SIZE_BUFF : left;
-				Recv(fp,buff,size);			ON_IO_ERROR(fp,badio);
-				fwrite(buff,size,1,fpf);
-				left -= size;
-			}
-			fclose(fpf);
-			rc = TRUE;
+	if (RequestExportBLOBMem(fp,obj,&buff,&size)) {
+		if (buff != NULL) {
+			return g_file_set_contents(fname,buff,size,NULL);
 		} else {
-			Warning("could not open for write: %s", fname);
+			return FALSE;
 		}
+	} else {
+		return FALSE;
 	}
-  badio:
 LEAVE_FUNC;
-	return	(rc);
+	return	FALSE;
 }
 
-extern	void
+extern	Bool
 RequestExportBLOBMem(
 	NETFILE			*fp,
 	MonObjectType	obj,
@@ -188,11 +101,12 @@ ENTER_FUNC;
 		*out = p;
 	}
 LEAVE_FUNC;
-	return;
-  badio:
+	return (p != NULL);
+badio:
 	if (p != NULL) {
 		xfree(p);
 	}
+	return FALSE;
 }
 
 extern	MonObjectType
@@ -201,37 +115,13 @@ RequestImportBLOB(
 	const char	*fname)
 {
 	MonObjectType	obj;
-	char	buff[SIZE_BUFF];
-	FILE	*fpf;
-	struct	stat	sb;
-	size_t	size
-		,	left;
-
+	char *buff;
+	size_t size
 ENTER_FUNC;
 	obj = GL_OBJ_NULL;
-	RequestBLOB(fp,BLOB_IMPORT);		ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		obj = RecvObject(fp);				ON_IO_ERROR(fp,badio);
-		if ((fpf = fopen(fname,"r")) != NULL) {
-			fstat(fileno(fpf),&sb);
-			left = sb.st_size;
-			SendLength(fp,left);
-			Flush(fp);
-			while (left > 0) {
-				size = (left > SIZE_BUFF) ? SIZE_BUFF : left;
-				fread(buff,size,1,fpf);
-				Send(fp,buff,size);			ON_IO_ERROR(fp,badio);
-				Flush(fp);
-				left -= size;
-			}
-			fclose(fpf);
-		} else {
-			dbgprintf("could not open for read: %s", fname);
-			SendLength(fp,0);
-			Flush(fp);
-		}
+	if (g_file_get_contents(fname,&buff,&size,NULL)) {
+		RequestImportBLOBMem(fp,buff,size);
 	}
-  badio:
 LEAVE_FUNC;
 	return	(obj);
 }
@@ -247,101 +137,10 @@ RequestImportBLOBMem(
 ENTER_FUNC;
 	obj = GL_OBJ_NULL;
 	RequestBLOB(fp,BLOB_IMPORT);	ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
-		SendLength(fp,size);
-		Send(fp,in,size);			ON_IO_ERROR(fp,badio);
-	}
+	SendLength(fp,size);
+	Send(fp,in,size);				ON_IO_ERROR(fp,badio);
+	obj = RecvObject(fp);			ON_IO_ERROR(fp,badio);
   badio:
 LEAVE_FUNC;
 	return	(obj);
-}
-
-extern	Bool
-RequestCheckBLOB(
-	NETFILE	*fp,
-	MonObjectType	obj)
-{
-	Bool	rc;
-
-ENTER_FUNC;
-	rc = FALSE;
-	RequestBLOB(fp,BLOB_CHECK);			ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		rc = TRUE;
-	}
-  badio:
-LEAVE_FUNC;
-	return	(rc);
-}
-
-extern	Bool
-RequestDestroyBLOB(
-	NETFILE	*fp,
-	MonObjectType	obj)
-{
-	Bool	rc;
-
-ENTER_FUNC;
-	rc = FALSE;
-	RequestBLOB(fp,BLOB_DESTROY);		ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		rc = TRUE;
-	}
-  badio:
-LEAVE_FUNC;
-	return	(rc);
-}
-
-extern	Bool
-RequestStartBLOB(
-	NETFILE	*fp)
-{
-	Bool	rc;
-
-ENTER_FUNC;
-	rc = FALSE;
-	RequestBLOB(fp,BLOB_START);			ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		rc = TRUE;
-	}
-  badio:
-LEAVE_FUNC;
-	return	(rc);
-}
-
-extern	Bool
-RequestCommitBLOB(
-	NETFILE	*fp)
-{
-	Bool	rc;
-
-ENTER_FUNC;
-	rc = FALSE;
-	RequestBLOB(fp,BLOB_COMMIT);		ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		rc = TRUE;
-	}
-  badio:
-LEAVE_FUNC;
-	return	(rc);
-}
-
-extern	Bool
-RequestAbortBLOB(
-	NETFILE	*fp)
-{
-	Bool	rc;
-
-ENTER_FUNC;
-	rc = FALSE;
-	RequestBLOB(fp,BLOB_ABORT);			ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == BLOB_OK) {
-		rc = TRUE;
-	}
-  badio:
-LEAVE_FUNC;
-	return	(rc);
 }
