@@ -25,6 +25,8 @@
 #include	"enum.h"
 #include	"comm.h"
 #include	"bytea.h"
+#include	"message.h"
+#include	"debug.h"
 
 #define DEFAULTSTATUS 403
 #define DEFAULTCONTENT "application/octet-stream"
@@ -364,11 +366,11 @@ file_to_bytea(
 		,	left;
 
 	if		(  stat(filename,&stbuf) != 0  ) {
-		fprintf(stderr,"%s: %s\n", filename, strerror(errno));
+		Warning("%s: %s\n", filename, strerror(errno));
 		return 0;
 	}
 	if (S_ISDIR(stbuf.st_mode)) {
-		fprintf(stderr,"%s: Is adirectory\n", filename);
+		Warning("%s: Is adirectory\n", filename);
 		return 0;
 	}
 	fsize = stbuf.st_size;
@@ -600,16 +602,16 @@ value_to_file(
 	size_t	size;
 
 	if ((fp = fopen(filename,"wb")) == NULL ) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
+		Warning("%s: %s\n", strerror(errno), filename);
 		return NULL;
 	}
 	size = fwrite(ValueByte(value),ValueByteLength(value),1,fp);
 	if ( size < 1) {
-		fprintf(stderr,"write error: %s\n",  filename);
+		Warning("write error: %s\n",  filename);
 		return NULL;
 	}
 	if (fclose(fp) != 0) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
+		Warning("%s: %s\n", strerror(errno), filename);
 		return NULL;
 	}
 	return filename;
@@ -627,15 +629,15 @@ monblob_export(
 	uuid_t u;
 
 	if (filename == NULL) {
-		fprintf(stderr,"filename null\n");
+		Warning("filename null\n");
 		return FALSE;
 	}
 	if (id == NULL) {
-		fprintf(stderr,"id null\n");
+		Warning("id null\n");
 		return FALSE;
 	}
 	if (uuid_parse(id, u) < 0) {
-		fprintf(stderr,"[%s] is invalid\n", id);
+		Warning("[%s] is invalid\n", id);
 		return FALSE;
 	}
 
@@ -645,7 +647,7 @@ monblob_export(
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
-		fprintf(stderr,"[%s] is not registered\n", id);
+		Warning("[%s] is not registered\n", id);
 		return FALSE;
 	}
 	value = GetItemLongName(ret, "file_data");
@@ -668,7 +670,7 @@ blob_export(
 
 	id = monblob_get_id(dbg,oid);
 	if (id == NULL) {
-		fprintf(stderr,"object[%d] not found\n",(int)oid);
+		Warning("object[%d] not found\n",(int)oid);
 		return FALSE;
 	}
 	ret = monblob_export(dbg,id,filename);
@@ -689,11 +691,11 @@ monblob_export_mem(
 	uuid_t u;
 
 	if (id == NULL) {
-		fprintf(stderr,"id null\n");
+		Warning("id null\n");
 		return FALSE;
 	}
 	if (uuid_parse(id, u) < 0) {
-		fprintf(stderr,"[%s] is invalid\n", id);
+		Warning("[%s] is invalid\n", id);
 		return FALSE;
 	}
 
@@ -703,14 +705,14 @@ monblob_export_mem(
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
-		fprintf(stderr,"[%s] is not registered\n", id);
+		Warning("[%s] is not registered\n", id);
 		return FALSE;
 	}
 	value = GetItemLongName(ret, "file_data");
 	retval = unescape_bytea(dbg, value);
-	*size = ValueByteLength(value);
+	*size = ValueByteLength(retval);
 	*buf = xmalloc(*size);
-	memcpy(*buf,ValueByte(value),*size);
+	memcpy(*buf,ValueByte(retval),*size);
 	FreeValueStruct(retval);
 	FreeValueStruct(ret);
 
@@ -729,7 +731,7 @@ blob_export_mem(
 
 	id = monblob_get_id(dbg,oid);
 	if (id == NULL) {
-		fprintf(stderr,"object[%d] not found\n",(int)oid);
+		Warning("object[%d] not found\n",(int)oid);
 		return FALSE;
 	}
 	ret = monblob_export_mem(dbg,id,buf,size);
@@ -881,7 +883,7 @@ monblob_get_id(
 		id = StrDup(ValueToString(val,dbg->coding));
 		FreeValueStruct(ret);
 	} else {
-		fprintf(stderr,"[%s] is not registered\n", id);
+		Warning("[%s] is not registered\n", id);
 	}
 	return id;
 }
@@ -900,12 +902,12 @@ monblob_get_blobid(
 		return 0;
 	}
 	sql = (char *)xmalloc(SIZE_BUFF);
-	sprintf(sql, "SELECT blobid FROM %s WHERE id = %s AND now() < importtime + CAST('%d days' AS INTERVAL);", MONBLOB, id, BLOBEXPIRE);
+	sprintf(sql, "SELECT blobid FROM %s WHERE id = '%s';", MONBLOB,id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (ret) {
 		val = GetItemLongName(ret,"blobid");
-		oid = ValueObjectId(val);
+		oid = (MonObjectType)ValueToInteger(val);
 		FreeValueStruct(ret);
 	}
 	return oid;
