@@ -38,7 +38,7 @@ typedef struct _monblob_struct {
 	size_t 	bytea_len;
 } monblob_struct;
 
-extern Bool monblob_setup(DBG_Struct *dbg);
+extern Bool monblob_setup(DBG_Struct *dbg, Bool recreate);
 extern char *new_id(void);
 extern monblob_struct *NewMonblob_struct(DBG_Struct *dbg, char *id, MonObjectType blobid);
 extern MonObjectType new_blobid(DBG_Struct	*dbg);

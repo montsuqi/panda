@@ -61,6 +61,14 @@ table_exist(
 }
 
 extern Bool
+index_exist(
+	DBG_Struct	*dbg,
+	char *index_name)
+{
+	return rel_exist(dbg, index_name, "i");
+}
+
+extern Bool
 sequence_exist(
 	DBG_Struct	*dbg,
 	char *sequence_name)

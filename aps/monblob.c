@@ -182,7 +182,7 @@ main(
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblob_setup(dbg);
+	monblob_setup(dbg, FALSE);
 
 	if (List) {
 		blob_list(dbg);

@@ -327,7 +327,7 @@ monsysdb_setup(
 		rc = delete_monbatch_log(dbg, DelDays);
 	}
 	if (rc) {
-		rc = monblob_setup(dbg);
+		rc = monblob_setup(dbg, fRECREATE);
 	}
 	if (CloseDB(dbg) != MCP_OK ) {
 		return FALSE;

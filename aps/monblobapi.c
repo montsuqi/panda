@@ -313,7 +313,7 @@ setup_only()
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblob_setup(dbg);
+	monblob_setup(dbg, FALSE);
 }
 
 extern	int
@@ -356,7 +356,7 @@ main(
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblob_setup(dbg);
+	monblob_setup(dbg, FALSE);
 	if (ImportFile) {
 		blob_import(dbg, ImportID, ImportFile, Socket);
 	} else {
