@@ -22,7 +22,6 @@
 #include	"queue.h"
 #include	"struct.h"
 #include	"net.h"
-#include	"blob.h"
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -40,7 +39,6 @@ GLOBAL	GHashTable					*ComponentHash;
 GLOBAL	volatile sig_atomic_t		fShutdown;
 GLOBAL	int							MaxTransactionRetry;
 GLOBAL	int							SesNum;
-GLOBAL	BLOB_State					*BlobState;
 
 #undef	GLOBAL
 

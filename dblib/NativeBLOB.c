@@ -39,48 +39,10 @@
 #include	"directory.h"
 #include	"wfcdata.h"
 #include	"dbgroup.h"
-#include	"blobreq.h"
-#include	"sysdata.h"
-#include	"comm.h"
-#include	"comms.h"
-#include	"redirect.h"
+#include	"monsys.h"
+#include	"bytea.h"
+#include	"dbops.h"
 #include	"debug.h"
-
-#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
-
-static	ValueStruct	*
-_NewBLOB(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	int			rc;
-	ValueStruct	*e;
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if (rec->type != RECORD_DB) {
-		rc = MCP_BAD_ARG;
-	} else {
-		if ((e = GetItemLongName(args,"object")) != NULL) {
-			if ((ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE) ) != GL_OBJ_NULL) {
-				ret = DuplicateValue(args,TRUE);
-				rc = MCP_OK;
-			} else {
-				rc = MCP_BAD_OTHER;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
-	}
-	if (ctrl != NULL) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
 
 static	ValueStruct	*
 _ExportBLOB(
@@ -89,32 +51,32 @@ _ExportBLOB(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	int			rc;
-	ValueStruct	*obj
-		,		*f;
-	ValueStruct	*ret;
+	ValueStruct	*ret,*file,*obj;
+	DBG_Struct *mondbg;
+	int rc;
+	char *filename;
 
 ENTER_FUNC;
 	ret = NULL;
-	if (rec->type != RECORD_DB) {
-		rc = MCP_BAD_ARG;
-	} else {
-		if (((obj = GetItemLongName(args,"object")) != NULL) &&
-			((f = GetItemLongName(args,"file")) != NULL)) {
-			if (RequestExportBLOB(NBCONN(dbg),ValueObjectId(obj),ValueToString(f,NULL))) {
-				rc = MCP_OK;
-			} else {
-				rc = MCP_BAD_OTHER;
-			}
+	file = GetItemLongName(args, "file");
+	obj  = GetItemLongName(args, "object");
+	if (file != NULL && obj != NULL) {
+		filename = ValueToString(file,dbg->coding);
+		mondbg = GetDBG_monsys();
+		if (blob_export(mondbg,ValueObjectId(obj),filename)) {
+			rc = MCP_OK;
 		} else {
-			rc = MCP_BAD_ARG;
+			rc = MCP_BAD_OTHER;
 		}
+		ret = DuplicateValue(args,TRUE);
+	} else {
+		rc = MCP_BAD_ARG;
 	}
 	if (ctrl != NULL) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
-	return	(ret);
+	return ret;
 }
 
 static	ValueStruct	*
@@ -124,36 +86,26 @@ _ImportBLOB(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	int			rc;
-	ValueStruct	*obj
-		,		*f;
-	ValueStruct	*ret;
-
+	ValueStruct	*file,*obj;
+	DBG_Struct *mondbg;
+	int rc;
+	char *filename;
 ENTER_FUNC;
-	ret = NULL;
-	if (rec->type != RECORD_DB) {
-		rc = MCP_BAD_ARG;
+	mondbg = GetDBG_monsys();
+	file = GetItemLongName(args,"file");
+	obj  = GetItemLongName(args,"object");
+	if (file != NULL && obj != NULL) {
+		filename = ValueToString(file,dbg->coding);
+		ValueObjectId(obj) = blob_import(mondbg,0,filename,"application/octet-stream",0);
+		rc = MCP_OK;
 	} else {
-		if (((obj = GetItemLongName(args,"object")) != NULL)
-			&&	((f = GetItemLongName(args,"file")) != NULL)) {
-			ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),
-												   ValueToString(f,NULL));
-			if (ValueObjectId(obj) != GL_OBJ_NULL) {
-                ValueIsNonNil(obj);
-				ret = DuplicateValue(args,TRUE);
-				rc = MCP_OK;
-			} else {
-				rc = MCP_BAD_OTHER;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
+		rc = MCP_BAD_ARG;
 	}
 	if (ctrl != NULL) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
-	return	(ret);
+	return DuplicateValue(args,TRUE);
 }
 
 static	ValueStruct	*
@@ -163,18 +115,20 @@ _CheckBLOB(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	int			rc;
+	int rc;
 	ValueStruct	*obj;
-	ValueStruct	*ret;
-
+	DBG_Struct *mondbg;
+	char *id;
 ENTER_FUNC;
-	ret = NULL;
 	if (rec->type != RECORD_DB) {
 		rc = MCP_BAD_ARG;
 	} else {
 		if ((obj = GetItemLongName(args,"object")) != NULL) {
-			if (RequestCheckBLOB(NBCONN(dbg),ValueObjectId(obj))) {
+			mondbg = GetDBG_monsys();
+			id = monblob_get_id(mondbg,ValueObjectId(obj));
+			if (id != NULL) {
 				rc = MCP_OK;
+				xfree(id);
 			} else {
 				rc = MCP_EOF;
 			}
@@ -186,7 +140,37 @@ ENTER_FUNC;
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
-	return	(ret);
+	return NULL;
+}
+
+static	ValueStruct	*
+_PersistBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct *mondbg;
+	ValueStruct *obj;
+	int rc;
+ENTER_FUNC;
+	if (rec->type != RECORD_DB) {
+		rc = MCP_BAD_ARG;
+	} else {
+		obj  = GetItemLongName(args,"object");
+		if (obj != NULL) {
+    		mondbg = GetDBG_monsys();
+			blob_persist(mondbg,ValueObjectId(obj));
+			rc = MCP_OK;
+		} else {
+			rc = MCP_BAD_ARG;
+		}
+	}
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
+	}
+LEAVE_FUNC;
+	return	NULL;
 }
 
 static	ValueStruct	*
@@ -196,21 +180,18 @@ _DestroyBLOB(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	int			rc;
-	ValueStruct	*obj;
-	ValueStruct	*ret;
-
+	DBG_Struct *mondbg;
+	ValueStruct *obj;
+	int rc;
 ENTER_FUNC;
-	ret = NULL;
 	if (rec->type != RECORD_DB) {
 		rc = MCP_BAD_ARG;
 	} else {
-		if ((obj = GetItemLongName(args,"object")) != NULL) {
-			if (RequestDestroyBLOB(NBCONN(dbg),ValueObjectId(obj))) {
-				rc = MCP_OK;
-			} else {
-				rc = MCP_EOF;
-			}
+		obj  = GetItemLongName(args,"object");
+		if (obj != NULL) {
+    		mondbg = GetDBG_monsys();
+			blob_delete(mondbg,ValueObjectId(obj));
+			rc = MCP_OK;
 		} else {
 			rc = MCP_BAD_ARG;
 		}
@@ -219,60 +200,20 @@ ENTER_FUNC;
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
-	return	(ret);
-}
-
-static	int
-_EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_QUERY(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return NULL;
-}
-
-static	ValueStruct	*
-_DBACCESS(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(ret);
+	return	NULL;
 }
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
-	{	"BLOBNEW",		_NewBLOB		},
 	{	"BLOBEXPORT",	_ExportBLOB		},
 	{	"BLOBIMPORT",	_ImportBLOB		},
 	{	"BLOBCHECK",	_CheckBLOB		},
+	{	"BLOBPERSIST",	_PersistBLOB	},
 	{	"BLOBDESTROY",	_DestroyBLOB	},
 
 	{	NULL,			NULL }

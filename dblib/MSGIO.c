@@ -42,15 +42,12 @@
 #include	"directory.h"
 #include	"wfcdata.h"
 #include	"dbgroup.h"
-#include	"blobreq.h"
-#include	"sysdata.h"
-#include	"comm.h"
-#include	"comms.h"
-#include	"redirect.h"
+#include	"monsys.h"
+#include	"bytea.h"
+#include	"dbops.h"
 #include	"message.h"
 #include	"debug.h"
 
-#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 #define CAST_BAD(arg)	(char*)(arg)
 
 typedef enum msg_type {
@@ -399,14 +396,16 @@ _ReadMSG(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct		*ret,*obj,*ctype,*data;
-	MSGTYPE			type;
-	unsigned char	*buff;
-	size_t			size;
+	ValueStruct	*ret,*obj,*ctype,*data;
+	MSGTYPE		type;
+	char		*buff;
+	size_t		size;
+	DBG_Struct	*mondbg;
 
 ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = MCP_BAD_OTHER;
+
 	if (rec->type != RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
@@ -432,7 +431,8 @@ ENTER_FUNC;
 		Warning("invalid content type[%s]",ValueToString(ctype,NULL));
 		return NULL;
 	}
-	if (RequestReadBLOB(NBCONN(dbg),ValueObjectId(obj),&buff,&size) > 0) {
+    mondbg = GetDBG_monsys();
+	if (blob_export_mem(mondbg,ValueObjectId(obj),&buff,&size)) {
 		ret = DuplicateValue(args,TRUE);
 		switch(type) {
 		case MSG_XML:
@@ -448,7 +448,7 @@ ENTER_FUNC;
 		xfree(buff);
 	} else {
 		Warning("RequestReadBLOB failure");
-		return NULL;
+		ret = NULL;
 	}
 LEAVE_FUNC;
 	return ret;
@@ -463,17 +463,12 @@ _WriteMSG_XML(
 	xmlDocPtr doc;
 	xmlNodePtr root,node;
 	unsigned char *buff;
-	int rc,oid,size;
-	size_t wrote;
+	int rc,size;
+	DBG_Struct *mondbg;
 
 	rc = MCP_BAD_OTHER;
 	obj = GetItemLongName(ret,"object");
 	val = GetRecordItem(ret,"data");
-	oid = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE);
-	if (oid == GL_OBJ_NULL) {
-		Warning("RequestNewBLOB failure");
-		return MCP_BAD_OTHER;
-	}
 	doc = xmlNewDoc("1.0");
 	root = xmlNewDocNode(doc, NULL, "xmlio2", NULL);
 	xmlDocSetRootElement(doc,root);
@@ -485,13 +480,12 @@ _WriteMSG_XML(
 	}
 	xmlDocDumpFormatMemoryEnc(doc,&buff,&size,"UTF-8",TRUE);
 	if (buff != NULL) {
-		wrote = RequestWriteBLOB(NBCONN(dbg),oid,(unsigned char *)buff,size);
-		if (wrote == size) {
-			ValueObjectId(obj) = oid;
+    	mondbg = GetDBG_monsys();
+		ValueObjectId(obj) = blob_import_mem(mondbg,0,"MSGIO.xml","application/xml",0,buff,size);
+		if (ValueObjectId(obj) != GL_OBJ_NULL) {
 			rc = MCP_OK;
 		} else {
-			Warning("RequestWriteBLOB failure");
-			ValueObjectId(obj) = GL_OBJ_NULL;
+			Warning("monblob_import_mem failure");
 			rc = MCP_BAD_OTHER;
 		}
 	}
@@ -506,28 +500,23 @@ _WriteMSG_JSON(
 	ValueStruct *ret)
 {
 	ValueStruct *val,*obj;
-	char *buff;
+	unsigned char *buff;
 	size_t size;
-	int rc,oid,wrote;
+	int rc;
+	DBG_Struct *mondbg;
 
 	obj = GetItemLongName(ret,"object");
 	val = GetRecordItem(ret,"data");
-	oid = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE);
-	if (oid == GL_OBJ_NULL) {
-		Warning("RequestNewBLOB failure");
-		return MCP_BAD_OTHER;
-	}
 	size = JSON_SizeValueOmmitString(NULL,val);
 	buff = g_malloc(size);
 	JSON_PackValueOmmitString(NULL,buff,val);
-	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
 
-	if (wrote == size) {
-		ValueObjectId(obj) = oid;
+    mondbg = GetDBG_monsys();
+	ValueObjectId(obj) = blob_import_mem(mondbg,0,"MSGIO.json","application/json",0,buff,size);
+	if (ValueObjectId(obj) != GL_OBJ_NULL) {
 		rc = MCP_OK;
 	} else {
-		Warning("does not match wrote size %ld:%ld",wrote,size);
-		ValueObjectId(obj) = GL_OBJ_NULL;
+		Warning("_WriteMSG_JSON failure");
 		rc = MCP_BAD_OTHER;
 	}
 	return rc;
@@ -587,80 +576,18 @@ LEAVE_FUNC;
 	return ret;
 }
 
-extern	ValueStruct	*
-MSG_BEGIN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	SYSDATA_DBSTART(dbg,ctrl);
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-MSG_END(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	SYSDATA_DBCOMMIT(dbg,ctrl);
-LEAVE_FUNC;
-	return	(NULL);
-}
-
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)MSG_BEGIN },
-	{	"DBCOMMIT",		(DB_FUNC)MSG_END },
+	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
 	{	"MSGREAD",		_ReadMSG		},
 	{	"MSGWRITE",		_WriteMSG		},
 
 	{	NULL,			NULL }
 };
-
-static	int
-_EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_QUERY(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return NULL;
-}
-
-static	ValueStruct	*
-_DBACCESS(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
 
 static	DB_Primitives	Core = {
 	_EXEC,
