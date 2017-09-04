@@ -194,6 +194,12 @@ main(
 		exit(1);
 	}
 
+	if (ExportID != NULL && OutputFile == NULL) {
+		printf("set -output\n");
+		PrintUsage(option,argv[0],NULL);
+		exit(1);
+	}
+
 	dbg = GetDBG_monsys();
 	dbg->dbt = NewNameHash();
 
@@ -227,7 +233,7 @@ main(
 			oid = (MonObjectType)atoi(DeleteID);
 			blob_delete(dbg, oid);
 		} else if (InfoID) {
-			fprintf(stderr,"not implement\n");
+			printf("not implement\n");
 			exit(1);
 		}
 	} else {
