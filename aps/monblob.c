@@ -27,13 +27,14 @@
 #include	"message.h"
 #include	"debug.h"
 
-static	char	*Directory;
-static	char	*ImportFile;
-static	char	*ExportID;
-static	Bool	List;
-static	char	*DeleteID;
-
-static	char	*OutputFile;
+static	char			*Directory;
+static	char			*ImportFile;
+static	Bool			List;
+static	Bool			Blob;
+static	char			*DeleteID;
+static	char			*InfoID;
+static	char			*ExportID;
+static	char			*OutputFile;
 static	unsigned int	LifeType;
 
 static	ARG_TABLE	option[] = {
@@ -43,10 +44,14 @@ static	ARG_TABLE	option[] = {
 		"Import file name"								},
 	{	"export",	STRING,		TRUE,	(void*)&ExportID,
 		"Export ID"										},
+	{	"blob",		BOOLEAN,	TRUE,	(void*)&Blob,
+		"user BLOB ID instead of ID"					},
 	{	"list",		BOOLEAN,	TRUE,	(void*)&List,
 		"list of imported file"							},
 	{	"delete",	STRING,		TRUE,	(void*)&DeleteID,
 		"Delete imported file"							},
+	{	"info",		STRING,		TRUE,	(void*)&InfoID,
+		"display Info for ID"							},
 	{	"output",	STRING,		TRUE,	(void*)&OutputFile,
 		"output file name"								},
 	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
@@ -57,12 +62,14 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	Directory = NULL;
-	ImportFile = NULL;
-	ExportID = NULL;
-	OutputFile = NULL;
-	LifeType = 1;
-	fTimer = TRUE;
+	Directory	= NULL;
+	ImportFile	= NULL;
+	ExportID	= NULL;
+	OutputFile	= NULL;
+	LifeType	= 1;
+	List		= FALSE;
+	Blob		= FALSE;
+	fTimer		= TRUE;
 }
 
 static	void
@@ -80,18 +87,6 @@ InitSystem(void)
 	}
 }
 
-static Bool
-_monblob_export(
-	DBG_Struct	*dbg,
-	char *id,
-	char *export_file)
-{
-	if (export_file == NULL) {
-		export_file = monblob_get_filename(dbg, id);
-	}
-	return monblob_export(dbg, id, export_file);
-}
-
 static char *
 valstr(
 	ValueStruct *value,
@@ -105,8 +100,9 @@ static void
 _list_print(
 	ValueStruct *value)
 {
-	printf("%s\t%s\t%s\n",
+	printf("%s\t%s\t%s\t%s\n",
 		   valstr(value,"id"),
+		   valstr(value,"blobid"),
 		   valstr(value,"importtime"),
 		   valstr(value,"filename"));
 }
@@ -143,7 +139,28 @@ blob_list(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, filename FROM %s ORDER BY importtime;", MONBLOB);
+			 "SELECT importtime, id, blobid, filename FROM %s ORDER BY importtime;", MONBLOB);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	list_print(ret);
+	FreeValueStruct(ret);
+	xfree(sql);
+	TransactionEnd(dbg);
+}
+
+static	void
+blob_info(
+	DBG_Struct	*dbg,
+	char *id)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	ValueStruct *ret;
+
+	TransactionStart(dbg);
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "SELECT importtime, id, blobid, filename, size FROM %s WHERE id = '%s';", MONBLOB,id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
@@ -158,8 +175,8 @@ main(
 {
 	DBG_Struct	*dbg;
 	char *id;
-	char *filename;
 	Bool rc;
+	MonObjectType oid;
 
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
@@ -183,25 +200,55 @@ main(
 
 	if (List) {
 		blob_list(dbg);
-	} else if (ImportFile) {
-		TransactionStart(dbg);
-		id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
-		TransactionEnd(dbg);
-		if ( !id ){
+		CloseDB(dbg);
+		return 0;
+	} 
+
+	if (Blob) {
+		if (ImportFile) {
+			TransactionStart(dbg);
+			oid = blob_import(dbg, 0, ImportFile, NULL, LifeType);
+			TransactionEnd(dbg);
+			printf("%d\n", (int)oid);
+		} else if (ExportID) {
+			TransactionStart(dbg);
+			oid = (MonObjectType)atoi(ExportID);
+			rc = blob_export(dbg, oid, OutputFile);
+			TransactionEnd(dbg);
+			if (!rc) {
+				exit(1);
+			}
+			printf("export: %s\n", OutputFile);
+		} else if (DeleteID){
+			oid = (MonObjectType)atoi(DeleteID);
+			blob_delete(dbg, oid);
+		} else if (InfoID) {
+			fprintf(stderr,"not implement\n");
 			exit(1);
 		}
-		printf("%s\n", id);
-		xfree(id);
-	} else if (ExportID) {
-		TransactionStart(dbg);
-		rc = _monblob_export(dbg, ExportID, OutputFile);
-		TransactionEnd(dbg);
-		if (!rc) {
-			exit(1);
+	} else {
+		if (ImportFile) {
+			TransactionStart(dbg);
+			id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
+			TransactionEnd(dbg);
+			if ( !id ){
+				exit(1);
+			}
+			printf("%s\n", id);
+			xfree(id);
+		} else if (ExportID) {
+			TransactionStart(dbg);
+			rc = monblob_export(dbg, ExportID, OutputFile);
+			TransactionEnd(dbg);
+			if (!rc) {
+				exit(1);
+			}
+			printf("export: %s\n", OutputFile);
+		} else if (DeleteID){
+			monblob_delete(dbg, DeleteID);
+		} else if (InfoID) {
+			blob_info(dbg,InfoID);
 		}
-		printf("export: %s\n", filename);
-	} else if (DeleteID){
-		monblob_delete(dbg, DeleteID);
 	}
 	CloseDB(dbg);
 

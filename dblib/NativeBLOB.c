@@ -96,7 +96,7 @@ ENTER_FUNC;
 	obj  = GetItemLongName(args,"object");
 	if (file != NULL && obj != NULL) {
 		filename = ValueToString(file,dbg->coding);
-		ValueObjectId(obj) = blob_import(mondbg,0,filename,"application/octet-stream",0);
+		ValueObjectId(obj) = blob_import(mondbg,0,filename,NULL,0);
 		rc = MCP_OK;
 	} else {
 		rc = MCP_BAD_ARG;
