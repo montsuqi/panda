@@ -102,11 +102,15 @@ static void
 _list_print(
 	ValueStruct *value)
 {
-	printf("%s\t%s\t%s\t%s\n",
+	printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		   valstr(value,"id"),
 		   valstr(value,"blobid"),
-		   valstr(value,"importtime"),
-		   valstr(value,"filename"));
+		   valstr(value,"filename"),
+		   valstr(value,"size"),
+		   valstr(value,"content_type"),
+		   valstr(value,"lifetype"),
+		   valstr(value,"status"),
+		   valstr(value,"importtime"));
 }
 
 static  void
@@ -141,7 +145,7 @@ blob_list(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename,size,content_type FROM %s ORDER BY importtime;", MONBLOB);
+			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s ORDER BY importtime;", MONBLOB);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
@@ -162,7 +166,7 @@ blob_info(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename,size,content_type FROM %s WHERE id = '%s';", MONBLOB,id);
+			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE id = '%s';", MONBLOB,id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
@@ -217,7 +221,7 @@ main(
 	if (Blob) {
 		if (ImportFile) {
 			TransactionStart(dbg);
-			oid = blob_import(dbg, 0, ImportFile, NULL, LifeType);
+			oid = blob_import(dbg, 0, ImportFile, NULL, 0);
 			TransactionEnd(dbg);
 			printf("%d\n", (int)oid);
 		} else if (ExportID) {
