@@ -25,6 +25,8 @@
 #include	"enum.h"
 #include	"comm.h"
 #include	"bytea.h"
+#include	"message.h"
+#include	"debug.h"
 
 #define DEFAULTSTATUS 403
 #define DEFAULTCONTENT "application/octet-stream"
@@ -276,7 +278,7 @@ new_id()
 }
 
 extern monblob_struct *
-NewMonblob_struct(
+new_monblob_struct(
 	DBG_Struct	*dbg,
 	char *id,
 	MonObjectType	obj)
@@ -305,7 +307,7 @@ NewMonblob_struct(
 }
 
 void
-FreeMonblob_struct(
+free_monblob_struct(
 	monblob_struct *monblob)
 {
 	if (!monblob){
@@ -326,7 +328,7 @@ FreeMonblob_struct(
 extern ValueStruct *
 escape_bytea(
 	DBG_Struct	*dbg,
-	unsigned char *src,
+	char *src,
 	size_t len)
 {
 	ValueStruct	*value, *retval;
@@ -364,11 +366,11 @@ file_to_bytea(
 		,	left;
 
 	if		(  stat(filename,&stbuf) != 0  ) {
-		fprintf(stderr,"%s: %s\n", filename, strerror(errno));
+		Warning("%s: %s\n", filename, strerror(errno));
 		return 0;
 	}
 	if (S_ISDIR(stbuf.st_mode)) {
-		fprintf(stderr,"%s: Is adirectory\n", filename);
+		Warning("%s: Is adirectory\n", filename);
 		return 0;
 	}
 	fsize = stbuf.st_size;
@@ -396,20 +398,25 @@ file_to_bytea(
 	return (int )fsize;
 }
 
-extern	char *
-monblob_import(
+static	char *
+_monblob_import(
 	DBG_Struct	*dbg,
 	char *id,
 	int persist,
 	char *filename,
 	char *content_type,
-	unsigned int lifetype)
+	unsigned int lifetype,
+	ValueStruct *value,
+	int size)
 {
 	monblob_struct *monblob;
-	ValueStruct *value = NULL;
 
-	monblob = NewMonblob_struct(dbg, id, 0);
-	monblob->filename = StrDup(basename(filename));
+	if (value == NULL) {
+		return NULL;
+	}
+
+	monblob = new_monblob_struct(dbg, id, 0);
+	monblob->filename = StrDup(basename((char*)filename));
 	monblob->lifetype = lifetype;
 	if (persist > 0 ) {
 		monblob->status = 200;
@@ -427,11 +434,7 @@ monblob_import(
 		xfree(monblob->content_type);
 		monblob->content_type = StrDup(content_type);
 	}
-	monblob->size = file_to_bytea(dbg, filename, &value);
-	if (value == NULL){
-		FreeMonblob_struct(monblob);
-		return NULL;
-	}
+	monblob->size = size;
 	monblob->bytea = ValueToString(value,NULL);
 	monblob->bytea_len = strlen(monblob->bytea);
 	monblob_insert(dbg, monblob, monblob_idcheck(dbg, monblob->id));
@@ -439,9 +442,88 @@ monblob_import(
 		id = StrDup(monblob->id);
 	}
 	FreeValueStruct(value);
-	FreeMonblob_struct(monblob);
+	free_monblob_struct(monblob);
 
-	return id;
+	return (char*)id;
+}
+
+extern	char *
+monblob_import(
+	DBG_Struct	*dbg,
+	char *id,
+	int persist,
+	char *filename,
+	char *content_type,
+	unsigned int lifetype)
+{
+	ValueStruct *value = NULL;
+	int size;
+
+	size = file_to_bytea(dbg, filename, &value);
+	if (value == NULL){
+		return NULL;
+	}
+	return _monblob_import(dbg,id,persist,filename,content_type,lifetype,value,size);
+}
+
+extern MonObjectType
+blob_import(
+	DBG_Struct	*dbg,
+	int persist,
+	char *filename,
+	char *content_type,
+	unsigned int lifetype)
+{
+	char *id;
+	MonObjectType oid;
+
+	id = monblob_import(dbg,NULL,persist,filename,content_type,lifetype);
+	oid = monblob_get_blobid(dbg,id);
+	if (id != NULL) {
+		xfree(id);
+	}
+	return oid;
+}
+
+extern	char *
+monblob_import_mem(
+	DBG_Struct	*dbg,
+	char *id,
+	int persist,
+	char *filename,
+	char *content_type,
+	unsigned int lifetype,
+	char *buf,
+	size_t size)
+{
+	ValueStruct *value;
+
+	value = escape_bytea(dbg,buf,size);
+	if (value == NULL){
+		return NULL;
+	}
+	return _monblob_import(dbg,id,persist,filename,content_type,lifetype,value,(int)size);
+}
+
+extern MonObjectType
+blob_import_mem(
+	DBG_Struct	*dbg,
+	int persist,
+	char *filename,
+	char *content_type,
+	unsigned int lifetype,
+	char *buf,
+	size_t size)
+{
+	char *id;
+	MonObjectType oid;
+
+	id = monblob_import_mem(dbg,NULL,persist,filename,content_type,lifetype,buf,size);
+	oid = monblob_get_blobid(dbg,id);
+	if (id != NULL) {
+		xfree(id);
+	}
+	return oid;
 }
 
 static size_t
@@ -520,22 +602,22 @@ value_to_file(
 	size_t	size;
 
 	if ((fp = fopen(filename,"wb")) == NULL ) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
+		Warning("%s: %s\n", strerror(errno), filename);
 		return NULL;
 	}
 	size = fwrite(ValueByte(value),ValueByteLength(value),1,fp);
 	if ( size < 1) {
-		fprintf(stderr,"write error: %s\n",  filename);
+		Warning("write error: %s\n",  filename);
 		return NULL;
 	}
 	if (fclose(fp) != 0) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
+		Warning("%s: %s\n", strerror(errno), filename);
 		return NULL;
 	}
 	return filename;
 }
 
-extern	char *
+extern Bool
 monblob_export(
 	DBG_Struct *dbg,
 	char *id,
@@ -546,9 +628,17 @@ monblob_export(
 	ValueStruct	*value, *ret, *retval;
 	uuid_t u;
 
+	if (filename == NULL) {
+		Warning("filename null\n");
+		return FALSE;
+	}
+	if (id == NULL) {
+		Warning("id null\n");
+		return FALSE;
+	}
 	if (uuid_parse(id, u) < 0) {
-		fprintf(stderr,"[%s] is invalid\n", id);
-		return NULL;
+		Warning("[%s] is invalid\n", id);
+		return FALSE;
 	}
 
 	sql = (char *)xmalloc(sql_len);
@@ -557,15 +647,96 @@ monblob_export(
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
-		fprintf(stderr,"[%s] is not registered\n", id);
-		return NULL;
+		Warning("[%s] is not registered\n", id);
+		return FALSE;
 	}
 	value = GetItemLongName(ret, "file_data");
 	retval = unescape_bytea(dbg, value);
 	filename = value_to_file(filename, retval);
 	FreeValueStruct(retval);
 	FreeValueStruct(ret);
-	return filename;
+
+	return TRUE;
+}
+
+extern Bool
+blob_export(
+	DBG_Struct *dbg,
+	MonObjectType oid,
+	char *filename)
+{
+	char *id;
+	Bool ret;
+
+	id = monblob_get_id(dbg,oid);
+	if (id == NULL) {
+		Warning("object[%d] not found\n",(int)oid);
+		return FALSE;
+	}
+	ret = monblob_export(dbg,id,filename);
+	xfree(id);
+	return ret;
+}
+
+extern Bool
+monblob_export_mem(
+	DBG_Struct *dbg,
+	char *id,
+	char **buf,
+	size_t *size)
+{
+	char *sql;
+	size_t sql_len = SIZE_SQL;
+	ValueStruct	*value, *ret, *retval;
+	uuid_t u;
+
+	if (id == NULL) {
+		Warning("id null\n");
+		return FALSE;
+	}
+	if (uuid_parse(id, u) < 0) {
+		Warning("[%s] is invalid\n", id);
+		return FALSE;
+	}
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (!ret) {
+		Warning("[%s] is not registered\n", id);
+		return FALSE;
+	}
+	value = GetItemLongName(ret, "file_data");
+	retval = unescape_bytea(dbg, value);
+	*size = ValueByteLength(retval);
+	*buf = xmalloc(*size);
+	memcpy(*buf,ValueByte(retval),*size);
+	FreeValueStruct(retval);
+	FreeValueStruct(ret);
+
+	return TRUE;
+}
+
+extern Bool
+blob_export_mem(
+	DBG_Struct *dbg,
+	MonObjectType oid,
+	char **buf,
+	size_t *size)
+{
+	char *id;
+	Bool ret;
+
+	id = monblob_get_id(dbg,oid);
+	if (id == NULL) {
+		Warning("object[%d] not found\n",(int)oid);
+		return FALSE;
+	}
+	ret = monblob_export_mem(dbg,id,buf,size);
+	xfree(id);
+	return ret;
 }
 
 static void
@@ -601,7 +772,7 @@ monblob_persist(
 {
 	monblob_struct *monblob;
 
-	monblob = NewMonblob_struct(dbg, id, 0);
+	monblob = new_monblob_struct(dbg, id, 0);
 	monblob->filename = StrDup(filename);
 	monblob->lifetype = lifetype;
 	if (monblob->lifetype == 0) {
@@ -613,8 +784,32 @@ monblob_persist(
 	monblob->content_type = StrDup(content_type);
 	monblob->status = 200;
 	monblob_update(dbg, monblob);
-	FreeMonblob_struct(monblob);
-	return;
+	free_monblob_struct(monblob);
+}
+
+/* update only lifetime */
+extern	void
+blob_persist(
+	DBG_Struct	*dbg,
+	MonObjectType oid)
+{
+	monblob_struct *monblob;
+	char *id;
+
+	id = monblob_get_id(dbg,oid);
+	if (id != NULL) {
+		monblob = new_monblob_struct(dbg, id, 0);
+		if (monblob->lifetype <= 0) {
+			monblob->lifetype = 1;
+		}
+		if (monblob->lifetype > 2) {
+			monblob->lifetype = 2;
+		}
+		monblob->status = 200;
+		monblob_update(dbg, monblob);
+		free_monblob_struct(monblob);
+		xfree(id);
+	}
 }
 
 extern	void
@@ -632,8 +827,22 @@ monblob_delete(
 	xfree(sql);
 }
 
+extern	void
+blob_delete(
+	DBG_Struct *dbg,
+	MonObjectType oid)
+{
+	char *id;
+
+	id = monblob_get_id(dbg,oid);
+	if (id != NULL) {
+		monblob_delete(dbg,id);
+		xfree(id);
+	}
+}
+
 extern	char *
-monblob_getfilename(
+monblob_get_filename(
 	DBG_Struct *dbg,
 	char *id)
 {
@@ -654,7 +863,7 @@ monblob_getfilename(
 }
 
 extern	char *
-monblob_getid(
+monblob_get_id(
 	DBG_Struct *dbg,
 	MonObjectType blobid)
 {
@@ -674,7 +883,32 @@ monblob_getid(
 		id = StrDup(ValueToString(val,dbg->coding));
 		FreeValueStruct(ret);
 	} else {
-		fprintf(stderr,"[%s] is not registered\n", id);
+		Warning("[%s] is not registered\n", id);
 	}
 	return id;
+}
+
+extern	MonObjectType
+monblob_get_blobid(
+	DBG_Struct *dbg,
+	char *id)
+{
+	char *sql;
+	ValueStruct	*ret, *val;
+	MonObjectType oid;
+
+	oid = 0;
+	if (id == NULL) {
+		return 0;
+	}
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT blobid FROM %s WHERE id = '%s';", MONBLOB,id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (ret) {
+		val = GetItemLongName(ret,"blobid");
+		oid = (MonObjectType)ValueToInteger(val);
+		FreeValueStruct(ret);
+	}
+	return oid;
 }

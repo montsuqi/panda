@@ -19,8 +19,7 @@
 lib_LTLIBRARIES = libpanda.la
 
 noinst_PROGRAMS		=		\
-	testnet					\
-	testblob
+	testnet
 
 libpanda_la_CFLAGS = $(AM_CFLAGS)
 libpanda_la_LDFLAGS	=			\
@@ -39,7 +38,6 @@ libpanda_la_SOURCES	=				\
 	SQLparser.c		SQLparser.h		\
 	auth.c			auth.h			\
 	authstub.c		authstub.h		\
-	blob.c			blob.h			\
 	blobreq.c		blobreq.h		\
 	comm.c			comm.h			\
 	comms.c			comms.h			\
@@ -80,7 +78,6 @@ libpandainclude_HEADERS =	\
 	SQLparser.h			\
 	auth.h				\
 	authstub.h			\
-	blob.h				\
 	blobreq.h			\
 	comm.h				\
 	comms.h				\
@@ -120,15 +117,6 @@ testnet_LDADD	= 	\
 
 testnet_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpanda.la
-
-testblob_LDADD	=						\
-	-lm									\
-	$(top_builddir)/libs/libpanda.la	\
-	$(P11_LIBS)							\
-	$(SSL_LIBS)							\
-	$(COMMON_LIBS)
-
-testblob_DEPENDENCIES	=
 
 EXTRA_DIST	=					\
 	option_parser.txt

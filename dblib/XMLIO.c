@@ -42,20 +42,15 @@
 #include	"directory.h"
 #include	"wfcdata.h"
 #include	"dbgroup.h"
-#include	"blobreq.h"
-#include	"sysdata.h"
-#include	"comm.h"
-#include	"comms.h"
-#include	"redirect.h"
+#include	"monsys.h"
+#include	"bytea.h"
+#include	"dbops.h"
 #include	"message.h"
 #include	"debug.h"
-
-#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
 static	xmlDocPtr	XMLDoc;
 static	int			XMLpos;
 static	int			XMLmode;
-static	int			XMLobj;
 
 enum xml_open_mode {
 	MODE_READ = 0,
@@ -70,18 +65,16 @@ _OpenXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	int			rc;
-	ValueStruct	*obj;
-	ValueStruct	*mode;
-	ValueStruct	*ret;
-	unsigned char		*buff;
-	size_t		size;
-	xmlNodePtr	root;
+	int				rc;
+	ValueStruct		*obj,*mode,*ret;
+	char			*buff;
+	size_t			size;
+	xmlNodePtr		root;
+	DBG_Struct		*mondbg;
 
 ENTER_FUNC;
 	XMLpos = 0;
 	XMLDoc = NULL;
-	XMLobj = GL_OBJ_NULL;
 	XMLmode = MODE_NONE;
 
 	rc = MCP_BAD_OTHER;
@@ -95,16 +88,14 @@ ENTER_FUNC;
 		) {
 			XMLmode = ValueInteger(mode);
 			if ( XMLmode == MODE_WRITE) {
-				if ((XMLobj = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE)) != GL_OBJ_NULL) {
-					ValueObjectId(obj) = XMLobj;
-					XMLDoc = xmlNewDoc("1.0");
-					root = xmlNewDocNode(XMLDoc, NULL, "data", NULL);
-					xmlDocSetRootElement(XMLDoc, root);
-					ret = DuplicateValue(args, TRUE);
-					rc = MCP_OK;
-				}
+				XMLDoc = xmlNewDoc("1.0");
+				root = xmlNewDocNode(XMLDoc, NULL, "data", NULL);
+				xmlDocSetRootElement(XMLDoc, root);
+				ret = DuplicateValue(args, TRUE);
+				rc = MCP_OK;
 			} else {
-				if(RequestReadBLOB(NBCONN(dbg),ValueObjectId(obj), &buff, &size) > 0) {
+    			mondbg = GetDBG_monsys();
+				if (blob_export_mem(mondbg,ValueObjectId(obj),&buff,&size)) {
 					if (size > 0) {
 						XMLDoc = xmlReadMemory(buff, size, "http://www.montsuqi.org/", NULL, XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
 						if (XMLDoc != NULL) {
@@ -132,11 +123,10 @@ _CloseXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*obj;
-	ValueStruct	*ret;
+	ValueStruct	*obj,*ret;
 	xmlChar 	*buff;
 	int			size;
-	int			wrote;
+	DBG_Struct	*mondbg;
 
 ENTER_FUNC;
 	buff = NULL;
@@ -156,12 +146,13 @@ ENTER_FUNC;
 	ctrl->rc = MCP_OK;
 	if (XMLmode == MODE_WRITE) {
 		xmlDocDumpFormatMemoryEnc(XMLDoc, &buff, &size, "UTF-8", 0);
-		if (buff != NULL && XMLobj != GL_OBJ_NULL) {
-			wrote = RequestWriteBLOB(NBCONN(dbg),XMLobj, (unsigned char *)buff, size);
-			if (wrote == size) {
-				ValueObjectId(obj) = XMLobj;
-				ret = DuplicateValue(ret, TRUE);
+		if (buff != NULL) {
+    		mondbg = GetDBG_monsys();
+			ValueObjectId(obj) = blob_import_mem(mondbg,0,"XMLIO.xml","application/xml",0,buff,size);
+			if (ValueObjectId(obj) != GL_OBJ_NULL) {
+				ctrl->rc = MCP_OK;
 			} else {
+				Warning("monblob_import_mem failure");
 				ctrl->rc = MCP_BAD_OTHER;
 			}
 		}
@@ -171,7 +162,6 @@ ENTER_FUNC;
 	XMLDoc = NULL;
 	XMLpos = 0;
 	XMLmode = MODE_NONE;
-	XMLobj = GL_OBJ_NULL;
 LEAVE_FUNC;
 	return	ret;
 }
@@ -433,10 +423,10 @@ LEAVE_FUNC;
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
 	{	"XMLOPEN",		_OpenXML		},
 	{	"XMLREAD",		_ReadXML		},
@@ -445,46 +435,6 @@ static	DB_OPS	Operations[] = {
 
 	{	NULL,			NULL }
 };
-
-static	int
-_EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_QUERY(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return NULL;
-}
-
-static	ValueStruct	*
-_DBACCESS(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
 
 static	DB_Primitives	Core = {
 	_EXEC,

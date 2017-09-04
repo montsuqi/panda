@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,15 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_BLOBREQ_H
-#define	_INC_BLOBREQ_H
+#ifndef	_DBOPS_H
+#define	_DBOPS_H
 
-#include	"libmondai.h"
-#include	"net.h"
-#include	"sysdatacom.h"
-
-extern	Bool			RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname);
-extern	Bool			RequestExportBLOBMem(NETFILE *fp,MonObjectType obj,char **,size_t*);
-extern	MonObjectType	RequestImportBLOB(NETFILE *fp, const char *fname);
-extern	MonObjectType	RequestImportBLOBMem(NETFILE *fp,char *,size_t);
-
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+extern	ValueStruct	* _DBOPEN(DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	ValueStruct	* _DBDISCONNECT( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	ValueStruct	* _DBSTART( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	ValueStruct	* _DBCOMMIT( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	int _EXEC(DBG_Struct *dbg,char *sql,Bool fRed,int usage);
+extern	ValueStruct	* _QUERY(DBG_Struct *dbg, char *sql,Bool fRed,int usage);
+extern	ValueStruct	* _DBACCESS(DBG_Struct *dbg,DBCOMM_CTRL *ctrl,RecordStruct *rec,ValueStruct *args);
 
 #endif
