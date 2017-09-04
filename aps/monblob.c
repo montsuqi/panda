@@ -65,6 +65,8 @@ SetDefault(void)
 	Directory	= NULL;
 	ImportFile	= NULL;
 	ExportID	= NULL;
+	DeleteID	= NULL;
+	InfoID		= NULL;
 	OutputFile	= NULL;
 	LifeType	= 1;
 	List		= FALSE;
@@ -139,7 +141,7 @@ blob_list(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename FROM %s ORDER BY importtime;", MONBLOB);
+			 "SELECT importtime, id, blobid, filename,size,content_type FROM %s ORDER BY importtime;", MONBLOB);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
@@ -160,7 +162,7 @@ blob_info(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename, size FROM %s WHERE id = '%s';", MONBLOB,id);
+			 "SELECT importtime, id, blobid, filename,size,content_type FROM %s WHERE id = '%s';", MONBLOB,id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
@@ -185,7 +187,9 @@ main(
 	if ( (ImportFile == NULL)
 		 && (ExportID == NULL)
 		 && (List == FALSE )
-		 && (DeleteID == NULL) ) {
+		 && (DeleteID == NULL) 
+		 && (InfoID == NULL) 
+		) {
 		PrintUsage(option,argv[0],NULL);
 		exit(1);
 	}
