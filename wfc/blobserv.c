@@ -95,7 +95,7 @@ BLOBIMPORT(
 	ssize = RecvLength(fp);					ON_IO_ERROR(fp,badio);
 	buff = xmalloc(ssize);
 	Recv(fp,buff,ssize);					ON_IO_ERROR(fp,badio);
-	obj = blob_import_mem(dbg,0,"","application/octet-stream",0,buff,ssize);
+	obj = blob_import_mem(dbg,0,"blobserv.bin",NULL,0,buff,ssize);
 	xfree(buff);
 	SendObject(fp,obj);						ON_IO_ERROR(fp,badio);
 badio:
