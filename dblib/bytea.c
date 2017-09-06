@@ -418,8 +418,8 @@ _monblob_import(
 	monblob = new_monblob_struct(dbg, id, 0);
 	monblob->filename = StrDup(basename((char*)filename));
 	monblob->lifetype = lifetype;
+	monblob->status = 200;
 	if (persist > 0 ) {
-		monblob->status = 200;
 		if (monblob->lifetype == 0) {
 			monblob->lifetype = 1;
 		}
@@ -911,4 +911,47 @@ monblob_get_blobid(
 		FreeValueStruct(ret);
 	}
 	return oid;
+}
+
+extern Bool
+monblob_check_id(
+	DBG_Struct *dbg,
+	char *id)
+{
+	char *sql;
+	ValueStruct	*ret;
+
+	if (id == NULL) {
+		return FALSE;
+	}
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT id FROM %s WHERE id = '%s' and status = 200;", MONBLOB,id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (ret) {
+		FreeValueStruct(ret);
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+extern Bool
+blob_check_id(
+	DBG_Struct *dbg,
+	MonObjectType oid)
+{
+	char *sql;
+	ValueStruct	*ret;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT id FROM %s WHERE blobid = '%d' and status = 200;", MONBLOB,(int)oid);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (ret) {
+		FreeValueStruct(ret);
+		return TRUE;
+	} else {
+		return FALSE;
+	}
 }

@@ -66,5 +66,7 @@ extern char*			monblob_get_id(DBG_Struct *dbg, MonObjectType blobid);
 extern MonObjectType 	monblob_get_blobid(DBG_Struct *dbg,char *id);
 extern void 			monblob_delete(DBG_Struct *dbg,char *id);
 extern void 			blob_delete(DBG_Struct *dbg,MonObjectType blobid);
+extern Bool				monblob_check_id(DBG_Struct *dbg,char *id);
+extern Bool				blob_check_id(DBG_Struct *dbg,MonObjectType oid);
 
 #endif

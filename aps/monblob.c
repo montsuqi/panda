@@ -33,6 +33,7 @@ static	Bool			List;
 static	Bool			Blob;
 static	char			*DeleteID;
 static	char			*InfoID;
+static	char			*CheckID;
 static	char			*ExportID;
 static	char			*OutputFile;
 static	unsigned int	LifeType;
@@ -51,7 +52,9 @@ static	ARG_TABLE	option[] = {
 	{	"delete",	STRING,		TRUE,	(void*)&DeleteID,
 		"Delete imported file"							},
 	{	"info",		STRING,		TRUE,	(void*)&InfoID,
-		"display Info for ID"							},
+		"display monblob Info"							},
+	{	"check",	STRING,		TRUE,	(void*)&CheckID,
+		"check enabled"									},
 	{	"output",	STRING,		TRUE,	(void*)&OutputFile,
 		"output file name"								},
 	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
@@ -67,6 +70,7 @@ SetDefault(void)
 	ExportID	= NULL;
 	DeleteID	= NULL;
 	InfoID		= NULL;
+	CheckID		= NULL;
 	OutputFile	= NULL;
 	LifeType	= 1;
 	List		= FALSE;
@@ -166,12 +170,61 @@ blob_info(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
+			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE blobid = '%s';", MONBLOB,id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	list_print(ret);
+	FreeValueStruct(ret);
+	xfree(sql);
+	TransactionEnd(dbg);
+}
+
+static	void
+monblob_info(
+	DBG_Struct	*dbg,
+	char *id)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	ValueStruct *ret;
+
+	TransactionStart(dbg);
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
 			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE id = '%s';", MONBLOB,id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
 	xfree(sql);
 	TransactionEnd(dbg);
+}
+
+static void
+_monblob_check_id(
+	DBG_Struct *dbg,
+	char *id)
+{
+	if (monblob_check_id(dbg,id)) {
+		printf("true");
+		exit(0);
+	} else {
+		printf("false");
+		exit(1);
+	}
+}
+
+static void
+_blob_check_id(
+	DBG_Struct *dbg,
+	char *id)
+{
+	if (blob_check_id(dbg,(MonObjectType)atoi(id))) {
+		printf("true");
+		exit(0);
+	} else {
+		printf("false");
+		exit(1);
+	}
 }
 
 extern	int
@@ -193,6 +246,7 @@ main(
 		 && (List == FALSE )
 		 && (DeleteID == NULL) 
 		 && (InfoID == NULL) 
+		 && (CheckID == NULL) 
 		) {
 		PrintUsage(option,argv[0],NULL);
 		exit(1);
@@ -237,8 +291,9 @@ main(
 			oid = (MonObjectType)atoi(DeleteID);
 			blob_delete(dbg, oid);
 		} else if (InfoID) {
-			printf("not implement\n");
-			exit(1);
+			blob_info(dbg,InfoID);
+		} else if (CheckID) {
+			_blob_check_id(dbg,CheckID);
 		}
 	} else {
 		if (ImportFile) {
@@ -261,7 +316,9 @@ main(
 		} else if (DeleteID){
 			monblob_delete(dbg, DeleteID);
 		} else if (InfoID) {
-			blob_info(dbg,InfoID);
+			monblob_info(dbg,InfoID);
+		} else if (CheckID) {
+			_monblob_check_id(dbg,CheckID);
 		}
 	}
 	CloseDB(dbg);
