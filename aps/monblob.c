@@ -54,7 +54,7 @@ static	ARG_TABLE	option[] = {
 	{	"info",		STRING,		TRUE,	(void*)&InfoID,
 		"display monblob Info"							},
 	{	"check",	STRING,		TRUE,	(void*)&CheckID,
-		"check enabled"									},
+		"check ID has data"								},
 	{	"output",	STRING,		TRUE,	(void*)&OutputFile,
 		"output file name"								},
 	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
