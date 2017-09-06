@@ -62,6 +62,8 @@ static	char	AppName[128];
 
 static	int		Sleep;
 static	Bool	fConnectRetry;
+static	char	*MiddleWareName;
+static	char	*MiddleWareVersion;
 
 static	void
 InitSystem(
@@ -70,9 +72,21 @@ InitSystem(
 	int		i;
 
 ENTER_FUNC;
+	MiddleWareName = getenv("__MCP_MIDDLEWARE_NAME");
+	if (MiddleWareName == NULL) {
+		MiddleWareName = "panda";
+	} 
+	MiddleWareVersion = getenv("__MCP_MIDDLEWARE_VERSION");
+	if (MiddleWareVersion == NULL) {
+		MiddleWareVersion = PACKAGE_VERSION;
+	} 
+	setenv("MCP_MIDDLEWARE_NAME",    MiddleWareName,1);
+	setenv("MCP_MIDDLEWARE_VERSION", MiddleWareVersion,1);
+
 	InitDirectory();
 	SetUpDirectory(Directory,name,"","",P_ALL);
 	setenv("MON_DIRECTORY_PATH", Directory, 1);
+
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		Error("LD \"%s\" not found.",name);
 	}
@@ -112,7 +126,6 @@ MakeProcessNode(void)
 {
 	ProcessNode	*node;
 	int			i;
-	char		*mwname,*mwver;
 	ValueStruct	*e;
 ENTER_FUNC;
 	node = New(ProcessNode);
@@ -129,17 +142,9 @@ ENTER_FUNC;
 		node->scrrec[i] = ThisLD->windows[i];
 	}
 
-	mwname = getenv("__MCP_MIDDLEWARE_NAME");
-	if (mwname == NULL) {
-		mwname = "panda";
-	} 
-	mwver = getenv("__MCP_MIDDLEWARE_VERSION");
-	if (mwver == NULL) {
-		mwver = PACKAGE_VERSION;
-	} 
 	e = node->mcprec->value;
-	SetValueString(GetItemLongName(e,"dc.middleware_name"),mwname,NULL);
-	SetValueString(GetItemLongName(e,"dc.middleware_version"),mwver,NULL);
+	SetValueString(GetItemLongName(e,"dc.middleware_name"),MiddleWareName,NULL);
+	SetValueString(GetItemLongName(e,"dc.middleware_version"),MiddleWareVersion,NULL);
 LEAVE_FUNC;
 	return	(node);
 }
@@ -173,10 +178,6 @@ SetMCPEnv(ValueStruct *val)
 		ValueStringPointer(GetItemLongName(val,"dc.host")),1);
 	setenv("MCP_TEMPDIR",
 		ValueStringPointer(GetItemLongName(val,"dc.tempdir")),1);
-	setenv("MCP_MIDDLEWARE_NAME",
-		ValueStringPointer(GetItemLongName(val,"dc.middleware_name")),1);
-	setenv("MCP_MIDDLEWARE_VERSION",
-		ValueStringPointer(GetItemLongName(val,"dc.middleware_version")),1);
 }
 
 static	int

@@ -47,49 +47,11 @@
 #include	"comms.h"
 #include	"sysdata.h"
 #include	"sysdbreq.h"
+#include	"dbops.h"
 #include	"message.h"
 #include	"debug.h"
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
-
-static	int
-_EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRedirect,
-	int			usage)
-{
-	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_QUERY(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return NULL;
-}
-
-static	ValueStruct	*
-_DBACCESS(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
 
 static	ValueStruct	*
 GETDATA(
@@ -235,6 +197,20 @@ LEAVE_FUNC;
 	return	ret;
 }
 
+static	ValueStruct	*
+DUMMY_OP(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+ENTER_FUNC;
+	Warning("not implement");
+	ctrl->rc = MCP_BAD_OTHER;
+LEAVE_FUNC;
+	return	NULL;
+}
+
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
 	{	"DBOPEN",			(DB_FUNC)SYSDATA_DBOPEN },
@@ -250,6 +226,21 @@ static	DB_OPS	Operations[] = {
 	{	NULL,				NULL }
 };
 
+static	DB_OPS	Operations_ginbee[] = {
+	/*	DB operations		*/
+	{	"DBOPEN",			(DB_FUNC)_DBOPEN },
+	{	"DBDISCONNECT",		(DB_FUNC)_DBDISCONNECT },
+	{	"DBSTART",			(DB_FUNC)_DBSTART },
+	{	"DBCOMMIT",			(DB_FUNC)_DBCOMMIT },
+	/*	table operations	*/
+	{	"GETDATA",			DUMMY_OP },
+	{	"SETMESSAGE",		DUMMY_OP },
+	{	"SETMESSAGEALL",	DUMMY_OP },
+	{	"SELECTALL",		DUMMY_OP },
+	{	"FETCH",			DUMMY_OP },
+	{	NULL,				NULL }
+};
+
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
@@ -260,5 +251,12 @@ static	DB_Primitives	Core = {
 extern	DB_Func	*
 InitSystem(void)
 {
-	return	(EnterDB_Function("System",Operations,DB_PARSER_NULL,&Core,"/*","*/\t"));
+	char *mw;
+
+	mw = getenv("MCP_MIDDLEWARE_NAME");
+	if (mw == NULL || strcmp("panda",mw)) {
+		return	(EnterDB_Function("System",Operations_ginbee,DB_PARSER_NULL,&Core,"/*","*/\t"));
+	} else {
+		return	(EnterDB_Function("System",Operations,DB_PARSER_NULL,&Core,"/*","*/\t"));
+	}
 }
