@@ -693,12 +693,14 @@ _DBDELETE(
 {
 	ValueStruct	*ret = NULL;
 	int pgid;
+	char *mw;
 
-	CheckBatchPg();
-
-	pgid = ValueToInteger(GetItemLongName(args,"pgid"));
-	ctrl->rc = killpg(pgid, SIGHUP);
-
+	mw = getenv("MCP_MIDDLEWARE_NAME");
+	if ((mw != NULL) && (!strcmp("panda",mw))) {
+		CheckBatchPg();
+		pgid = ValueToInteger(GetItemLongName(args,"pgid"));
+		ctrl->rc = killpg(pgid, SIGHUP);
+	}
 	return ret;
 }
 
