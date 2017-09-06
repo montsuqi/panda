@@ -45,51 +45,6 @@
 
 #include	"directory.h"
 
-static	void
-OnChildExit(
-	int		ec)
-{
-ENTER_FUNC;
-	while( waitpid(-1, NULL, WNOHANG) > 0 );
-LEAVE_FUNC;
-}
-
-static	void
-SetSigChild(void)
-{
-	struct sigaction sa, orgsa;
-
-	memset(&orgsa, 0, sizeof(struct sigaction));
-	sigaction(SIGCHLD, NULL, &orgsa);
-	if (orgsa.sa_handler == SIG_DFL) {
-		memset(&sa, 0, sizeof(struct sigaction));
-		sigemptyset (&sa.sa_mask);
-		sa.sa_flags |= SA_RESTART;
-		sa.sa_handler = (void *)OnChildExit;
-		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-			fprintf(stderr,"sigaction(2) failure\n");
-		}
-	}
-}
-
-static	void
-SetSigChildDFL(void)
-{
-	struct sigaction sa, orgsa;
-
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigaction(SIGCHLD, NULL, &orgsa);
-	if (orgsa.sa_handler != SIG_DFL) {
-		memset(&sa, 0, sizeof(struct sigaction));
-		sigemptyset (&sa.sa_mask);
-		sa.sa_handler = SIG_DFL;
-		sa.sa_flags |= SA_RESTART;
-		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-			fprintf(stderr,"sigaction(2) failure\n");
-		}
-	}
-}
-
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
@@ -155,6 +110,7 @@ _DBSTART(
 {
 	char 		**cmdv;
 ENTER_FUNC;
+	while( waitpid(-1, NULL, WNOHANG) > 0 );
 	dbg->count = 0;
 	cmdv = dbg->process[PROCESS_UPDATE].conn;
 	cmdv[dbg->count] = NULL;
@@ -235,7 +191,6 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	SetSigChild();
 	LBS_EmitEnd(dbg->checkData);
 	setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->checkData), 1);
 
@@ -312,7 +267,6 @@ ExSystem(
 	char	*argv[3];
 	extern	char	**environ;
 
-	SetSigChildDFL();
 	if		(  command  !=  NULL  ) {
 		if		(  ( pid = fork() )  <  0  )	{
 			rc = -1;

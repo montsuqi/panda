@@ -32,7 +32,6 @@
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
-#include	<signal.h>
 #include	<time.h>
 #include	<sys/time.h>
 
