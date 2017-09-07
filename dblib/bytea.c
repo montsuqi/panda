@@ -417,13 +417,10 @@ _monblob_import(
 	monblob = new_monblob_struct(dbg, id, 0);
 	monblob->filename = StrDup(basename((char*)filename));
 	monblob->lifetype = lifetype;
-	monblob->status = 200;
 	if (persist > 0 ) {
 		if (monblob->lifetype == 0) {
 			monblob->lifetype = 1;
 		}
-	} else {
-		monblob->status = DEFAULTSTATUS;
 	}
 	if (monblob->lifetype > 2) {
 		monblob->lifetype = 2;
@@ -436,6 +433,7 @@ _monblob_import(
 	monblob->size = size;
 	monblob->bytea = ValueToString(value,NULL);
 	monblob->bytea_len = strlen(monblob->bytea);
+	monblob->status = 200;
 	monblob_insert(dbg, monblob, monblob_idcheck(dbg, monblob->id));
 	if (monblob->id) {
 		id = StrDup(monblob->id);
