@@ -35,7 +35,6 @@
 #include "SQLparser.h"
 #include "auth.h"
 #include "authstub.h"
-#include "blob.h"
 #include "blobreq.h"
 #include "comm.h"
 #include "comms.h"
