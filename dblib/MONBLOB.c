@@ -60,8 +60,8 @@ _NewBLOB(
 	DBG_Struct		*mondbg;
 	monblob_struct *monblob;
 ENTER_FUNC;
-	monblob = new_monblob_struct(dbg, NULL, 0);
 	mondbg = GetDBG_monsys();
+	monblob = new_monblob_struct(mondbg, NULL, 0);
 	sql = xmalloc(sql_len);
 	snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, monblob->id , 503);
 	ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
