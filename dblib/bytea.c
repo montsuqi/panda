@@ -568,7 +568,6 @@ monblob_insert(
 	char	*sql, *sql_p;
 	size_t	sql_len = SIZE_SQL;
 	int rc;
-
 	sql = xmalloc(monblob->bytea_len + sql_len);
 	sql_p = sql;
 	if (update) {
@@ -584,7 +583,7 @@ monblob_insert(
 		sql_p += snprintf(sql_p, sql_len, "')");
 	}
 	snprintf(sql_p, sql_len, ";");
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
 
 	return (rc == MCP_OK);
