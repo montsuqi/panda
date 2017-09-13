@@ -588,7 +588,6 @@ _WriteXML_XML(
 	unsigned char *buff;
 	int rc,size;
 	DBG_Struct *mondbg;
-
 	rc = MCP_BAD_OTHER;
 	obj = GetItemLongName(ret,"object");
 	rname = GetItemLongName(ret,"recordname");
