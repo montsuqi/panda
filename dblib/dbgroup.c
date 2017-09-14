@@ -133,7 +133,6 @@ CheckErrCount(
 		dbg->errcount = 0;
 	} else if (ctrl->rc < 0) {
 		dbg->errcount++;
-		printf("errcount : %d\n", dbg->errcount);
 	}
 	if (dbg->errcount >= MAX_ERR_COUNT) {
 		Warning("Error count reached limit\n");
@@ -320,10 +319,12 @@ ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = 0;
 	start = GetNowTime();
+	dbgprintf("func  = [%s]", ctrl->func);
 	if		(  ctrl->fDBOperation  ) {
 		ctrl->rc = ExecFunction(NULL,ctrl->func, FALSE);
 	} else {
 		if (rec == NULL) {
+			Warning("bad function [%s:%s:%s] null record\n",ctrl->func, ctrl->rname,ctrl->pname);
 			ctrl->rc = MCP_BAD_FUNC;
 		} else {
 			dbg = RecordDB(rec)->dbg;
