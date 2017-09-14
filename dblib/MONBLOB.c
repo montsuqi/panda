@@ -229,7 +229,6 @@ _GETBLOBID(
 	ValueStruct	*obj, *val;
 	ValueStruct	*ret;
 	DBG_Struct		*mondbg;
-	MonObjectType blobid;
 	char *id = NULL;
 	int oid;
 
