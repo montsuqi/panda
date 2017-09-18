@@ -138,65 +138,38 @@ list_print(
 }
 
 static	void
-blob_list(
+blob_list_print(
 	DBG_Struct	*dbg)
 {
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
-	TransactionStart(dbg);
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s ORDER BY importtime;", MONBLOB);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	ret = blob_list(dbg);
 	list_print(ret);
 	FreeValueStruct(ret);
-	xfree(sql);
-	TransactionEnd(dbg);
 }
 
 static	void
-blob_info(
+monblob_info_print(
 	DBG_Struct	*dbg,
 	char *id)
 {
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
-	TransactionStart(dbg);
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE blobid = '%s';", MONBLOB,id);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	ret = monblob_info(dbg,id);
 	list_print(ret);
 	FreeValueStruct(ret);
-	xfree(sql);
-	TransactionEnd(dbg);
 }
 
 static	void
-monblob_info(
+blob_info_print(
 	DBG_Struct	*dbg,
 	char *id)
 {
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
-	TransactionStart(dbg);
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE id = '%s';", MONBLOB,id);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	ret = blob_info(dbg,id);
 	list_print(ret);
 	FreeValueStruct(ret);
-	xfree(sql);
-	TransactionEnd(dbg);
 }
 
 static void
@@ -244,9 +217,9 @@ main(
 	if ( (ImportFile == NULL)
 		 && (ExportID == NULL)
 		 && (List == FALSE )
-		 && (DeleteID == NULL) 
-		 && (InfoID == NULL) 
-		 && (CheckID == NULL) 
+		 && (DeleteID == NULL)
+		 && (InfoID == NULL)
+		 && (CheckID == NULL)
 		) {
 		PrintUsage(option,argv[0],NULL);
 		exit(1);
@@ -267,10 +240,10 @@ main(
 	monblob_setup(dbg, FALSE);
 
 	if (List) {
-		blob_list(dbg);
+		blob_list_print(dbg);
 		CloseDB(dbg);
 		return 0;
-	} 
+	}
 
 	if (Blob) {
 		if (ImportFile) {
@@ -291,7 +264,7 @@ main(
 			oid = (MonObjectType)atoi(DeleteID);
 			blob_delete(dbg, oid);
 		} else if (InfoID) {
-			blob_info(dbg,InfoID);
+			blob_info_print(dbg,InfoID);
 		} else if (CheckID) {
 			_blob_check_id(dbg,CheckID);
 		}
@@ -307,7 +280,7 @@ main(
 			xfree(id);
 		} else if (ExportID) {
 			TransactionStart(dbg);
-			rc = monblob_export(dbg, ExportID, OutputFile);
+			rc = monblob_export_file(dbg, ExportID, OutputFile);
 			TransactionEnd(dbg);
 			if (!rc) {
 				exit(1);
@@ -316,7 +289,7 @@ main(
 		} else if (DeleteID){
 			monblob_delete(dbg, DeleteID);
 		} else if (InfoID) {
-			monblob_info(dbg,InfoID);
+			monblob_info_print(dbg,InfoID);
 		} else if (CheckID) {
 			_monblob_check_id(dbg,CheckID);
 		}
