@@ -62,6 +62,7 @@ typedef enum xml_open_mode {
 
 typedef struct {
 	XMLMode mode;
+	MonObjectType obj;
 	int	pos;
 	int num;
 } XMLCtx;
@@ -398,6 +399,7 @@ ENTER_FUNC;
 	case MODE_WRITE_JSON:
 		break;
 	case MODE_READ:
+        ctx->obj = ValueObjectId(obj);
 		break;
 	default:
 		Warning("not reach here");
@@ -541,32 +543,27 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((obj = GetItemLongName(args,"object")) != NULL) {
-    	mondbg = GetDBG_monsys();
-		if (blob_export_mem(mondbg,ValueObjectId(obj),&buff,&size)) {
-			ret = DuplicateValue(args,TRUE);
-			if (size > 0) {
-				PrevMode = CheckFormat(buff,size);
-				switch(PrevMode) {
-				case MODE_WRITE_XML:
-					ctrl->rc = _ReadXML_XML(ret,buff,size);
-					break;
-				case MODE_WRITE_JSON:
-					ctrl->rc = _ReadXML_JSON(ret,buff,size);
-					break;
-				default:
-					Warning("not reach");
-					break;
-				}
+    mondbg = GetDBG_monsys();
+	if (blob_export_mem(mondbg,ctx->obj,&buff,&size)) {
+		ret = DuplicateValue(args,TRUE);
+		if (size > 0) {
+			PrevMode = CheckFormat(buff,size);
+			switch(PrevMode) {
+			case MODE_WRITE_XML:
+				ctrl->rc = _ReadXML_XML(ret,buff,size);
+				break;
+			case MODE_WRITE_JSON:
+				ctrl->rc = _ReadXML_JSON(ret,buff,size);
+				break;
+			default:
+				Warning("not reach");
+				break;
 			}
-			xfree(buff);
-		} else {
-			Warning("RequestReadBLOB failure");
-			ctrl->rc = MCP_BAD_OTHER;
-			return NULL;
 		}
+		xfree(buff);
 	} else {
-		ctrl->rc = MCP_BAD_ARG;
+		Warning("RequestReadBLOB failure");
+		ctrl->rc = MCP_BAD_OTHER;
 		return NULL;
 	}
 #ifdef TRACE
