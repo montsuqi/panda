@@ -152,7 +152,7 @@ BatchIDExist(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len, "SELECT 1 FROM %s WHERE id='%s';",
-				 BATCH_TABLE, id);
+				 BATCH_LOG_TABLE, id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (ret) {
