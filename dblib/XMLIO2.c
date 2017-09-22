@@ -645,8 +645,7 @@ _WriteXML_JSON(
 	json_object_object_add(root,rname,jobj);
 	buff = (char*)json_object_to_json_string(root);
 	size = strlen(buff);
-
-    mondbg = GetDBG_monsys();
+	mondbg = GetDBG_monsys();
 	ValueObjectId(obj) = blob_import_mem(mondbg,0,"XMLIO2.json","application/json",0,buff,size);
 	if (ValueObjectId(obj) != GL_OBJ_NULL) {
 		rc = MCP_OK;
