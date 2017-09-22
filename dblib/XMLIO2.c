@@ -122,7 +122,7 @@ ENTER_FUNC;
 	if (val == NULL || root == NULL) {
 		Warning("XMLNode2Value val = NULL || root = NULL");
 		return MCP_BAD_OTHER;
-	} 
+	}
 	type = xmlGetProp(root,"type");
 	if (type == NULL) {
 		Warning("XMLNode2Value root type is NULL");
@@ -270,7 +270,7 @@ ENTER_FUNC;
 	if (val == NULL || name == NULL) {
 		Warning("val or name = null,val:%p name:%p",val,name);
 		return NULL;
-	} 
+	}
 	node = NULL;
 	type = NULL;
 
@@ -278,22 +278,22 @@ ENTER_FUNC;
 	  case	GL_TYPE_INT:
 		type = "int";
 		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL)); 
+		xmlNodeAddContent(node, ValueToString(val,NULL));
 		break;
 	  case	GL_TYPE_FLOAT:
 		type = "float";
 		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL)); 
+		xmlNodeAddContent(node, ValueToString(val,NULL));
 		break;
 	  case	GL_TYPE_NUMBER:
 		type = "number";
 		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL)); 
+		xmlNodeAddContent(node, ValueToString(val,NULL));
 		break;
 	  case	GL_TYPE_BOOL:
 		type = ("bool");
 		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL)); 
+		xmlNodeAddContent(node, ValueToString(val,NULL));
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
@@ -303,7 +303,7 @@ ENTER_FUNC;
 		type = ("string");
 		if (!IsEmptyValue(val)) {
 			node =xmlNewNode(NULL, name);
-			xmlNodeAddContent(node, ValueToString(val,NULL)); 
+			xmlNodeAddContent(node, ValueToString(val,NULL));
 		}
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -313,7 +313,7 @@ ENTER_FUNC;
 				have_data = TRUE;
 			}
 		}
-		if (have_data) {	
+		if (have_data) {
 			type = ("array");
 			node =xmlNewNode(NULL, name);
         	childname = g_strdup_printf("%s_child",name);
@@ -335,12 +335,12 @@ ENTER_FUNC;
 				have_data = TRUE;
 			}
 		}
-		if (have_data) {	
+		if (have_data) {
 			type = ("record");
 			node =xmlNewNode(NULL, name);
 			for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
 				if (!IsEmptyValue(ValueRecordItem(val,i))) {
-					child = Value2XMLNode(ValueRecordName(val, i), 
+					child = Value2XMLNode(ValueRecordName(val, i),
 								ValueRecordItem(val,i));
 					if (child != NULL) {
 						xmlAddChildList(node, child);
@@ -369,7 +369,7 @@ _OpenXML(
 ENTER_FUNC;
 	ctrl->rc = MCP_BAD_ARG;
 	ret = NULL;
-	
+
 	if (rec->type  !=  RECORD_DB) {
 		return NULL;
 	}
@@ -520,7 +520,7 @@ _ReadXML(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*ret,*context,*obj;
+	ValueStruct	*ret,*context;
 	XMLCtx		*ctx;
 	char		*buff;
 	size_t		size;
@@ -543,7 +543,7 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-    mondbg = GetDBG_monsys();
+	mondbg = GetDBG_monsys();
 	if (blob_export_mem(mondbg,ctx->obj,&buff,&size)) {
 		ret = DuplicateValue(args,TRUE);
 		if (size > 0) {
@@ -645,7 +645,6 @@ _WriteXML_JSON(
 	json_object_object_add(root,rname,jobj);
 	buff = (char*)json_object_to_json_string(root);
 	size = strlen(buff);
-	json_object_put(root);
 
     mondbg = GetDBG_monsys();
 	ValueObjectId(obj) = blob_import_mem(mondbg,0,"XMLIO2.json","application/json",0,buff,size);
@@ -655,6 +654,7 @@ _WriteXML_JSON(
 		Warning("_WriteXML_JSON failure");
 		rc = MCP_BAD_OTHER;
 	}
+	json_object_put(root);
 	return rc;
 }
 
