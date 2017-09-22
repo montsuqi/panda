@@ -45,8 +45,8 @@ char *columns[][2] = {\
 
 static char *
 get_columns(
-		DBG_Struct      *dbg,
-		char *table_name)
+	DBG_Struct      *dbg,
+	char *table_name)
 {
 	char *sql;
 	ValueStruct	*retval = NULL;
@@ -64,8 +64,25 @@ get_columns(
 }
 
 static Bool
+check_id(
+	char *id)
+{
+	uuid_t u;
+
+	if (id == NULL) {
+		Warning("id is null\n");
+		return FALSE;
+	}
+	if (uuid_parse(id, u) < 0) {
+		Warning("[%s] is an invalid uuid\n", id);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static Bool
 migration_monblob(
-        DBG_Struct      *dbg)
+	DBG_Struct      *dbg)
 {
 	Bool rc;
 	char *sql;
@@ -89,7 +106,7 @@ migration_monblob(
 
 static Bool
 create_monblob(
-        DBG_Struct      *dbg)
+	DBG_Struct      *dbg)
 {
 	Bool rc;
 	char *sql, *p;
@@ -124,7 +141,7 @@ create_monblob(
 
 static Bool
 recreate_monblob(
-        DBG_Struct      *dbg)
+	DBG_Struct      *dbg)
 {
 	int rc;
 	char	sql[SIZE_SQL+1];
@@ -170,7 +187,7 @@ recreate_monblob(
 
 static Bool
 create_sequence(
-        DBG_Struct      *dbg)
+	DBG_Struct      *dbg)
 {
 	char *sql;
 	int rc;
@@ -187,7 +204,7 @@ monblob_setup(
 	DBG_Struct	*dbg,
 	Bool recreate)
 {
-	int 	rc;
+	int	rc;
 
 	TransactionStart(dbg);
 	if ( table_exist(dbg, MONBLOB) != TRUE) {
@@ -210,11 +227,14 @@ monblob_idcheck(
 {
 	Bool rc;
 	char *sql;
+	char *eid;
 	ValueStruct *ret;
 
 	sql = (char *)xmalloc(SIZE_BUFF);
-	sprintf(sql, "SELECT 1 FROM %s WHERE id='%s';", MONBLOB, id);
+	eid = Escape_monsys(dbg, id);
+	sprintf(sql, "SELECT 1 FROM %s WHERE id='%s';", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	if (ret) {
 		rc = TRUE;
@@ -228,7 +248,7 @@ monblob_idcheck(
 
 static void
 reset_blobid(
-		DBG_Struct	*dbg)
+	DBG_Struct	*dbg)
 {
 	char *sql;
 	ValueStruct *ret;
@@ -242,7 +262,7 @@ reset_blobid(
 
 extern MonObjectType
 new_blobid(
-		DBG_Struct	*dbg)
+	DBG_Struct	*dbg)
 {
 	MonObjectType blobid;
 	ValueStruct	*ret, *val;
@@ -530,12 +550,12 @@ insert_query(
 	monblob_struct *blob,
 	char *query)
 {
-	size_t 	size;
+	size_t size;
 	char *filename;
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, content_type, status, file_data) "\
+					"INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, content_type, status, file_data) "\
 					"VALUES ('%s', '%u', '%s', %d, '%s', %d, '%s', %d, '", \
 					MONBLOB, blob->id, (unsigned int)blob->blobid, blob->importtime, blob->lifetype, filename, blob->size,
 					blob->content_type, blob->status );
@@ -549,12 +569,12 @@ update_query(
 	monblob_struct *blob,
 	char *query)
 {
-	size_t 	size;
+	size_t size;
 	char *filename;
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "UPDATE %s SET blobid = '%u', importtime = '%s', lifetype = %d, filename = '%s', size = %d,  content_type = '%s', status = %d, file_data = '", \
+					"UPDATE %s SET blobid = '%u', importtime = '%s', lifetype = %d, filename = '%s', size = %d,  content_type = '%s', status = %d, file_data = '", \
 					MONBLOB, (unsigned int)blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, blob->content_type, blob->status );
 	xfree(filename);
 	return size;
@@ -595,8 +615,8 @@ value_to_file(
 	char *filename,
 	ValueStruct	*value)
 {
-	FILE	*fp;
-	size_t	size;
+	FILE *fp;
+	size_t size;
 
 	if ((fp = fopen(filename,"wb")) == NULL ) {
 		Warning("%s: %s\n", strerror(errno), filename);
@@ -620,13 +640,16 @@ monblob_export(
 	char *id)
 {
 	char	*sql;
+	char	*eid;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*ret;
 
 	sql = (char *)xmalloc(sql_len);
+	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
-			 "SELECT id, filename, content_type, status, file_data FROM %s WHERE id = '%s'", MONBLOB, id);
+			 "SELECT id, filename, content_type, status, file_data FROM %s WHERE id = '%s'", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	return ret;
 }
@@ -638,6 +661,7 @@ monblob_export_file(
 	char *filename)
 {
 	char	*sql;
+	char	*eid;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*value, *ret, *retval;
 	uuid_t u;
@@ -656,9 +680,11 @@ monblob_export_file(
 	}
 
 	sql = (char *)xmalloc(sql_len);
+	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, id);
+			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	if (!ret) {
 		Warning("[%s] is not registered\n", id);
@@ -700,23 +726,20 @@ monblob_export_mem(
 	size_t *size)
 {
 	char *sql;
+	char *eid;
 	size_t sql_len = SIZE_SQL;
 	ValueStruct	*value, *ret, *retval;
-	uuid_t u;
 
-	if (id == NULL) {
-		Warning("id null\n");
-		return FALSE;
-	}
-	if (uuid_parse(id, u) < 0) {
-		Warning("[%s] is invalid\n", id);
+	if (!check_id(id)) {
 		return FALSE;
 	}
 
 	sql = (char *)xmalloc(sql_len);
+	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, id);
+			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	if (!ret) {
 		Warning("[%s] is not registered\n", id);
@@ -758,19 +781,27 @@ monblob_update(
 	DBG_Struct	*dbg,
 	monblob_struct *monblob)
 {
-	char	*sql, *sql_p;
-	size_t	sql_len = SIZE_SQL;
+	char *sql, *sql_p;
+	char *filename, *content_type, *id;
+	size_t sql_len = SIZE_SQL;
+
 	sql = xmalloc(sql_len);
 	sql_p = sql;
 	sql_p += snprintf(sql_p, sql_len, "UPDATE %s SET lifetype = %d, ", MONBLOB, monblob->lifetype);
 	if ((monblob->filename != NULL) && (strlen(monblob->filename) > 0 )){
-		sql_p += snprintf(sql_p, sql_len, "filename = '%s', ",  monblob->filename);
+		filename = Escape_monsys(dbg, monblob->filename);
+		sql_p += snprintf(sql_p, sql_len, "filename = '%s', ",  filename);
+		xfree(filename);
 	}
 	if ((monblob->content_type != NULL) && (strlen(monblob->content_type) > 0 )){
+		content_type = Escape_monsys(dbg, monblob->content_type);
 		sql_p += snprintf(sql_p, sql_len, "content_type = '%s', ", monblob->content_type);
+		xfree(content_type);
 	}
 	sql_p += snprintf(sql_p, sql_len, "status = %d ", monblob->status);
-	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", monblob->id);
+	id = Escape_monsys(dbg, monblob->id);
+	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", id);
+	xfree(id);
 	snprintf(sql_p, sql_len, ";");
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
@@ -831,8 +862,8 @@ monblob_delete(
 	DBG_Struct	*dbg,
 	char *id)
 {
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
+	char *sql;
+	size_t sql_len = SIZE_SQL;
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
@@ -861,12 +892,15 @@ monblob_get_filename(
 	char *id)
 {
 	char *sql;
+	char *eid;
 	char *filename = NULL;
 	ValueStruct	*ret, *val;
 
 	sql = (char *)xmalloc(SIZE_BUFF);
-	sprintf(sql, "SELECT filename FROM %s WHERE id = '%s';", MONBLOB, id);
+	eid = Escape_monsys(dbg, id);
+	sprintf(sql, "SELECT filename FROM %s WHERE id = '%s';", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	if (ret) {
 		val = GetItemLongName(ret, "filename");
@@ -911,6 +945,7 @@ monblob_get_blobid(
 	char *id)
 {
 	char *sql;
+	char *eid;
 	ValueStruct	*ret, *val;
 	MonObjectType blobid;
 
@@ -919,8 +954,10 @@ monblob_get_blobid(
 		return 0;
 	}
 	sql = (char *)xmalloc(SIZE_BUFF);
-	sprintf(sql, "SELECT blobid FROM %s WHERE id = '%s';", MONBLOB,id);
+	eid = Escape_monsys(dbg, id);
+	sprintf(sql, "SELECT blobid FROM %s WHERE id = '%s';", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	if (ret) {
 		val = GetItemLongName(ret,"blobid");
@@ -936,14 +973,17 @@ monblob_check_id(
 	char *id)
 {
 	char *sql;
+	char *eid;
 	ValueStruct	*ret;
 
-	if (id == NULL) {
+	if (!check_id(id)) {
 		return FALSE;
 	}
 	sql = (char *)xmalloc(SIZE_BUFF);
-	sprintf(sql, "SELECT id FROM %s WHERE id = '%s' and status = 200;", MONBLOB,id);
+	eid = Escape_monsys(dbg, id);
+	sprintf(sql, "SELECT id FROM %s WHERE id = '%s' and status = 200;", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
 	xfree(sql);
 	if (ret) {
 		FreeValueStruct(ret);
@@ -977,8 +1017,8 @@ extern	ValueStruct *
 blob_list(
 	DBG_Struct	*dbg)
 {
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
+	char *sql;
+	size_t sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
 	TransactionStart(dbg);
@@ -996,37 +1036,44 @@ extern ValueStruct *
 monblob_info(
 	DBG_Struct	*dbg,
 	char *id)
- {
-	 char    *sql;
-	 size_t  sql_len = SIZE_SQL;
-	 ValueStruct *ret;
+{
+	char *sql;
+	char *eid;
+	size_t sql_len = SIZE_SQL;
+	ValueStruct *ret;
 
-	 TransactionStart(dbg);
-
-	 sql = (char *)xmalloc(sql_len);
-	 snprintf(sql, sql_len,
-			  "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE id = '%s';", MONBLOB,id);
-	 ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	 xfree(sql);
-	 TransactionEnd(dbg);
-	 return ret;
- }
+	if (!check_id(id)) {
+		return FALSE;
+	}
+	TransactionStart(dbg);
+	sql = (char *)xmalloc(sql_len);
+	eid = Escape_monsys(dbg, id);
+	snprintf(sql, sql_len,
+			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE id = '%s';", MONBLOB, eid);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eid);
+	xfree(sql);
+	TransactionEnd(dbg);
+	return ret;
+}
 
 extern	ValueStruct *
 blob_info(
 	DBG_Struct	*dbg,
-	char *id)
+	char *blobid)
 {
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
+	char *sql;
+	char *eblobid;
+	size_t sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
 	TransactionStart(dbg);
-
 	sql = (char *)xmalloc(sql_len);
+	eblobid = Escape_monsys(dbg, blobid);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE blobid = '%s';", MONBLOB,id);
+			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s WHERE blobid = '%s';", MONBLOB, eblobid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(eblobid);
 	xfree(sql);
 	TransactionEnd(dbg);
 	return ret;
