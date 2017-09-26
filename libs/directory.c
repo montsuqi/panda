@@ -48,6 +48,17 @@
 static	GHashTable	*DBMS_Table;
 static	char		*MONDB_LoadPath;
 
+typedef struct {
+	char *name;
+	char *type;
+} REQUIRED_DBG;
+
+REQUIRED_DBG RDBG[] = {
+	{"system", "System"},
+	{"monblob", "MONBLOB"},
+	{NULL,NULL}
+};
+
 static	DB_Func	*
 NewDB_Func(void)
 {
@@ -72,7 +83,7 @@ EnterDB_Function(
 	int		i;
 
 ENTER_FUNC;
-	dbgprintf("Enter [%s]\n",name); 
+	dbgprintf("Enter [%s]\n",name);
 	if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,name) )
 			   ==  NULL  ) {
 		func = NewDB_Func();
@@ -87,7 +98,7 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
-	return	(func); 
+	return	(func);
 }
 
 extern	void
@@ -187,8 +198,7 @@ ENTER_FUNC;
 	for	( i = 1 ; i < n ; i ++ ) {
 		if		(  ( gname = RecordDB(db[i])->gname )  !=  NULL  ) {
 			if		(  ( dbg = GetDBG(gname) )  ==  NULL  )	{
-				fprintf(stderr,"[%s]\n",gname);
-				Error("DB group not found");
+				Error("DB group [%s] not found", gname);
 			}
 			RecordDB(db[i])->dbg = dbg;
 			xfree(gname);
@@ -251,6 +261,22 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static void
+RequiredDBGROUP(void)
+{
+	int i;
+	DBG_Struct	*dbg;
+ENTER_FUNC;
+	for (i=0; RDBG[i].name != NULL; i++){
+		if	( g_hash_table_lookup(ThisEnv->DBG_Table,RDBG[i].name) == NULL ) {
+			dbg = NewDBG_Struct(RDBG[i].name);
+			dbg->type = StrDup(RDBG[i].type);
+			RegistDBG(dbg);
+		}
+	}
+LEAVE_FUNC;
+}
+
 extern	void
 SetUpDirectory(
 	char	*name,
@@ -263,6 +289,7 @@ SetUpDirectory(
 ENTER_FUNC;
 	InitDBG();
 	di = DI_Parser(name,ld,bd,db,parse_type);
+	RequiredDBGROUP();
 	if ( (parse_type >= P_ALL) && di ) {
 		AssignDBG(di);
 	}
