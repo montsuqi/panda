@@ -20,14 +20,15 @@ noinst_LIBRARIES = libpostgresqlutils.a libdblog.a
 pkglib_LTLIBRARIES = $(DB_OBJECTS)
 lib_LTLIBRARIES = libpandadb.la
 
-libpandadb_la_LIBADD =
-
+libpandadb_la_LIBADD = \
+	-luuid
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	dblib.h \
 	dbutils.h \
-	dbgroup.h
+	dbgroup.h \
+	bytea.h
 
 noinst_PROGRAMS		=
 
