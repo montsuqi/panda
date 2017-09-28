@@ -120,7 +120,7 @@ RequestImportBLOB(
 ENTER_FUNC;
 	obj = GL_OBJ_NULL;
 	if (g_file_get_contents(fname,&buff,&size,NULL)) {
-		RequestImportBLOBMem(fp,buff,size);
+		obj = RequestImportBLOBMem(fp,buff,size);
 	}
 LEAVE_FUNC;
 	return	(obj);
