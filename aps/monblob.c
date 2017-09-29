@@ -117,7 +117,7 @@ _list_print(
 		   valstr(value,"importtime"));
 }
 
-static  void
+static  Bool
 list_print(
 	ValueStruct *ret)
 {
@@ -125,7 +125,7 @@ list_print(
 	ValueStruct *value;
 
 	if (ret == NULL) {
-		return;
+		return FALSE;
 	}
 	if (ValueType(ret) == GL_TYPE_ARRAY) {
 		for	( i = 0 ; i < ValueArraySize(ret) ; i ++ ) {
@@ -135,41 +135,48 @@ list_print(
 	} else if (ValueType(ret) == GL_TYPE_RECORD) {
 		_list_print(ret);
 	}
+	return TRUE;
 }
 
-static	void
-blob_list_print(
+static	Bool
+all_list_print(
 	DBG_Struct	*dbg)
 {
+	Bool rc;
 	ValueStruct *ret;
 
 	ret = blob_list(dbg);
-	list_print(ret);
+	rc = list_print(ret);
 	FreeValueStruct(ret);
+	return rc;
 }
 
-static	void
+static	Bool
 monblob_info_print(
 	DBG_Struct	*dbg,
 	char *id)
 {
+	Bool rc;
 	ValueStruct *ret;
 
 	ret = monblob_info(dbg,id);
-	list_print(ret);
+	rc = list_print(ret);
 	FreeValueStruct(ret);
+	return rc;
 }
 
-static	void
+static	Bool
 blob_info_print(
 	DBG_Struct	*dbg,
 	char *id)
 {
+	Bool rc;
 	ValueStruct *ret;
 
 	ret = blob_info(dbg,id);
-	list_print(ret);
+	rc = list_print(ret);
 	FreeValueStruct(ret);
+	return rc;
 }
 
 static void
@@ -240,7 +247,9 @@ main(
 	monblob_setup(dbg, FALSE);
 
 	if (List) {
-		blob_list_print(dbg);
+		if (!all_list_print(dbg)){
+			exit(1);
+		}
 		CloseDB(dbg);
 		return 0;
 	}
@@ -262,9 +271,13 @@ main(
 			printf("export: %s\n", OutputFile);
 		} else if (DeleteID){
 			oid = (MonObjectType)atoi(DeleteID);
-			blob_delete(dbg, oid);
+			if (!blob_delete(dbg, oid)) {
+				exit(1);
+			}
 		} else if (InfoID) {
-			blob_info_print(dbg,InfoID);
+			if (!blob_info_print(dbg,InfoID)){
+				exit(1);
+			}
 		} else if (CheckID) {
 			_blob_check_id(dbg,CheckID);
 		}
@@ -287,9 +300,13 @@ main(
 			}
 			printf("export: %s\n", OutputFile);
 		} else if (DeleteID){
-			monblob_delete(dbg, DeleteID);
+			if (!monblob_delete(dbg, DeleteID)){
+				exit(1);
+			}
 		} else if (InfoID) {
-			monblob_info_print(dbg,InfoID);
+			if (!monblob_info_print(dbg,InfoID)){
+				exit(1);
+			}
 		} else if (CheckID) {
 			_monblob_check_id(dbg,CheckID);
 		}

@@ -56,6 +56,7 @@ _NewBLOB(
 {
 	ValueStruct	*ret, *val;
 	char *sql;
+	int rc;
 	size_t	sql_len = SIZE_SQL;
 	DBG_Struct		*mondbg;
 	monblob_struct *monblob;
@@ -64,7 +65,7 @@ ENTER_FUNC;
 	monblob = new_monblob_struct(mondbg, NULL, 0);
 	sql = xmalloc(sql_len);
 	snprintf(sql, sql_len, "INSERT INTO %s (id, blobid, status) VALUES('%s', '%u', '%d');", MONBLOB, monblob->id, (unsigned int)monblob->blobid, 503);
-	ExecDBOP(mondbg, sql, TRUE, DB_UPDATE);
+	rc = ExecDBOP(mondbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		SetValueString(val, monblob->id, dbg->coding);
@@ -73,8 +74,11 @@ ENTER_FUNC;
 		ValueObjectId(val) = (MonObjectType)monblob->blobid;
 	}
 	free_monblob_struct(monblob);
-	ret = DuplicateValue(args,TRUE);
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
+	}
 LEAVE_FUNC;
+	ret = DuplicateValue(args,TRUE);
 	return	(ret);
 }
 
@@ -93,6 +97,7 @@ _ImportBLOB(
 	int	persist = 0;
 	char *filename = NULL;
 	char *content_type = NULL;
+	int rc;
 
 ENTER_FUNC;
 	mondbg = GetDBG_monsys();
@@ -112,9 +117,15 @@ ENTER_FUNC;
 	if ((rid != NULL) && (val = GetItemLongName(args, "id")) != NULL) {
 		SetValueString(val, rid, dbg->coding);
 		xfree(rid);
+		rc = MCP_OK;
+	} else {
+		rc = MCP_BAD_OTHER;
 	}
-	ret = DuplicateValue(args,TRUE);
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
+	}
 LEAVE_FUNC;
+	ret = DuplicateValue(args,TRUE);
 	return	(ret);
 }
 
@@ -130,6 +141,7 @@ _ExportBLOB(
 	DBG_Struct		*mondbg;
 	char *id = NULL;
 	char *filename = NULL;
+	int rc;
 
 ENTER_FUNC;
 	mondbg = GetDBG_monsys();
@@ -139,9 +151,16 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
-	monblob_export_file(mondbg, id, filename);
-	ret = DuplicateValue(args,TRUE);
+	if (monblob_export_file(mondbg, id, filename)) {
+		rc = MCP_OK;
+	} else {
+		rc = MCP_BAD_OTHER;
+	}
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
+	}
 LEAVE_FUNC;
+	ret = DuplicateValue(args,TRUE);
 	return	(ret);
 }
 
@@ -158,21 +177,30 @@ _PersistBLOB(
 	char *id = NULL;
 	char *filename = NULL;
 	char *content_type = NULL;
+	int rc;
 
 ENTER_FUNC;
 	mondbg = GetDBG_monsys();
+	rc = MCP_BAD_ARG;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		id = ValueToString(val,dbg->coding);
+		if ((val = GetItemLongName(args, "filename")) != NULL) {
+			filename = ValueToString(val,dbg->coding);
+		}
+		if ((val = GetItemLongName(args, "content_type")) != NULL) {
+			content_type = ValueToString(val,dbg->coding);
+		}
+		if (monblob_persist(mondbg, id, filename, content_type, 1)) {
+			rc = MCP_OK;
+		} else {
+			rc = MCP_BAD_OTHER;
+		}
 	}
-	if ((val = GetItemLongName(args, "filename")) != NULL) {
-		filename = ValueToString(val,dbg->coding);
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
 	}
-	if ((val = GetItemLongName(args, "content_type")) != NULL) {
-		content_type = ValueToString(val,dbg->coding);
-	}
-	monblob_persist(mondbg, id, filename, content_type, 1);
-	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
+	ret = DuplicateValue(args,TRUE);
 	return	(ret);
 }
 
@@ -267,12 +295,21 @@ _DestroyBLOB(
 	ValueStruct	*ret;
 	ValueStruct	*val;
 	char *id;
+	int rc;
 
 ENTER_FUNC;
 	mondbg = GetDBG_monsys();
+	rc = MCP_BAD_ARG;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		id = ValueToString(val,dbg->coding);
-		monblob_delete(mondbg, id);
+		if (monblob_delete(mondbg, id)) {
+			rc = MCP_OK;
+		} else {
+			rc = MCP_BAD_OTHER;
+		}
+	}
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
 	}
 	ret = NULL;
 LEAVE_FUNC;
