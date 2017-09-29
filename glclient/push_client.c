@@ -431,6 +431,7 @@ main(
 	int argc,
 	char **argv)
 {
+	char path[PATH_MAX];
 	char *dname,*log;
 	GOptionContext *ctx;
 	struct sigaction sa;
@@ -443,7 +444,10 @@ main(
 		fprintf(stderr,"sigaction(2) failure: %s",strerror(errno));
 	}
 
-	dname = dirname(argv[0]);
+	if (readlink("/proc/self/exe", path, sizeof(path)) <= 0){
+		exit(1);
+	}
+	dname = dirname(path);
 	GLPushAction    = g_strdup_printf("%s/gl-push-action",dname);
 
 	ctx = g_option_context_new("");
