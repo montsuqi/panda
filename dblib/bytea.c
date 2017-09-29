@@ -776,11 +776,12 @@ blob_export_mem(
 	return ret;
 }
 
-static void
+static Bool
 monblob_update(
 	DBG_Struct	*dbg,
 	monblob_struct *monblob)
 {
+	Bool rc;
 	char *sql, *sql_p;
 	char *filename, *content_type, *id;
 	size_t sql_len = SIZE_SQL;
@@ -803,11 +804,12 @@ monblob_update(
 	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", id);
 	xfree(id);
 	snprintf(sql_p, sql_len, ";");
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
+	return (rc == MCP_OK);
 }
 
-extern	void
+extern	int
 monblob_persist(
 	DBG_Struct	*dbg,
 	char *id,
@@ -815,6 +817,7 @@ monblob_persist(
 	char *content_type,
 	unsigned int lifetype)
 {
+	int rc;
 	monblob_struct *monblob;
 
 	monblob = new_monblob_struct(dbg, id, 0);
@@ -828,16 +831,18 @@ monblob_persist(
 	}
 	monblob->content_type = StrDup(content_type);
 	monblob->status = 200;
-	monblob_update(dbg, monblob);
+	rc = monblob_update(dbg, monblob);
 	free_monblob_struct(monblob);
+	return rc;
 }
 
 /* update only lifetime */
-extern	void
+extern	Bool
 blob_persist(
 	DBG_Struct	*dbg,
 	MonObjectType blobid)
 {
+	Bool rc;
 	monblob_struct *monblob;
 	char *id;
 
@@ -851,39 +856,48 @@ blob_persist(
 			monblob->lifetype = 2;
 		}
 		monblob->status = 200;
-		monblob_update(dbg, monblob);
+		rc = monblob_update(dbg, monblob);
 		free_monblob_struct(monblob);
 		xfree(id);
+	} else {
+		rc = FALSE;
 	}
+	return rc;
 }
 
-extern	void
+extern	Bool
 monblob_delete(
 	DBG_Struct	*dbg,
 	char *id)
 {
+	Bool rc;
 	char *sql;
 	size_t sql_len = SIZE_SQL;
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
 			 "DELETE FROM %s WHERE id = '%s'", MONBLOB, id);
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
+	return (rc == MCP_OK);
 }
 
-extern	void
+extern	Bool
 blob_delete(
 	DBG_Struct *dbg,
 	MonObjectType blobid)
 {
+	Bool rc;
 	char *id;
 
 	id = monblob_get_id(dbg,blobid);
 	if (id != NULL) {
-		monblob_delete(dbg,id);
+		rc = monblob_delete(dbg,id);
 		xfree(id);
+	} else {
+		rc = FALSE;
 	}
+	return rc;
 }
 
 extern	char *
