@@ -28,6 +28,7 @@ libpandadbinclude_HEADERS =	\
 	dblib.h \
 	dbutils.h \
 	dbgroup.h \
+	monsys.h \
 	bytea.h
 
 noinst_PROGRAMS		=
