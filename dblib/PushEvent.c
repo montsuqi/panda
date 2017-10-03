@@ -58,15 +58,8 @@ ENTER_FUNC;
 	if (ctrl == NULL) {
 		return NULL;
 	}
-	if (rec->type  !=  RECORD_DB) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if (PushEvent_via_ValueStruct(args)) {
-		ctrl->rc = MCP_OK;
-	} else {
-		ctrl->rc = MCP_BAD_OTHER;
-	}
+	PushEvent_via_ValueStruct(args);
+	ctrl->rc = MCP_OK;
 LEAVE_FUNC;
 	return	NULL;
 }
