@@ -356,6 +356,7 @@ main(
 {
 	GOptionContext *ctx;
 	struct sigaction sa;
+	char path[PATH_MAX];
 	char *dname;
 
 	memset(&sa, 0, sizeof(struct sigaction));
@@ -369,7 +370,10 @@ main(
 	g_option_context_add_main_entries(ctx, entries, NULL);
 	g_option_context_parse(ctx,&argc,&argv,NULL);
 
-	dname = dirname(argv[0]);
+	if (readlink("/proc/self/exe", path, sizeof(path)) <= 0){
+		exit(1);
+	}
+	dname = dirname(path);
 	PushClientCMD = g_strdup_printf("%s/gl-push-client",dname);
 
 	InitSystem();
