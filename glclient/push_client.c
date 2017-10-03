@@ -444,12 +444,6 @@ main(
 		fprintf(stderr,"sigaction(2) failure: %s",strerror(errno));
 	}
 
-	if (readlink("/proc/self/exe", path, sizeof(path)) <= 0){
-		exit(1);
-	}
-	dname = dirname(path);
-	GLPushAction    = g_strdup_printf("%s/gl-push-action",dname);
-
 	ctx = g_option_context_new("");
 	g_option_context_add_main_entries(ctx, entries, NULL);
 	g_option_context_parse(ctx,&argc,&argv,NULL);
@@ -459,6 +453,16 @@ main(
 		InitLogger_via_FileName(log);
 	} else {
 		InitLogger("gl-push-client");
+	}
+
+	if (readlink("/proc/self/exe", path, sizeof(path)) <= 0){
+		exit(1);
+	}
+	dname = dirname(path);
+	GLPushAction    = g_strdup_printf("%s/gl-push-action",dname);
+	if (!g_file_test(GLPushAction,G_FILE_TEST_IS_EXECUTABLE)) {
+		Warning("%s does not exists",GLPushAction);
+		exit(1);
 	}
 
 	PusherURI = getenv("GLPUSH_PUSHER_URI");

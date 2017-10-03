@@ -109,15 +109,19 @@ StartPushClient()
 		setenv("GLPUSH_CA_FILE"           ,CAFile,1);
 	}
 
-	pid = fork();
-	if (pid == 0) {
-		execl(PushClientCMD,PushClientCMD,NULL);
-	} else if (pid < 0) {
-		Warning("fork error:%s",strerror(errno));
+	if (g_file_test(PushClientCMD,G_FILE_TEST_IS_EXECUTABLE)) {
+		pid = fork();
+		if (pid == 0) {
+			execl(PushClientCMD,PushClientCMD,NULL);
+		} else if (pid < 0) {
+			Warning("fork error:%s",strerror(errno));
+		} else {
+			Info("%s(%d) fork",PushClientCMD,(int)pid);
+			PushClientPID = pid;
+			UsePushClient = TRUE;
+		}
 	} else {
-		Info("%s(%d) fork",PushClientCMD,(int)pid);
-		PushClientPID = pid;
-		UsePushClient = TRUE;
+		Warning("%s does not exists",PushClientCMD);
 	}
 }
 
