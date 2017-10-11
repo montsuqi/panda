@@ -36,12 +36,14 @@ GLOBAL	DI_Struct	*ThisEnv;
 #define	AUDITLOG_TABLE	"montsuqi_auditlog"
 
 extern	void		InitDirectory(void);
+extern	void		InitDBG(void);
 extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db, Bool parse_ld);
 extern	LD_Struct	*SearchWindowToLD(char *wname);
 extern	LD_Struct	*GetLD(char *name);
 extern	BD_Struct	*GetBD(char *name);
 extern	DBD_Struct	*GetDBD(char *name);
 extern	DBG_Struct	*GetDBG(char *name);
+extern	void		LoadDBG(DBG_Struct *dbg);
 extern	void		RegistDBG(DBG_Struct *dbg);
 extern	void		SetDBGPath(char *path);
 extern	DB_Func		*EnterDB_Function(char *name, DB_OPS *ops, int type,

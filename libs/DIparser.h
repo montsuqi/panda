@@ -42,5 +42,7 @@
 extern	void		DI_ParserInit(void);
 
 extern	DBG_Struct	*NewDBG_Struct(char	*name);
+extern	void		FreeDBG_Struct(DBG_Struct *dbg);
+
 extern	DI_Struct	*DI_Parser(char *name, char *ld, char *bd, char *db, Bool parse_ld);
 #endif

@@ -765,6 +765,16 @@ NewDBG_Struct(
 	return	(dbg);
 }
 
+extern	void
+FreeDBG_Struct(
+	DBG_Struct	*dbg)
+{
+	FreeLBS(dbg->checkData);
+	FreeLBS(dbg->last_query);
+	xfree(dbg->name);
+	xfree(dbg);
+}
+
 static	void
 ParDB_Server(
 	int			usage,

@@ -647,7 +647,7 @@ monblob_export(
 	sql = (char *)xmalloc(sql_len);
 	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
-			 "SELECT id, filename, content_type, status, file_data FROM %s WHERE id = '%s'", MONBLOB, eid);
+			 "SELECT id, filename, content_type, status, file_data FROM %s WHERE id = '%s';", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(eid);
 	xfree(sql);
@@ -682,7 +682,7 @@ monblob_export_file(
 	sql = (char *)xmalloc(sql_len);
 	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, eid);
+			 "SELECT file_data FROM %s WHERE id = '%s';", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(eid);
 	xfree(sql);
@@ -737,7 +737,7 @@ monblob_export_mem(
 	sql = (char *)xmalloc(sql_len);
 	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, eid);
+			 "SELECT file_data FROM %s WHERE id = '%s';", MONBLOB, eid);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(eid);
 	xfree(sql);

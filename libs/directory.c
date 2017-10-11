@@ -125,7 +125,7 @@ GetDBG(
 	return	(dbg);
 }
 
-static	void
+extern	void
 LoadDBG(
 	DBG_Struct	*dbg)
 {
@@ -250,7 +250,7 @@ SetDBGPath(
 	MONDB_LoadPath = path;
 }
 
-static	void
+extern	void
 InitDBG(void)
 {
 ENTER_FUNC;
