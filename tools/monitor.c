@@ -314,6 +314,7 @@ ENTER_FUNC;
 	ProcessList = NULL;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	setenv("MON_DIRECTORY_PATH", Directory, 1);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
