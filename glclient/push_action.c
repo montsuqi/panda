@@ -31,17 +31,9 @@
 static void
 _Print()
 {
-	char *ConfigNum,*Title,*Printer,*ShowDialog,*oid;
-	int n;
+	char *Title,*Printer,*ShowDialog,*oid;
 	gboolean show;
 	LargeByteString *lbs;
-
-	ConfigNum = getenv("GLPUSH_CONFIG_NUMBER");
-	if (ConfigNum == NULL) {
-		n = 0;
-	} else {
-		n = atoi(ConfigNum);
-	}
 
 	Title = getenv("GLPUSH_TITLE");
 	if (Title == NULL) {
@@ -101,7 +93,15 @@ main(
 	int argc,
 	char **argv)
 {
+	struct sigaction sa;
 	char *LogFile,*TempDir,*Action;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 
 	gtk_init(&argc,&argv);
 	gtk_panda_init(&argc,&argv);
@@ -139,6 +139,8 @@ main(
 
 	gtk_timeout_add(10*1000,push_action_exit,NULL);
 	gtk_main();
+
+	sleep(3);
 
 	return 0;
 }

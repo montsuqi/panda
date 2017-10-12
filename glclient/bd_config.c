@@ -75,6 +75,7 @@ _new_server()
 	json_object_object_add(child,"password",json_object_new_string(""));
 	json_object_object_add(child,"timer",json_object_new_boolean(TRUE));
 	json_object_object_add(child,"timerperiod",json_object_new_int(1000));
+	json_object_object_add(child,"printer_config",json_object_new_string(""));
 
 	json_object_object_add(child,"ssl",json_object_new_boolean(FALSE));
 	json_object_object_add(child,"cafile",json_object_new_string("/etc/ssl/certs/gl-cacert.pem"));

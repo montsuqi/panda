@@ -94,7 +94,7 @@ InitDesktop(void)
 		}
 		fclose(fp);
 	} else {
-		Warning("cannot open applications list");
+		Debug("cannot open applications list");
 	}
 }
 

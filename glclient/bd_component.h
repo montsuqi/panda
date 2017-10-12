@@ -61,6 +61,10 @@ struct _BDComponent {
   GtkWidget *pkcs11_container;
   GtkWidget *pkcs11;
   GtkWidget *pkcs11lib;
+//
+  GtkWidget *printertable;
+  GList *printer_entry_list;
+  GList *printer_combo_list;
 // info 
   GtkWidget *infotable;
 };

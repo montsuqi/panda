@@ -86,7 +86,7 @@ exec_cmd(
 	} else if (pid < 0) {
 		Warning("fork error:%s",strerror(errno));
 	} else {
-		Info("%s fork",cmd);
+		Debug("%s fork",cmd);
 	}
 }
 
@@ -126,8 +126,6 @@ print_report(
 		showdialog = TRUE;
 	}
 
-	Info("report title:%s printer:%s showdialog:%d oid:%s",title,printer,(int)showdialog,oid);
-
 	setenv("GLPUSH_TITLE",title,1);
 	setenv("GLPUSH_PRINTER",printer,1);
 	if (showdialog) {
@@ -165,8 +163,6 @@ download_file(
 	if (oid == NULL || strlen(oid) <= 0) {
 		return;
 	}
-
-	Info("misc filename:%s description:%s oid:%s",filename,desc,oid);
 
 	setenv("GLPUSH_FILENAME",filename,1);
 	setenv("GLPUSH_DESCRIPTION",desc,1);
@@ -265,7 +261,6 @@ callback_push_receive(
 	switch (reason) {
 
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
-		Info("LWS_CALLBACK_CLIENT_ESTABLISHED\n");
 		/* subscribe */
 		snprintf(buf,sizeof(buf)-1,"{"
 			"\"command\"    : \"subscribe\","
@@ -278,13 +273,11 @@ callback_push_receive(
 		break;
 
 	case LWS_CALLBACK_CLOSED:
-		Info("LWS_CALLBACK_CLOSED");
 		wsi_pr = NULL;
 		break;
 
 	case LWS_CALLBACK_CLIENT_RECEIVE:
 		((char *)in)[len] = '\0';
-		Info("LWS_CALLBACK_CLIENT_RECEIVE");
 		Info("%s", (char *)in);
 		message_handler(in);
 

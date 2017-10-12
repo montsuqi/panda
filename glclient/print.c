@@ -47,6 +47,8 @@
 #include	"tempdir.h"
 
 static char *DataDir = NULL;
+static GHashTable *PrinterTable = NULL;;
+static GHashTable *CopiesTable = NULL;
 
 void
 ShowPrintDialog(
@@ -84,17 +86,103 @@ ShowPrintDialog(
 	g_free(_title);
 }
 
+static void
+_Print(
+	const char *title,
+	const char *printer,
+	int copies,
+	LargeByteString *lbs)
+{
+	GtkWidget *pandapdf;
+	char buf[1024];
+
+
+	pandapdf = gtk_panda_pdf_new();
+	if (!gtk_panda_pdf_set(GTK_PANDA_PDF(pandapdf),LBS_Size(lbs),LBS_Body(lbs))) {
+		gtk_widget_destroy(pandapdf);
+		return;
+	}
+	gtk_panda_pdf_print_with_printer(GTK_PANDA_PDF(pandapdf),copies,printer);
+	snprintf(buf,sizeof(buf),_(
+		"starting print\n \n"
+		"title:%s\n"
+		"printer:%s\n"),title,printer);
+	Notify(_("glclient print notify"),buf,"gtk-print",0);
+	gtk_widget_destroy(pandapdf);
+}
+
+static gboolean
+CheckPrinter(const char *name)
+{
+	static GList *List = NULL;
+	int i;
+	
+	if (List == NULL) {
+		List = gtk_panda_pdf_get_printer_list();
+	}
+	for(i=0;i<g_list_length(List);i++) {
+		if (!g_strcmp0(name,(char*)g_list_nth_data(List,i))) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static void
+InitPrinterTable()
+{
+	int i;
+	gchar **entries,**kv,*config,*k,*v;
+	GRegex *re;
+	GMatchInfo *match;
+
+	PrinterTable = NewNameHash();
+	CopiesTable = NewNameHash();
+
+	config = getenv("GLPRINTER_CONFIG");
+	if (config == NULL) {
+		return;
+	}
+	
+	re = g_regex_new("^(.*)#(\\d+)$",0,0,NULL);
+	entries = g_strsplit(config,",",-1);
+	for(i=0;entries[i]!=NULL;i++) {
+		kv = g_strsplit(entries[i],":=:",-1);
+		if (kv[0] != NULL && kv[1] != NULL && CheckPrinter(kv[1])) {
+			if (g_regex_match(re,kv[0],0,&match)) {
+				k = g_match_info_fetch(match,1);
+				v = g_match_info_fetch(match,2);
+				g_hash_table_insert(PrinterTable,g_strdup(k),g_strdup(kv[1]));
+				g_hash_table_insert(CopiesTable,g_strdup(k),GINT_TO_POINTER(atoi(v)));
+				g_free(k);
+				g_free(v);
+				g_match_info_free(match);
+			} else {
+				g_hash_table_insert(PrinterTable,g_strdup(kv[0]),g_strdup(kv[1]));
+				g_hash_table_insert(CopiesTable,g_strdup(kv[0]),GINT_TO_POINTER(1));
+			}
+		}
+		g_strfreev(kv);
+	}
+	g_strfreev(entries);
+	g_regex_unref(re);
+}
+
 void
 Print(
 	const char *oid,
 	const char *title,
-	const char *printer,
+	const char *pname,
 	LargeByteString *lbs)
 {
-	GtkWidget *pandapdf;
-	char buf[1024],path[1024];
+	char buf[1024],path[1024],*printer;
 	struct tm cur;
 	time_t t;
+	int cp;
+
+	if (PrinterTable == NULL) {
+		InitPrinterTable();
+	}
 
 	if (getenv("GLCLIENT_SAVE_PRINT_DATA") != NULL) {
 		if (DataDir == NULL) {
@@ -108,26 +196,12 @@ Print(
 		g_file_set_contents(path,LBS_Body(lbs),LBS_Size(lbs),NULL);
 	}
 
-	pandapdf = gtk_panda_pdf_new();
-	if (!gtk_panda_pdf_set(GTK_PANDA_PDF(pandapdf),LBS_Size(lbs),LBS_Body(lbs))) {
-		gtk_widget_destroy(pandapdf);
-		return;
-	}
-	if (printer == NULL) {
-		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),FALSE);
-		snprintf(buf,sizeof(buf),_(
-			"starting print\n \n"
-			"title:%s\n"
-			"printer:%s\n"),title,"default");
-		Notify(_("glclient print notify"),buf,"gtk-print",0);
+	printer = (char*)g_hash_table_lookup(PrinterTable,pname);
+	cp = GPOINTER_TO_INT(g_hash_table_lookup(CopiesTable,pname));
+	if (printer != NULL) {
+		Info("%s %s(%s) %d",title,pname,printer,cp);
+		_Print(title,printer,cp,lbs);
 	} else {
-		gtk_panda_pdf_print_with_printer(GTK_PANDA_PDF(pandapdf),printer);
-		snprintf(buf,sizeof(buf),_(
-			"starting print\n \n"
-			"title:%s\n"
-			"printer:%s\n"),title,printer);
-		Notify(_("glclient print notify"),buf,"gtk-print",0);
+		ShowPrintDialog(title,lbs);
 	}
-
-	gtk_widget_destroy(pandapdf);
 }

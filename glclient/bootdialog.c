@@ -515,6 +515,10 @@ boot_dialog_new ()
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->ssltable, label);
 #endif
 
+  /* printer tab */
+  label = gtk_label_new (_("Printer"));
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->printertable, label);
+
   /* Other tab */
   label = gtk_label_new (_("Details"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->othertable, label);

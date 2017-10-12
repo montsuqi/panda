@@ -41,8 +41,8 @@
 #include	<uuid/uuid.h>
 #include	<time.h>
 #include	<libgen.h>
-
 #include	<gtk/gtk.h>
+#include	<gtkpanda/gtkpanda.h>
 
 #define		MAIN
 #include	"glclient.h"
@@ -214,7 +214,6 @@ InitSystem()
 		}
 	}
 
-
 	if (getenv("GLCLIENT_DELAY_DRAW_WINDOW") != NULL) {
 		DelayDrawWindow = TRUE;
 	} else {
@@ -285,6 +284,7 @@ LoadConfig (
 	} else {
 		Pass = g_strdup("");
 	} 
+	setenv("GLPRINTER_CONFIG",gl_config_get_string(n,"printer_config"),1);
 
 	fSSL = gl_config_get_boolean(n,"ssl");
 	{
