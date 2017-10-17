@@ -41,7 +41,8 @@ base_sources =						\
 	notify.c		notify.h		\
 	widgetOPS.c		widgetOPS.h		\
 	tempdir.c		tempdir.h		\
-	logger.c		logger.h
+	logger.c		logger.h		\
+					icon.h
 
 base_dependencies =					\
 	$(top_builddir)/libs/libpanda.la
