@@ -34,15 +34,15 @@
 #define	MessageLogPrintf(fmt, ...)	_MessageLevelPrintf(MESSAGE_LOG, __FILE__,__LINE__,(fmt), __VA_ARGS__)
 #define	MessageDebugPrintf(fmt, ...)	_MessageLevelPrintf(MESSAGE_DEBUG, __FILE__,__LINE__,(fmt), __VA_ARGS__)
 
-extern	void	_MessagePrintf(char *file, int line, char *format, ...);
-extern	void	_MessageLevelPrintf(int level, char *file, int line, char *format, ...);
-extern	void	_Message(int level, char *file, int line, char *msg);
-extern	void	__Message(int level, char *file, int line, char *msg);
-extern	void	InitMessage(char *id,char *fn);
-extern	void	SetMessageFunction(void (*func)(int level, char *file, int line, char *msg));
-extern	long	GetNowTime(void);
-extern	void	TimerPrintf(long start, long end, char *format, ...);
-extern	void	Time(char*);
+extern	void			_MessagePrintf(char *file, int line, char *format, ...);
+extern	void			_MessageLevelPrintf(int level, char *file, int line, char *format, ...);
+extern	void			_Message(int level, char *file, int line, char *msg);
+extern	void			__Message(int level, char *file, int line, char *msg);
+extern	void			InitMessage(char *id,char *fn);
+extern	void			SetMessageFunction(void (*func)(int level, char *file, int line, char *msg));
+extern	unsigned long	GetNowTime(void);
+extern	void			TimerPrintf(long start, long end, char *format, ...);
+extern	void			Time(char*);
 
 #ifndef Bool
 #define Bool            int
