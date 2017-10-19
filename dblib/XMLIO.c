@@ -150,6 +150,7 @@ ENTER_FUNC;
     		mondbg = GetDBG_monsys();
 			ValueObjectId(obj) = blob_import_mem(mondbg,0,"XMLIO.xml","application/xml",0,buff,size);
 			if (ValueObjectId(obj) != GL_OBJ_NULL) {
+				ret = DuplicateValue(args,TRUE);
 				ctrl->rc = MCP_OK;
 			} else {
 				Warning("monblob_import_mem failure");
