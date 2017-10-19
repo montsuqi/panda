@@ -120,5 +120,4 @@ GLOBAL	Bool		fSavePIN;
 GLOBAL	Bool		UsePushClient;
 GLOBAL	pid_t		PushClientPID;
 GLOBAL	char		*PushClientCMD;
-
 #endif

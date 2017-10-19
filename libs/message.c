@@ -326,7 +326,7 @@ SetMessageFunction(
 	MessageFunction = func;
 }
 
-extern long
+extern unsigned long
 GetNowTime(void)
 {
 	struct	timeval	tv;

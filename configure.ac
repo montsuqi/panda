@@ -148,6 +148,7 @@ if test "x$enable_client" = "xyes"; then
 	PKG_CHECK_MODULES(GLCLIENT,
 	[
 		libglade-panda-2.0	>= 2.0.3
+		gtkpanda2			>= 2.0.6
 		libcurl             >= 7.0.5
 		gmodule-2.0			>= 2.0.0
 		gconf-2.0			>= 2.28.1

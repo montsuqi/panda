@@ -30,11 +30,15 @@
 #include    <sys/types.h>
 #include    <glib.h>
 #include    <gtk/gtk.h>
+#include	<gtkpanda/gtkpanda.h>
+
 #include    "gettext.h"
 #include	"glclient.h"
 #include    "const.h"
 #include    "bd_config.h"
 #include    "bd_component.h"
+
+#define PRINTER_CONFIG_SIZE (10)
 
 void
 open_file_chooser(GtkWidget *w, gpointer entry)
@@ -143,6 +147,47 @@ bd_component_set_value(
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->pkcs11),gl_config_get_boolean(n,"pkcs11"));
   gtk_widget_set_sensitive(self->pkcs11_container,gl_config_get_boolean(n,"pkcs11"));  
   gtk_entry_set_text(GTK_ENTRY(self->pkcs11lib),gl_config_get_string(n,"pkcs11lib"));
+  // printer
+  {
+    int i,j;
+    gchar **entries,**kv,*str;
+    GtkEntry *entry;
+    GtkComboBox *combo;
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+
+	for(i=0;i<PRINTER_CONFIG_SIZE;i++) {
+        entry = GTK_ENTRY(g_list_nth_data(self->printer_entry_list,i));
+        gtk_entry_set_text(entry,"");
+        combo = GTK_COMBO_BOX(g_list_nth_data(self->printer_combo_list,i));
+        gtk_combo_box_set_active(combo,0);
+	}
+
+    entries = g_strsplit(gl_config_get_string(n,"printer_config"),",",-1);
+    for(i=0;entries[i]!=NULL && i < PRINTER_CONFIG_SIZE;i++) {
+      kv = g_strsplit(entries[i],":=:",-1);
+      if (kv[0] != NULL && kv[1] != NULL) {
+        entry = GTK_ENTRY(g_list_nth_data(self->printer_entry_list,i));
+        combo = GTK_COMBO_BOX(g_list_nth_data(self->printer_combo_list,i));
+        model = gtk_combo_box_get_model(combo);
+        gtk_combo_box_set_active(combo,0);
+        gtk_entry_set_text(entry,kv[0]);
+        if (gtk_tree_model_get_iter_first(model,&iter)) {
+          j = 0;
+          do {
+            gtk_tree_model_get(model,&iter,0,&str,-1);
+            if (!strcmp(str,kv[1])) {
+              gtk_combo_box_set_active(combo,j);
+            }
+            g_free(str);
+            j++;
+          } while(gtk_tree_model_iter_next(model,&iter));
+        }
+      }
+      g_strfreev(kv);
+    }
+    g_strfreev(entries);
+  }
 
   // other
   gtk_entry_set_text(GTK_ENTRY (self->style),gl_config_get_string(n,"style"));
@@ -208,6 +253,36 @@ bd_component_value_to_config(
   // pkcs11
   gl_config_set_boolean(n,"pkcs11", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->pkcs11)));
   gl_config_set_string(n,"pkcs11lib", gtk_entry_get_text(GTK_ENTRY(self->pkcs11lib)));
+
+  // printer
+  {
+    GtkEntry *entry;
+    GtkComboBox *combo;
+    gchar *k,*v,*ret;
+    GString *str;
+    int i;
+
+    str = g_string_new(NULL); 
+    for(i=0;i<PRINTER_CONFIG_SIZE;i++) {
+      entry = GTK_ENTRY(g_list_nth_data(self->printer_entry_list,i));
+      k = (gchar*)gtk_entry_get_text(entry);
+      if (k != NULL && strlen(k) > 0) {
+        combo = GTK_COMBO_BOX(g_list_nth_data(self->printer_combo_list,i));
+        v = gtk_combo_box_get_active_text(combo);
+        if (i==0) {
+          g_string_append_printf(str,"%s:=:%s",k,v);
+        } else {
+          g_string_append_printf(str,",%s:=:%s",k,v);
+        }
+        if (v != NULL) {
+          g_free(v);
+        }
+      }
+    }
+    ret = g_string_free(str,FALSE);
+    gl_config_set_string(n,"printer_config",ret);
+    g_free(ret);
+  }
 
   // other
   gl_config_set_string(n,"style", gtk_entry_get_text(GTK_ENTRY(self->style)));
@@ -409,6 +484,50 @@ bd_component_new()
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
+
+  // printer
+  table = gtk_table_new (11, 2, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 0);
+  self->printertable = table;
+
+  ypos = 0;
+
+  label = gtk_label_new (_("Printer Name"));
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  label = gtk_label_new (_("Actual Printer"));
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  gtk_table_attach (GTK_TABLE (table), label, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  {
+    int i,j;
+    GList *list;
+    GtkWidget *combo;
+
+    self->printer_entry_list = NULL;
+    self->printer_combo_list = NULL;
+    list = gtk_panda_pdf_get_printer_list();
+    for(i=0;i<PRINTER_CONFIG_SIZE;i++) {
+      entry = gtk_entry_new ();
+      combo = gtk_combo_box_new_text();
+      gtk_combo_box_append_text(GTK_COMBO_BOX(combo),"");
+      for (j=0;j<g_list_length(list);j++) {
+        gtk_combo_box_append_text(GTK_COMBO_BOX(combo),(char*)g_list_nth_data(list,j));
+      }
+      self->printer_entry_list = g_list_append(self->printer_entry_list,entry);
+      self->printer_combo_list = g_list_append(self->printer_combo_list,combo);
+
+      gtk_table_attach (GTK_TABLE (table), entry, 0, 1, ypos, ypos + 1,
+                        GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+      gtk_table_attach (GTK_TABLE (table), combo, 1, 2, ypos, ypos + 1,
+                        GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+      ypos++;
+    }
+  }
 
   // other
   table = gtk_table_new (3, 1, FALSE);
