@@ -216,12 +216,12 @@ send_event(
 		t5 = now();
 
 		Info("[send_event_exec_time] "
-             "total:%lums "
-             "make_event_data:%lums "
-             "rpc_exec:%lu "
-             "server_exec:%lums "
-             "cobol_exec:%lums "
-             "update_screen:%lums",
+			"total:%lums "
+			"make_event_data:%lums "
+			"rpc_exec:%lu "
+			"server_exec:%lums "
+			"cobol_exec:%lums "
+			"update_screen:%lums",
 			(t5-t1),
 			(t2-t1),
 			(rpc),
