@@ -39,6 +39,11 @@ typedef struct {
 	char			*ProtocolVersion;
 	char			*AppVersion;
 	gboolean		fGinbee;
+	size_t			ReqSize;
+	size_t			ResSize;
+	unsigned long	RPCExecTime;
+	unsigned long	ServerExecTime;
+	unsigned long	COBOLExecTime;
 #ifdef USE_SSL
 	gboolean		fSSL;
 	gboolean		fPKCS11;

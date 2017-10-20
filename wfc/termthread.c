@@ -556,9 +556,11 @@ MakeErrorLog(
 static	json_object*
 MakeEventResponse(
 	json_object *obj,
-	SessionData *data)
+	SessionData *data,
+	unsigned long server_exec_time,
+    unsigned long cobol_exec_time)
 {
-	json_object *result,*res,*window_data,*windows,*w,*child;
+	json_object *result,*meta,*res,*window_data,*windows,*w,*child;
 	RecordStruct *rec;
 	ValueStruct *val;
 	LargeByteString *scrdata;
@@ -569,6 +571,15 @@ MakeEventResponse(
 	res = MakeJSONResponseTemplate(obj);
 	result = json_object_new_object();
 	json_object_object_add(res,"result",result);
+
+	meta = json_object_new_object();
+	json_object_object_add(result,"meta",meta);
+
+	child = json_object_new_int((int)server_exec_time);
+	json_object_object_add(meta,"exec_time",child);
+
+	child = json_object_new_int((int)cobol_exec_time);
+	json_object_object_add(meta,"cobol_exec_time",child);
 
 	window_data = json_object_new_object();
 	json_object_object_add(window_data,"focused_window",
@@ -701,6 +712,7 @@ ENTER_FUNC;
 	}
 	data->hdr->puttype = SCREEN_NULL;
 	UpdateSession(data);
+
 	data = Process(data);
 
 	if (data->status != SESSION_STATUS_NORMAL) {
@@ -712,7 +724,7 @@ ENTER_FUNC;
 		UpdateSession(data);
 	}
 
-	res = MakeEventResponse(obj,data);
+	res = MakeEventResponse(obj,data,0,0);
 	SendString(term->fp,(char*)json_object_to_json_string(res));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
@@ -737,7 +749,9 @@ RPC_SendEvent(
 	const char *session_id,*window,*widget,*event;
 	size_t	size;
 	int i;
+	unsigned long t1,t2,t3,t4;
 ENTER_FUNC;
+	t1 = GetNowTime();
 
 	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
@@ -838,7 +852,10 @@ ENTER_FUNC;
 	data->retry = 0;
 
 	UpdateSession(data);
+
+	t2 = GetNowTime();
 	data = Process(data);
+	t3 = GetNowTime();
 
 	if (data->status != SESSION_STATUS_NORMAL) {
 		Warning("Error: %s Session Abort",data->hdr->uuid);
@@ -849,7 +866,8 @@ ENTER_FUNC;
 		UpdateSession(data);
 	}
 
-	res = MakeEventResponse(obj,data);
+	t4 = GetNowTime();
+	res = MakeEventResponse(obj,data,(t4-t1),(t3-t2));
 
 	for (i=0;i<data->w.sp;i++) {
 		if (data->w.s[i].puttype == SCREEN_CLOSE_WINDOW) {

@@ -59,6 +59,7 @@
 #include "const.h"
 #include "logger.h"
 #include "tempdir.h"
+#include "utils.h"
 
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
@@ -313,38 +314,50 @@ CheckJSONRPCResponse(
 	GLProtocol *ctx,
 	json_object *obj)
 {
-	json_object *obj2,*obj3;
+	json_object *child,*child2,*child3;
 	int code,id;
 	char *message,*jsonstr,*path;
 
-	if (!json_object_object_get_ex(obj,"jsonrpc",&obj2)) {
+	ctx->ServerExecTime = 0;
+	ctx->COBOLExecTime = 0;
+
+	if (!json_object_object_get_ex(obj,"jsonrpc",&child)) {
 		Error(_("invalid jsonrpc"));
 	}
-	if (strcmp("2.0",json_object_get_string(obj2))) {
+	if (strcmp("2.0",json_object_get_string(child))) {
 		Error(_("invalid jsonrpc version"));
 	}
 
-	if (!json_object_object_get_ex(obj,"id",&obj2)) {
+	if (!json_object_object_get_ex(obj,"id",&child)) {
 		Error(_("invalid jsonrpc id"));
 	}
-	id = json_object_get_int(obj2);
+	id = json_object_get_int(child);
 	if (id != ctx->RPCID - 1) {
 		Error(_("invalid jsonrpc id"));
 	}
 
-	if (json_object_object_get_ex(obj,"error",&obj2)) {
+	if (json_object_object_get_ex(obj,"error",&child)) {
 		code = 0;
 		message = NULL;
-		if (json_object_object_get_ex(obj2,"code",&obj3)) {
-			code = json_object_get_int(obj3);
+		if (json_object_object_get_ex(child,"code",&child2)) {
+			code = json_object_get_int(child2);
 		}
-		if (json_object_object_get_ex(obj2,"message",&obj3)) {
-			message = (char*)json_object_get_string(obj3);
+		if (json_object_object_get_ex(child,"message",&child2)) {
+			message = (char*)json_object_get_string(child2);
 		}
 		Error(_("jsonrpc error code:%d message:%s"),code,message);
 	}
 
-	if (!json_object_object_get_ex(obj,"result",&obj2)) {
+	if (json_object_object_get_ex(obj,"result",&child)) {
+		if (json_object_object_get_ex(child,"meta",&child2)) {
+			if (json_object_object_get_ex(child2,"exec_time",&child3)) {
+				ctx->ServerExecTime = (unsigned long)json_object_get_int(child3);
+			}
+			if (json_object_object_get_ex(child2,"cobol_exec_time",&child3)) {
+				ctx->COBOLExecTime = (unsigned long)json_object_get_int(child3);
+			}
+		}
+	} else {
 		Error(_("no result object"));
 	}
 
@@ -373,8 +386,9 @@ JSONRPC(
 	char *ctype,*url,*jsonstr,*path;
 	char buf[256],errbuf[CURL_ERROR_SIZE+1];
 	long http_code;
-	size_t jsonsize;
 	json_object *ret;
+
+	ctx->RPCExecTime = now();
 
 	if (type == TYPE_AUTH) {
 		url = ctx->AuthURI;
@@ -385,11 +399,11 @@ JSONRPC(
 		readbuf = NewLBS();
 	}
 	jsonstr = (char*)json_object_to_json_string(obj);
-	jsonsize = strlen(jsonstr);
+	ctx->ReqSize = strlen(jsonstr);
 
 	if (Logging) {
 		path = g_strdup_printf("%s/req_%05d.json",LogDir,ctx->RPCID);
-		if (!g_file_set_contents(path,jsonstr,jsonsize,NULL)) {
+		if (!g_file_set_contents(path,jsonstr,ctx->ReqSize,NULL)) {
 			Error("could not create %s",path);
 		}
 		g_free(path);
@@ -411,7 +425,7 @@ JSONRPC(
 	snprintf(buf,sizeof(buf),"User-Agent: glclient2_%s_%s",PACKAGE_VERSION,PACKAGE_DATE);
 	headers = curl_slist_append(headers, buf);
 	headers = curl_slist_append(headers, "Content-Type: application/json");
-	snprintf(buf,sizeof(buf),"Content-Length: %ld",jsonsize);
+	snprintf(buf,sizeof(buf),"Content-Length: %ld",ctx->ReqSize);
 	headers = curl_slist_append(headers, buf);
 	snprintf(buf,sizeof(buf),"Expect:");
 	headers = curl_slist_append(headers, buf);
@@ -427,8 +441,12 @@ JSONRPC(
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
 	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
-		Error(_("comm error:%s"),errbuf);
+	{
+		ctx->RPCExecTime = now();
+		if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
+			Error(_("comm error:%s"),errbuf);
+		}
+		ctx->RPCExecTime = now() - ctx->RPCExecTime;
 	}
 	http_code = 0;
 	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
@@ -464,6 +482,8 @@ JSONRPC(
 		Error(_("invalid json"));
 	}
 	CheckJSONRPCResponse(ctx,ret);
+	ctx->ResSize = strlen(LBS_Body(writebuf));
+
 	return ret;
 }
 

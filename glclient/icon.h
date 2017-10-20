@@ -1,5 +1,5 @@
 /* XPM */
-static char *glclient2_icon[] = {
+static const char *glclient2_icon[] = {
 /* columns rows colors chars-per-pixel */
 "48 48 240 2 ",
 "   c black",

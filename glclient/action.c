@@ -1096,32 +1096,6 @@ GetWindowData(
 	return (WindowData*)g_hash_table_lookup(WINDOWTABLE(Session),wname);
 }
 
-extern	void
-SendEvent(
-	const char *window,
-	const char *widget,
-	const char *event)
-{
-	json_object *params,*event_data;
-
-	event_data = json_object_new_object();
-	json_object_object_add(event_data,"window",
-		json_object_new_string(window));
-	json_object_object_add(event_data,"widget",
-		json_object_new_string(widget));
-	json_object_object_add(event_data,"event",
-		json_object_new_string(event));
-	json_object_object_add(event_data,"screen_data",
-		MakeScreenData(window));
-	
-	params = json_object_new_object();
-	json_object_object_add(params,"event_data",event_data);
-	if (SCREENDATA(Session) != NULL) {
-		json_object_put(SCREENDATA(Session));
-	}
-	SCREENDATA(Session) = RPC_SendEvent(GLP(Session),params);
-}
-
 static	void
 CheckCloseWindow(
 	json_object *w,
@@ -1327,7 +1301,7 @@ UpdateWindow(
 			ShowWindow(wname);
 		}
 		ResetTimers((char*)wname);
-		Debug("show window[%s] put_type[%s]",wname,put_type);
+		Info("show window[%s] put_type[%s]",wname,put_type);
 	}
 }
 
@@ -1338,7 +1312,7 @@ UpdateScreen()
 	const char *f_window,*f_widget;
 	int i;
 
-	Debug("====");
+	Info("----");
 	
 	json_object_object_get_ex(SCREENDATA(Session),"result",&result);
 	if (!json_object_object_get_ex(result,"window_data",&window_data)) {
@@ -1354,7 +1328,7 @@ UpdateScreen()
 	}
 	THISWINDOW(Session) = g_strdup(f_window);
 	FOCUSEDWINDOW(Session) = (char*)f_window;
-	Debug("focused_window[%s]",f_window);
+	Info("focused_window[%s]",f_window);
 
 	if (!json_object_object_get_ex(window_data,"focused_widget",&child)) {
 		Error("invalid json part:focused_widget");
