@@ -39,9 +39,10 @@
 #include	"libmondai.h"
 #include	"glclient.h"
 #include	"action.h"
+#include	"widgetOPS.h"
 #include	"protocol.h"
 #include	"dialogs.h"
-#include	"message.h"
+#include	"utils.h"
 #include	"logger.h"
 
 extern	gboolean
@@ -135,14 +136,44 @@ StopEventTimer(void)
 	}
 }
 
+static json_object*
+MakeEventData(
+	const char *window,
+	const char *widget,
+	const char *event)
+{
+	json_object *params,*event_data;
+
+	event_data = json_object_new_object();
+	json_object_object_add(event_data,"window",
+		json_object_new_string(window));
+	json_object_object_add(event_data,"widget",
+		json_object_new_string(widget));
+	json_object_object_add(event_data,"event",
+		json_object_new_string(event));
+	json_object_object_add(event_data,"screen_data",
+		MakeScreenData(window));
+	
+	params = json_object_new_object();
+	json_object_object_add(params,"event_data",event_data);
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+
+	Info("window:%s widget:%s event:%s",window,widget,event);
+
+	return params;
+}
+
 extern	void
 send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	char	*window_name;
-	char	*widget_name;
-	long	t1,t2,t3,t4,t5;
+	char*window_name,*widget_name;
+	unsigned long t1,t2,t3,t4,t5,rpc,server,cobol;
+	json_object *params;
+
 	window_name = GetWindowName(widget);
 	widget_name = (char *)gtk_widget_get_name(widget);
 	event = event != NULL ? event : widget_name;
@@ -155,7 +186,7 @@ send_event(
 	}
 	if (!ISRECV(Session)) {
 		ISRECV(Session) = TRUE;
-		t1 = GetNowTime();
+		t1 = now();
 
 		StopEventTimer();
 		StopTimersAll();
@@ -163,15 +194,17 @@ send_event(
 		ShowBusyCursor(TopWindow);
 		BlockChangedHandlers();
 
-		#if 0
-		Debug("windowName:%s widgetName:%s event:%s",window_name,widget_name,event);
-		#endif
+		params = MakeEventData(window_name,widget_name,event);
+		t2 = now();
 
-		t2 = GetNowTime();
-		SendEvent(window_name,widget_name,event);
-		t3 = GetNowTime();
+		SCREENDATA(Session) = RPC_SendEvent(GLP(Session),params);
+		rpc    = GLP(Session)->RPCExecTime;
+		server = GLP(Session)->ServerExecTime;
+		cobol  = GLP(Session)->COBOLExecTime;
+
+		t3 = now();
 		UpdateScreen();
-		t4 = GetNowTime();
+		t4 = now();
 
 		if (!fKeyBuff) {
 			ClearKeyBuffer();
@@ -180,10 +213,22 @@ send_event(
 		HideBusyCursor(TopWindow); 
 
 		ISRECV(Session) = FALSE;
-		t5 = GetNowTime();
-		if (getenv("GLCLIENT_DO_PROFILE")!=NULL) {
-			fprintf(stderr,"total:%ldms SendEvent:%ldms UpdateScreen:%ldms\n",(t5-t1),(t3-t2),(t4-t3));
-		}
+		t5 = now();
+
+		Info("[send_event_exec_time] "
+			"total:%lums "
+			"make_event_data:%lums "
+			"rpc_exec:%lu "
+			"server_exec:%lums "
+			"cobol_exec:%lums "
+			"update_screen:%lums",
+			(t5-t1),
+			(t2-t1),
+			(rpc),
+			(server),
+			(cobol),
+			(t4-t3)
+		);
 	}
 }
 

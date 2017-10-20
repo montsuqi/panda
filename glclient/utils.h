@@ -34,5 +34,6 @@ gboolean CheckAlreadyFile(char *filename);
 void rm_r_old(const char *dir,unsigned int elaps);
 void gl_lock();
 void gl_unlock();
+unsigned long now(void);
 
 #endif

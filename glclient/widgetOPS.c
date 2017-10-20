@@ -1338,7 +1338,7 @@ RemoveChangedWidget(
 	return TRUE;
 }
 
-extern struct json_object *
+extern json_object *
 MakeScreenData(
 	const char *wname)
 {

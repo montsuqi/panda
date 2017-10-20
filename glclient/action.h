@@ -70,7 +70,6 @@ extern	void		InitStyle(void);
 extern	int			AskPass(char *buf, size_t buflen,const char	*prompt);
 extern	void		SetPingTimerFunc();
 extern	WindowData	*GetWindowData(const char *wname);
-extern	void		SendEvent(const char*window,const char*widget,const char*event);
 extern	void		UpdateScreen();
 extern	void		TimeSet(const char*);
 #endif
