@@ -714,6 +714,7 @@ blob_export(
 		return FALSE;
 	}
 	ret = monblob_export_file(dbg,id,filename);
+	monblob_delete(dbg,id);
 	xfree(id);
 	return ret;
 }
@@ -772,6 +773,7 @@ blob_export_mem(
 		return FALSE;
 	}
 	ret = monblob_export_mem(dbg,id,buf,size);
+	monblob_delete(dbg,id);
 	xfree(id);
 	return ret;
 }
