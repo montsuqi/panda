@@ -75,7 +75,6 @@ BLOBEXPORT(
 		SendLength(fp,size); 			ON_IO_ERROR(fp,badio);
 		Send(fp,buff,size);
 		xfree(buff);
-		blob_delete(dbg,obj);
 	} else {
 		SendPacketClass(fp,BLOB_NOT);	ON_IO_ERROR(fp,badio);
 	}
