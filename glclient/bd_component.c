@@ -37,8 +37,10 @@
 #include    "const.h"
 #include    "bd_config.h"
 #include    "bd_component.h"
+#include    "logger.h"
 
 #define PRINTER_CONFIG_SIZE (10)
+#define MAX_COPIES          (99)
 
 void
 open_file_chooser(GtkWidget *w, gpointer entry)
@@ -256,32 +258,49 @@ bd_component_value_to_config(
 
   // printer
   {
+	GRegex *re;
+	GMatchInfo *match;
     GtkEntry *entry;
     GtkComboBox *combo;
-    gchar *k,*v,*ret;
-    GString *str;
-    int i;
+    gchar *k,*v,*pname,*strcp,*ret;
+    GString *gstr;
+    int i,cp;
 
-    str = g_string_new(NULL); 
+	re = g_regex_new("^(.*)#(\\d+)$",0,0,NULL);
+    gstr = g_string_new(NULL); 
     for(i=0;i<PRINTER_CONFIG_SIZE;i++) {
       entry = GTK_ENTRY(g_list_nth_data(self->printer_entry_list,i));
       k = (gchar*)gtk_entry_get_text(entry);
       if (k != NULL && strlen(k) > 0) {
         combo = GTK_COMBO_BOX(g_list_nth_data(self->printer_combo_list,i));
         v = gtk_combo_box_get_active_text(combo);
-        if (i==0) {
-          g_string_append_printf(str,"%s:=:%s",k,v);
-        } else {
-          g_string_append_printf(str,",%s:=:%s",k,v);
+        if (i>0) {
+          g_string_append_printf(gstr,",");
         }
+		if (g_regex_match(re,k,0,&match)) {
+			pname = g_match_info_fetch(match,1);
+			strcp = g_match_info_fetch(match,2);
+			cp = atoi(strcp);
+			if (cp > MAX_COPIES) {
+				Warning("max copies limit; printer %s set #%d",pname,MAX_COPIES);
+				cp = MAX_COPIES;
+			}
+			g_string_append_printf(gstr,"%s#%d:=:%s",pname,cp,v);
+			g_free(pname);
+			g_free(strcp);
+			g_match_info_free(match);
+		} else {
+        	g_string_append_printf(gstr,"%s:=:%s",k,v);
+		}
         if (v != NULL) {
           g_free(v);
         }
       }
     }
-    ret = g_string_free(str,FALSE);
+    ret = g_string_free(gstr,FALSE);
     gl_config_set_string(n,"printer_config",ret);
     g_free(ret);
+	g_regex_unref(re);
   }
 
   // other

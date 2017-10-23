@@ -128,8 +128,6 @@ CheckPrinter(const char *name)
 	return FALSE;
 }
 
-#define MAX_COPIES (99)
-
 static void
 InitPrinterTable()
 {
@@ -155,10 +153,6 @@ InitPrinterTable()
 				k = g_match_info_fetch(match,1);
 				v = g_match_info_fetch(match,2);
 				cp = atoi(v);
-				if (cp > MAX_COPIES) {
-					Warning("max copies limit; prnter %s set #%d",k,MAX_COPIES);
-					cp = MAX_COPIES;
-				}
 				g_hash_table_insert(PrinterTable,g_strdup(k),g_strdup(kv[1]));
 				g_hash_table_insert(CopiesTable,g_strdup(k),GINT_TO_POINTER(cp));
 				g_free(k);
