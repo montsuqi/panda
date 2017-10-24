@@ -318,8 +318,8 @@ CheckJSONRPCResponse(
 	int code,id;
 	char *message,*jsonstr,*path;
 
-	ctx->ServerExecTime = 0;
-	ctx->COBOLExecTime = 0;
+	ctx->TotalExecTime = 0;
+	ctx->AppExecTime = 0;
 
 	if (!json_object_object_get_ex(obj,"jsonrpc",&child)) {
 		Error(_("invalid jsonrpc"));
@@ -350,11 +350,11 @@ CheckJSONRPCResponse(
 
 	if (json_object_object_get_ex(obj,"result",&child)) {
 		if (json_object_object_get_ex(child,"meta",&child2)) {
-			if (json_object_object_get_ex(child2,"exec_time",&child3)) {
-				ctx->ServerExecTime = (unsigned long)json_object_get_int(child3);
+			if (json_object_object_get_ex(child2,"total_exec_time",&child3)) {
+				ctx->TotalExecTime = (unsigned long)json_object_get_int(child3);
 			}
-			if (json_object_object_get_ex(child2,"cobol_exec_time",&child3)) {
-				ctx->COBOLExecTime = (unsigned long)json_object_get_int(child3);
+			if (json_object_object_get_ex(child2,"app_exec_time",&child3)) {
+				ctx->AppExecTime = (unsigned long)json_object_get_int(child3);
 			}
 		}
 	} else {

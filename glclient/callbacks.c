@@ -171,7 +171,7 @@ send_event(
 	char		*event)
 {
 	char*window_name,*widget_name;
-	unsigned long t1,t2,t3,t4,t5,rpc,server,cobol;
+	unsigned long t1,t2,t3,t4,t5,rpc,server,app;
 	json_object *params;
 
 	window_name = GetWindowName(widget);
@@ -199,8 +199,8 @@ send_event(
 
 		SCREENDATA(Session) = RPC_SendEvent(GLP(Session),params);
 		rpc    = GLP(Session)->RPCExecTime;
-		server = GLP(Session)->ServerExecTime;
-		cobol  = GLP(Session)->COBOLExecTime;
+		server = GLP(Session)->TotalExecTime;
+		app  = GLP(Session)->AppExecTime;
 
 		t3 = now();
 		UpdateScreen();
@@ -220,13 +220,13 @@ send_event(
 			"make_event_data:%lums "
 			"rpc_exec:%lu "
 			"server_exec:%lums "
-			"cobol_exec:%lums "
+			"app_exec:%lums "
 			"update_screen:%lums",
 			(t5-t1),
 			(t2-t1),
 			(rpc),
 			(server),
-			(cobol),
+			(app),
 			(t4-t3)
 		);
 	}

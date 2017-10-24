@@ -557,8 +557,8 @@ static	json_object*
 MakeEventResponse(
 	json_object *obj,
 	SessionData *data,
-	unsigned long server_exec_time,
-    unsigned long cobol_exec_time)
+	unsigned long total_exec_time,
+    unsigned long app_exec_time)
 {
 	json_object *result,*meta,*res,*window_data,*windows,*w,*child;
 	RecordStruct *rec;
@@ -575,11 +575,11 @@ MakeEventResponse(
 	meta = json_object_new_object();
 	json_object_object_add(result,"meta",meta);
 
-	child = json_object_new_int((int)server_exec_time);
-	json_object_object_add(meta,"exec_time",child);
+	child = json_object_new_int((int)total_exec_time);
+	json_object_object_add(meta,"total_exec_time",child);
 
-	child = json_object_new_int((int)cobol_exec_time);
-	json_object_object_add(meta,"cobol_exec_time",child);
+	child = json_object_new_int((int)app_exec_time);
+	json_object_object_add(meta,"app_exec_time",child);
 
 	window_data = json_object_new_object();
 	json_object_object_add(window_data,"focused_window",

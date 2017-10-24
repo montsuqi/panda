@@ -42,8 +42,8 @@ typedef struct {
 	size_t			ReqSize;
 	size_t			ResSize;
 	unsigned long	RPCExecTime;
-	unsigned long	ServerExecTime;
-	unsigned long	COBOLExecTime;
+	unsigned long	TotalExecTime;
+	unsigned long	AppExecTime;
 #ifdef USE_SSL
 	gboolean		fSSL;
 	gboolean		fPKCS11;
