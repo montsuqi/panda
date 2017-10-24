@@ -601,7 +601,7 @@ _WriteXML_XML(
 	xmlDocDumpFormatMemoryEnc(doc,&buff,&size,"UTF-8",TRUE);
 	if (buff != NULL) {
     	mondbg = GetDBG_monsys();
-		ValueObjectId(obj) = blob_import_mem(mondbg,0,"MSGIO.xml","application/xml",0,buff,size);
+		ValueObjectId(obj) = blob_import_mem(mondbg,0,"XMLIO2.xml","application/xml",0,buff,size);
 		if (ValueObjectId(obj) != GL_OBJ_NULL) {
 			rc = MCP_OK;
 		} else {
