@@ -132,15 +132,18 @@ Error(
 	const char *format,
 	...)
 {
+	char	buf[SIZE_LOG+1];
 	va_list	va;
 
 	va_start(va,format);
-	if (ErrorFunc != NULL) {
-		ErrorFunc(format,va);
-	} else {
-		_Error(format,va);
-	}
+	vsnprintf(buf, sizeof(buf), format, va);
 	va_end(va);
+
+	if (ErrorFunc != NULL) {
+		ErrorFunc(buf);
+	} else {
+		_Error(buf);
+	}
 }
 
 void
