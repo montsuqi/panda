@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 #include <sys/stat.h>
@@ -60,6 +61,10 @@
 #include "logger.h"
 #include "tempdir.h"
 #include "utils.h"
+
+#define SIZE_URL_BUF 256
+#define TYPE_AUTH 0
+#define TYPE_APP  1
 
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
@@ -176,7 +181,6 @@ HeaderPostBLOB(
 	return all;
 }
 
-#define SIZE_URL_BUF 256
 
 char *
 REST_PostBLOB(
@@ -184,8 +188,9 @@ REST_PostBLOB(
 	LargeByteString *lbs)
 {
 	struct curl_slist *headers = NULL;
-	char *oid,url[SIZE_URL_BUF+1],clength[256],errbuf[CURL_ERROR_SIZE+1];
+	char *oid,url[SIZE_URL_BUF+1],clength[256];
 	long http_code;
+	CURLcode res;
 
 	oid = malloc(SIZE_NAME+1);
 	memset(oid,0,SIZE_NAME+1);
@@ -207,30 +212,28 @@ REST_PostBLOB(
 	curl_easy_setopt(ctx->Curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
 	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEHEADER,(void*)oid);
 
-	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
-
-	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
-		Error(_("comm error:%s"),errbuf);
+	res = curl_easy_perform(ctx->Curl);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
 	}
 	http_code = 0;
-	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		switch (http_code) {
-		case 200:
-			break;
-		case 401:
-		case 403:
-			Error(_("authentication error:incorrect user or password"));
-			break;
-		case 503:
-			Error(_("server maintenance error"));
-			break;
-		default:
-			Error(_("http status code[%ld]"),http_code);
-			break;
-		}
-	} else {
-		Error(_("comm error:%s"),errbuf);
+	res = curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
+	}
+	switch (http_code) {
+	case 200:
+		break;
+	case 401:
+	case 403:
+		Error(_("authentication error:incorrect user or password"));
+		break;
+	case 503:
+		Error(_("server maintenance error"));
+		break;
+	default:
+		Error(_("http status code[%ld]"),http_code);
+		break;
 	}
 	curl_slist_free_all(headers);
 
@@ -242,9 +245,10 @@ REST_GetBLOB(
 	GLProtocol *ctx,
 	const char *oid)
 {
-	char url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
+	char url[SIZE_URL_BUF+1];
 	LargeByteString *lbs;
 	long http_code;
+	CURLcode res;
 
 	if (oid == NULL || !strcmp(oid,"0")) {
 		return NULL;
@@ -262,31 +266,29 @@ REST_GetBLOB(
 	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEFUNCTION,write_data);
 	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, NULL);
 
-	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
-
-	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
-		Warning(_("comm error:can not get blob:%s"),oid);
-		return NULL;
+	res = curl_easy_perform(ctx->Curl);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
 	}
 	http_code = 0;
-	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		switch (http_code) {
-		case 200:
-			break;
-		case 401:
-		case 403:
-			Warning(_("authentication error:incorrect user or password"));
-			return NULL;
-		case 503:
-			Error(_("server maintenance error"));
-			break;
-		default:
-			Warning(_("http status code[%ld]"),http_code);
-			return NULL;
-		}
-	} else {
-		Error(_("comm error:%s"),errbuf);
+	res = curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
+	}
+
+	switch (http_code) {
+	case 200:
+		break;
+	case 401:
+	case 403:
+		Warning(_("authentication error:incorrect user or password"));
+		return NULL;
+	case 503:
+		Error(_("server maintenance error"));
+		break;
+	default:
+		Warning(_("http status code[%ld]"),http_code);
+		return NULL;
 	}
 
 	return lbs;
@@ -373,8 +375,6 @@ CheckJSONRPCResponse(
 	}
 }
 
-#define TYPE_AUTH 0
-#define TYPE_APP  1
 
 static	json_object*
 JSONRPC(
@@ -384,9 +384,10 @@ JSONRPC(
 {
 	struct curl_slist *headers = NULL;
 	char *ctype,*url,*jsonstr,*path;
-	char buf[256],errbuf[CURL_ERROR_SIZE+1];
+	char buf[256];
 	long http_code;
 	json_object *ret;
+	CURLcode res;
 
 	ctx->RPCExecTime = now();
 
@@ -438,41 +439,39 @@ JSONRPC(
 	curl_easy_setopt(ctx->Curl, CURLOPT_READFUNCTION, read_text_data);
 	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, headers);
 
-	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
-
 	{
 		ctx->RPCExecTime = now();
-		if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
-			Error(_("comm error:%s"),errbuf);
+		res = curl_easy_perform(ctx->Curl);
+		if (res != CURLE_OK) {
+			Error(_("comm error:%s"),curl_easy_strerror(res));
 		}
 		ctx->RPCExecTime = now() - ctx->RPCExecTime;
 	}
 	http_code = 0;
-	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		switch (http_code) {
-		case 200:
-			break;
-		case 401:
-		case 403:
-			Error(_("authentication error:incorrect user or password"));
-			break;
-		case 503:
-			Error(_("server maintenance error"));
-			break;
-		default:
-			Error(_("http status code[%d]"),http_code);
-			break;
-		}
-	} else {
-		Error(_("comm error:%s"),errbuf);
+	res = curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
 	}
-	if (curl_easy_getinfo(ctx->Curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
-		if (ctype == NULL || !g_regex_match_simple("json",ctype,G_REGEX_CASELESS,0)) {
-			Error(_("invalid content type:%s"),ctype);
-		}
-	} else {
-		Error(_("comm error:%s"),errbuf);
+	switch (http_code) {
+	case 200:
+		break;
+	case 401:
+	case 403:
+		Error(_("authentication error:incorrect user or password"));
+		break;
+	case 503:
+		Error(_("server maintenance error"));
+		break;
+	default:
+		Error(_("http status code[%d]"),http_code);
+		break;
+	}
+	res = curl_easy_getinfo(ctx->Curl,CURLINFO_CONTENT_TYPE,&ctype);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
+	}
+	if (ctype == NULL || !g_regex_match_simple("json",ctype,G_REGEX_CASELESS,0)) {
+		Error(_("invalid content type:%s"),ctype);
 	}
 	curl_slist_free_all(headers);
 
