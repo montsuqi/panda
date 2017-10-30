@@ -1473,10 +1473,10 @@ _QUERY(
 	ExecStatusType	status;
 
 ENTER_FUNC;
-	ret = NULL;
-
 	res = _PQexec(dbg, sql, fRed, usage);
-	CheckConnect(dbg, usage);
+	if (!CheckConnect(dbg, usage)){
+		ret = NULL;
+	} else
 	if ( ( res ==  NULL)
 		 ||	(  ( status = PQresultStatus(res) ) == PGRES_BAD_RESPONSE )
 		 ||	(  status  ==  PGRES_FATAL_ERROR     )
