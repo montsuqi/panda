@@ -69,6 +69,7 @@ BLOBEXPORT(
 	char *buff;
 
 	dbgmsg("BLOB_EXPORT");
+	TransactionStart(dbg);
 	obj = RecvObject(fp);				ON_IO_ERROR(fp,badio);
 	if (blob_export_mem(dbg,obj,&buff,&size)) {
 		SendPacketClass(fp,BLOB_OK);	ON_IO_ERROR(fp,badio);
@@ -80,6 +81,7 @@ BLOBEXPORT(
 		SendPacketClass(fp,BLOB_NOT);	ON_IO_ERROR(fp,badio);
 	}
 badio:
+	TransactionEnd(dbg);
 	return;
 }
 
@@ -92,6 +94,7 @@ BLOBIMPORT(
 	unsigned char	*buff;
 
 	dbgmsg("BLOB_IMPORT");
+	TransactionStart(dbg);
 	ssize = RecvLength(fp);					ON_IO_ERROR(fp,badio);
 	buff = xmalloc(ssize);
 	Recv(fp,buff,ssize);					ON_IO_ERROR(fp,badio);
@@ -99,6 +102,7 @@ BLOBIMPORT(
 	xfree(buff);
 	SendObject(fp,obj);						ON_IO_ERROR(fp,badio);
 badio:
+	TransactionEnd(dbg);
 	return;
 }
 

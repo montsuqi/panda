@@ -144,10 +144,11 @@ all_list_print(
 {
 	Bool rc;
 	ValueStruct *ret;
-
+	TransactionStart(dbg);
 	ret = blob_list(dbg);
 	rc = list_print(ret);
 	FreeValueStruct(ret);
+	TransactionEnd(dbg);
 	return rc;
 }
 
