@@ -1037,14 +1037,11 @@ blob_list(
 	size_t sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
-	TransactionStart(dbg);
-
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
 			 "SELECT importtime, id, blobid, filename,size,content_type,lifetype,status FROM %s ORDER BY importtime;", MONBLOB);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
-	TransactionEnd(dbg);
 	return ret;
 }
 
