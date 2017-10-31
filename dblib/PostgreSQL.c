@@ -1214,6 +1214,18 @@ _PQgetResult(
 {
 	return PQgetResult(PGCONN(dbg,usage));
 }
+static Bool
+CheckConnect(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	if ( PQstatus(PGCONN(dbg,usage)) != CONNECTION_OK ){
+		Warning("PostgreSQL: Unconnected.");
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+		return FALSE;
+	}
+	return TRUE;
+}
 
 static int
 CheckResult(
@@ -1223,9 +1235,7 @@ CheckResult(
 	int 		status)
 {
 	int rc;
-
-	if ( PQstatus(PGCONN(dbg,usage)) != CONNECTION_OK ){
-		Warning("PostgreSQL: Unconnected.");
+	if ( !CheckConnect(dbg, usage)) {
 		rc = MCP_BAD_CONN;
 	} else
 	if ( res && (PQresultStatus(res) == status)) {
@@ -1463,9 +1473,10 @@ _QUERY(
 	ExecStatusType	status;
 
 ENTER_FUNC;
-	ret = NULL;
-
 	res = _PQexec(dbg, sql, fRed, usage);
+	if (!CheckConnect(dbg, usage)){
+		ret = NULL;
+	} else
 	if ( ( res ==  NULL)
 		 ||	(  ( status = PQresultStatus(res) ) == PGRES_BAD_RESPONSE )
 		 ||	(  status  ==  PGRES_FATAL_ERROR     )
@@ -1609,6 +1620,10 @@ _DBSTART(
 
 ENTER_FUNC;
 	rc = 0;
+	if (!CheckConnect(dbg, PROCESS_UPDATE)) {
+		Warning("PostgreSQL: DB is not conneted. ReOpenDB");
+		_DBOPEN(dbg, ctrl);
+	}
 	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		conn = PGCONN(dbg,DB_UPDATE);
 		LockDB_Redirect(dbg);
@@ -1663,6 +1678,8 @@ ENTER_FUNC;
 		}
 	} else {
 		conn = NULL;
+		Warning("PostgreSQL: DB is not conneted. REOPEN");
+		_DBOPEN(dbg, ctrl);
 	}
 	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {

@@ -144,7 +144,6 @@ all_list_print(
 {
 	Bool rc;
 	ValueStruct *ret;
-
 	ret = blob_list(dbg);
 	rc = list_print(ret);
 	FreeValueStruct(ret);
@@ -246,6 +245,7 @@ main(
 	}
 	monblob_setup(dbg, FALSE);
 
+	TransactionStart(dbg);
 	if (List) {
 		if (!all_list_print(dbg)){
 			exit(1);
@@ -256,15 +256,11 @@ main(
 
 	if (Blob) {
 		if (ImportFile) {
-			TransactionStart(dbg);
 			oid = blob_import(dbg, 0, ImportFile, NULL, 0);
-			TransactionEnd(dbg);
 			printf("%d\n", (int)oid);
 		} else if (ExportID) {
-			TransactionStart(dbg);
 			oid = (MonObjectType)atoi(ExportID);
 			rc = blob_export(dbg, oid, OutputFile);
-			TransactionEnd(dbg);
 			if (!rc) {
 				exit(1);
 			}
@@ -283,18 +279,14 @@ main(
 		}
 	} else {
 		if (ImportFile) {
-			TransactionStart(dbg);
 			id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
-			TransactionEnd(dbg);
 			if ( !id ){
 				exit(1);
 			}
 			printf("%s\n", id);
 			xfree(id);
 		} else if (ExportID) {
-			TransactionStart(dbg);
 			rc = monblob_export_file(dbg, ExportID, OutputFile);
-			TransactionEnd(dbg);
 			if (!rc) {
 				exit(1);
 			}
@@ -311,6 +303,7 @@ main(
 			_monblob_check_id(dbg,CheckID);
 		}
 	}
+	TransactionEnd(dbg);
 	CloseDB(dbg);
 
 	return 0;

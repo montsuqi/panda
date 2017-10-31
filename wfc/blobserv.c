@@ -49,6 +49,7 @@
 #define BLOBEXPIRE 2
 
 static DBG_Struct	*dbg;
+static pthread_mutex_t lock;
 
 extern	void
 InitServeBLOB()
@@ -58,6 +59,7 @@ InitServeBLOB()
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
+	pthread_mutex_init(&lock,NULL);
 }
 
 static	void
@@ -69,6 +71,7 @@ BLOBEXPORT(
 	char *buff;
 
 	dbgmsg("BLOB_EXPORT");
+	TransactionStart(dbg);
 	obj = RecvObject(fp);				ON_IO_ERROR(fp,badio);
 	if (blob_export_mem(dbg,obj,&buff,&size)) {
 		SendPacketClass(fp,BLOB_OK);	ON_IO_ERROR(fp,badio);
@@ -79,6 +82,7 @@ BLOBEXPORT(
 		SendPacketClass(fp,BLOB_NOT);	ON_IO_ERROR(fp,badio);
 	}
 badio:
+	TransactionEnd(dbg);
 	return;
 }
 
@@ -91,6 +95,7 @@ BLOBIMPORT(
 	unsigned char	*buff;
 
 	dbgmsg("BLOB_IMPORT");
+	TransactionStart(dbg);
 	ssize = RecvLength(fp);					ON_IO_ERROR(fp,badio);
 	buff = xmalloc(ssize);
 	Recv(fp,buff,ssize);					ON_IO_ERROR(fp,badio);
@@ -98,6 +103,7 @@ BLOBIMPORT(
 	xfree(buff);
 	SendObject(fp,obj);						ON_IO_ERROR(fp,badio);
 badio:
+	TransactionEnd(dbg);
 	return;
 }
 
@@ -106,6 +112,7 @@ ServeBLOB(
 	NETFILE		*fp)
 {
 ENTER_FUNC;
+	pthread_mutex_lock(&lock);
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_EXPORT:
 		BLOBEXPORT(fp);
@@ -116,6 +123,7 @@ ENTER_FUNC;
 	  default:
 		break;
 	}
+	pthread_mutex_unlock(&lock);
 LEAVE_FUNC;
 }
 
