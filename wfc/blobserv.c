@@ -50,10 +50,7 @@
 #define BLOBEXPIRE 2
 
 static DBG_Struct	*dbg;
-typedef	struct	_BLOBLock {
-	LOCKOBJECT;
-}	BLOBLock;
-static BLOBLock *lock = NULL;
+static pthread_mutex_t lock;
 
 extern	void
 InitServeBLOB()
@@ -63,8 +60,7 @@ InitServeBLOB()
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	lock = New(BLOBLock);
-	InitLock(lock);
+	pthread_mutex_init(&lock,NULL);
 }
 
 static	void
@@ -117,7 +113,7 @@ ServeBLOB(
 	NETFILE		*fp)
 {
 ENTER_FUNC;
-	LockWrite(lock);
+	pthread_mutex_lock(&lock);
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_EXPORT:
 		BLOBEXPORT(fp);
@@ -128,7 +124,7 @@ ENTER_FUNC;
 	  default:
 		break;
 	}
-	UnLock(lock);
+	pthread_mutex_unlock(&lock);
 LEAVE_FUNC;
 }
 
