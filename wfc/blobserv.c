@@ -35,6 +35,7 @@
 #include	<pthread.h>
 
 #include	"libmondai.h"
+#include	"lock.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"enum.h"
@@ -49,6 +50,10 @@
 #define BLOBEXPIRE 2
 
 static DBG_Struct	*dbg;
+typedef	struct	_BLOBLock {
+	LOCKOBJECT;
+}	BLOBLock;
+static BLOBLock *lock = NULL;
 
 extern	void
 InitServeBLOB()
@@ -58,6 +63,8 @@ InitServeBLOB()
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
+	lock = New(BLOBLock);
+	InitLock(lock);
 }
 
 static	void
@@ -110,6 +117,7 @@ ServeBLOB(
 	NETFILE		*fp)
 {
 ENTER_FUNC;
+	LockWrite(lock);
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_EXPORT:
 		BLOBEXPORT(fp);
@@ -120,6 +128,7 @@ ENTER_FUNC;
 	  default:
 		break;
 	}
+	UnLock(lock);
 LEAVE_FUNC;
 }
 
