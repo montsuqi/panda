@@ -35,7 +35,6 @@
 #include	<pthread.h>
 
 #include	"libmondai.h"
-#include	"lock.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"enum.h"
