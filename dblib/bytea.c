@@ -1056,7 +1056,6 @@ monblob_info(
 	if (!check_id(id)) {
 		return FALSE;
 	}
-	TransactionStart(dbg);
 	sql = (char *)xmalloc(sql_len);
 	eid = Escape_monsys(dbg, id);
 	snprintf(sql, sql_len,
@@ -1064,7 +1063,6 @@ monblob_info(
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(eid);
 	xfree(sql);
-	TransactionEnd(dbg);
 	return ret;
 }
 
@@ -1078,7 +1076,6 @@ blob_info(
 	size_t sql_len = SIZE_SQL;
 	ValueStruct *ret;
 
-	TransactionStart(dbg);
 	sql = (char *)xmalloc(sql_len);
 	eblobid = Escape_monsys(dbg, blobid);
 	snprintf(sql, sql_len,
@@ -1086,6 +1083,5 @@ blob_info(
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(eblobid);
 	xfree(sql);
-	TransactionEnd(dbg);
 	return ret;
 }
