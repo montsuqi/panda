@@ -1620,10 +1620,6 @@ _DBSTART(
 
 ENTER_FUNC;
 	rc = 0;
-	if (!CheckConnect(dbg, PROCESS_UPDATE)) {
-		Warning("PostgreSQL: DB is not conneted. ReOpenDB");
-		_DBOPEN(dbg, ctrl);
-	}
 	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		conn = PGCONN(dbg,DB_UPDATE);
 		LockDB_Redirect(dbg);
@@ -1678,8 +1674,6 @@ ENTER_FUNC;
 		}
 	} else {
 		conn = NULL;
-		Warning("PostgreSQL: DB is not conneted. REOPEN");
-		_DBOPEN(dbg, ctrl);
 	}
 	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
