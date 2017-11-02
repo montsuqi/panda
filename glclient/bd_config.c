@@ -35,8 +35,6 @@
 #include "logger.h"
 #include "utils.h"
 
-static char        *ConfDir    = NULL;
-static char        *ConfFile   = NULL;
 static json_object *config_obj = NULL;
 
 static	gboolean
@@ -121,17 +119,39 @@ load_config(gchar* str)
     }
 }
 
+char*
+gl_config_get_config_dir()
+{
+	static char *conf_dir = NULL;
+
+	if (conf_dir == NULL) {
+		conf_dir = g_strconcat(g_get_home_dir(), "/.glclient", NULL);
+	}
+	return conf_dir;
+}
+
+char*
+gl_config_get_config_file()
+{
+	static char *conf_file = NULL;
+	char *conf_dir; 
+
+	if (conf_file == NULL) {
+		conf_dir = gl_config_get_config_dir();
+		conf_file = g_strconcat(conf_dir,"/config.json",NULL);
+	}
+	return conf_file;
+}
+
 void
 gl_config_init(void) 
 {
-	gchar *buf;
+	gchar *buf,*conf_file;
 	size_t size;
 
-	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
-	ConfFile = g_strdup_printf("%s/config.json",ConfDir);
-
 	gl_lock();
-	if (g_file_get_contents(ConfFile,&buf,&size,NULL)) {
+	conf_file = gl_config_get_config_file();
+	if (g_file_get_contents(conf_file,&buf,&size,NULL)) {
 		load_config(buf);
 		g_free(buf);
 	} else {
@@ -216,7 +236,7 @@ void
 gl_config_save(void)
 {
 	json_object *list,*nlist,*child;
-	const char *jsonstr;
+	const char *jsonstr,*conf_file;
 	int i,j,index,nindex;
 
 	json_object_object_get_ex(config_obj,"index",&child);
@@ -240,9 +260,11 @@ gl_config_save(void)
 	json_object_object_add(config_obj,"index",json_object_new_int(nindex));
 
 	jsonstr = json_object_to_json_string(config_obj);
+
 	gl_lock();
-	if (!g_file_set_contents(ConfFile,jsonstr,strlen(jsonstr),NULL)) {
-		Error("could not create %s",ConfFile);
+	conf_file = gl_config_get_config_file();
+	if (!g_file_set_contents(conf_file,jsonstr,strlen(jsonstr),NULL)) {
+		Error("could not create %s",conf_file);
 	}
 	gl_unlock();
 }
@@ -349,11 +371,6 @@ gl_config_get_boolean(
 	return json_object_get_boolean(child);
 }
 
-const char*
-gl_config_get_config_dir()
-{
-	return ConfDir;
-}
 
 extern	void
 ListConfig()
