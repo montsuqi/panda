@@ -82,6 +82,7 @@ InitDesktop(void)
 			GLCLIENT_DATADIR, DESKTOP_LIST);
 		fp = fopen(fname, "r");
 	}
+	Info("%s use %s\n",__FILE__,fname);
 	if (fp != NULL) {
 		while (fgets(buff, sizeof(buff), fp) != NULL) {
 			head = strstr(buff, ":");
