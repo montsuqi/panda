@@ -33,7 +33,8 @@
 
 /* gconf tool */
 void        gl_config_init();
-const char* gl_config_get_config_dir();
+char*       gl_config_get_config_dir();
+char*       gl_config_get_config_file();
 int         gl_config_get_config_nums();
 gboolean    gl_config_have_config(int i);
 int         gl_config_get_index();
