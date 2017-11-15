@@ -131,12 +131,12 @@ execute()
 	fd = _flock(lockfile);
 	if (g_file_get_contents(datafile,&buf,&size,NULL)) {
 		tmp = realloc(buf,size+1);
-        if (tmp == NULL) {
+		if (tmp == NULL) {
 			Error("realloc(3) failure");
 		} else {
 			buf = tmp;
 			memset(tmp+size,0,1);
-        }
+		}
 		obj = json_tokener_parse(buf);
 		if (is_error(obj)) {
 			obj = json_object_new_array();

@@ -983,12 +983,18 @@ ReadDownloadMetaFile(
 	const char *metafile)
 {
 	json_object *obj,*result;
-	char *buf,*buf2;
+	char *buf,*tmp;
 	size_t size;
 
 	if (g_file_get_contents(metafile,&buf,&size,NULL)) {
-		buf2 = strndup(buf,size);
-		obj = json_tokener_parse(buf2);
+		tmp = realloc(buf,size+1);
+		if (tmp == NULL) {
+			Error("realloc(3) failure");
+		} else {
+			buf = tmp;
+			memset(tmp+size,0,1);
+		}
+		obj = json_tokener_parse(buf);
 		if (!is_error(obj)) {
 			if (json_object_object_get_ex(obj,"result",&result)) {
 				json_object_get(result);
@@ -1000,7 +1006,6 @@ ReadDownloadMetaFile(
 			result = json_object_new_array();
 		}
 		g_free(buf);
-		g_free(buf2);
 		if (unlink(metafile) == -1) {
 			Error("unlink(2) failure %s %s",metafile,strerror(errno));
 		}
