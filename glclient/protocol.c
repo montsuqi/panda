@@ -841,9 +841,6 @@ REST_GetBLOB_via_ENV()
 	if (lbs == NULL) {
 		_Error("REST_GetBLOB failure");
 	}
-	if (LBS_Size(lbs) <= 0) {
-		_Error("LBS size 0");
-	}
 
 	return lbs;
 }
