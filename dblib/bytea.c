@@ -477,6 +477,9 @@ monblob_import(
 	ValueStruct *value = NULL;
 	size_t size;
 
+	/* Delete expiration date */
+	monblob_expire(dbg);
+
 	size = file_to_bytea(dbg, filename, &value);
 	if (value == NULL){
 		return NULL;
@@ -900,6 +903,22 @@ blob_delete(
 		rc = FALSE;
 	}
 	return rc;
+}
+
+extern	Bool
+monblob_expire(
+	DBG_Struct *dbg)
+{
+	Bool rc;
+	char *sql;
+	size_t sql_len = SIZE_SQL;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "DELETE FROM %s WHERE (lifetype = 0 AND (now() > importtime + CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > importtime + CAST('%d days' AS INTERVAL)));", MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	return (rc == MCP_OK);
 }
 
 extern	char *

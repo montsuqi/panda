@@ -23,6 +23,7 @@
 #include	"dblib.h"
 #define 	MONBLOB	"monblob"
 #define 	BLOBEXPIRE 2
+#define 	MONBLOBEXPIRE 50
 #define 	SEQMONBLOB "seqmonblob"
 
 typedef struct _monblob_struct {
