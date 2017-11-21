@@ -37,15 +37,18 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<dirent.h>
+#include	<glib.h>
 #include	<time.h>
 #include	<errno.h>
 
 #include	"utils.h"
+#include	"tempdir.h"
 
 static char *LockFile = NULL;
 static int   LockFD   = -1;
 
-int _flock(const char *lock)
+int
+_flock(const char *lock)
 {
 	int fd;
 
@@ -59,7 +62,8 @@ int _flock(const char *lock)
 	return fd;
 }
 
-void _funlock(int fd)
+void
+_funlock(int fd)
 {
 	if (fd != -1) {
 		flock(fd,LOCK_UN);
@@ -67,15 +71,17 @@ void _funlock(int fd)
 	}
 }
 
-void gl_lock()
+void
+gl_lock()
 {
 	if (LockFile == NULL) {
-		LockFile = g_build_filename(g_get_home_dir(),"/.glclient/.lock",NULL);
+		LockFile = g_build_filename(GetTempDir(),".lock",NULL);
 	}
 	LockFD = _flock(LockFile);
 }
 
-void gl_unlock()
+void
+gl_unlock()
 {
 	if (LockFile != NULL && LockFD != -1) {
 		_funlock(LockFD);

@@ -36,6 +36,7 @@
 #include	<sys/wait.h>
 #include	<signal.h>
 #include	<errno.h>
+#include	<glib.h>
 #include	<libmondai.h>
 
 #define		DESKTOP_MAIN
@@ -66,36 +67,58 @@ GetSuffix(char *path)
 void
 InitDesktop(void)
 {
-	FILE *fp;
-	char fname[256];
-	char buff[SIZE_BUFF+1];
-	char *head;
-	char *key;
-	char *value;
+	char *conf1,*conf2,*buf,*tmp;
+	size_t size;
+	gboolean f_read;
 
 	DesktopAppTable = NewNameHash();
-	snprintf(fname, sizeof(fname), "%s/%s", 
-		gl_config_get_config_dir(), DESKTOP_LIST);
-	fp = fopen(fname, "r");
-	if (fp == NULL) {
-		snprintf(fname, sizeof(fname), "%s/%s", 
-			GLCLIENT_DATADIR, DESKTOP_LIST);
-		fp = fopen(fname, "r");
-	}
-	Info("%s use %s\n",__FILE__,fname);
-	if (fp != NULL) {
-		while (fgets(buff, sizeof(buff), fp) != NULL) {
-			head = strstr(buff, ":");
-			if (head != NULL) {
-				key = StrnDup(buff, head - buff);
-				head += 1;
-				value = StrnDup(head, strlen(head) - 1); /* chop */
-				g_hash_table_insert(DesktopAppTable, key, value);
-			}
-		}
-		fclose(fp);
+	conf1 = g_build_filename(GetRootDir(),DESKTOP_LIST,NULL);
+	conf2 = g_build_filename(GLCLIENT_DATADIR,DESKTOP_LIST,NULL);
+	f_read = FALSE;
+
+	if (g_file_get_contents(conf1,&buf,&size,NULL)) {
+		f_read = TRUE;
+		Info("use %s\n",conf1);
 	} else {
-		Debug("cannot open applications list");
+		if (g_file_get_contents(conf2,&buf,&size,NULL)) {
+			f_read = TRUE;
+			Info("use %s\n",conf2);
+		} else {
+			Warning("cannot open applications list");
+		}
+	}
+	g_free(conf1);
+	g_free(conf2);
+
+	if (f_read) {
+		tmp = realloc(buf,size+1);
+		if (tmp == NULL) {
+			Error("realloc(3) failure");
+		} else {
+			buf = tmp;
+			memset(tmp+size,0,1);
+		}
+		{
+			GRegex *reg;
+			GMatchInfo *info;
+
+			reg = g_regex_new("(.*):(.*)",0,0,NULL);
+			g_regex_match(reg,buf,0,&info);
+			while(g_match_info_matches(info)) {
+				gchar *k,*v;
+				
+				k = g_match_info_fetch(info,1);
+				v = g_match_info_fetch(info,2);
+
+				Debug("app %s:%s\n",k,v);
+				g_hash_table_insert(DesktopAppTable, k, v);
+
+				g_match_info_next(info,NULL);
+			}
+			g_match_info_free(info);
+			g_regex_unref(reg);
+		}
+		g_free(buf);
 	}
 }
 

@@ -35,13 +35,15 @@
 #include	<dirent.h>
 #include	<uuid/uuid.h>
 #include	<time.h>
+#include	<glib.h>
 #include	<libmondai.h>
 
-#include	"utils.h"
 #include	"tempdir.h"
+#include	"utils.h"
 
 #define		ELAPSED (2592000) // 30day
 
+static char *RootDir = NULL;
 static char *TempDir = NULL;
 
 void
@@ -50,12 +52,13 @@ InitTempDir()
 	uuid_t u;
 	gchar *dir,buf[64];
 
-	dir = g_strconcat(g_get_home_dir(),"/.glclient/tmp",NULL);
+	RootDir = g_build_filename(g_get_home_dir(),GL_ROOT_DIR,NULL);
+	dir = g_strconcat(RootDir,"tmp",NULL);
 	MakeDir(dir,0700);
 	rm_r_old(dir,ELAPSED);
 	uuid_generate(u);
 	uuid_unparse(u,buf);
-	TempDir = g_strconcat(dir,"/",buf,NULL);
+	TempDir = g_build_filename(dir,buf,NULL);
 	MakeDir(TempDir,0700);
 	g_free(dir);
 	fprintf(stderr,"tempdir: %s\n",TempDir);
@@ -65,6 +68,7 @@ void
 InitTempDir_via_Dir(
 	const char *_dir)
 {
+	RootDir = g_build_filename(g_get_home_dir(),GL_ROOT_DIR,NULL);
 	TempDir = g_strdup(_dir);
 	mkdir_p((char*)_dir,0700);
 }
@@ -73,6 +77,12 @@ char *
 GetTempDir()
 {
 	return TempDir;
+}
+
+char *
+GetRootDir()
+{
+	return RootDir;
 }
 
 char *

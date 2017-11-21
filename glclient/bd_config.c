@@ -34,6 +34,7 @@
 #include "bd_config.h"
 #include "logger.h"
 #include "utils.h"
+#include "tempdir.h"
 
 static json_object *config_obj = NULL;
 
@@ -120,25 +121,12 @@ load_config(gchar* str)
 }
 
 char*
-gl_config_get_config_dir()
-{
-	static char *conf_dir = NULL;
-
-	if (conf_dir == NULL) {
-		conf_dir = g_build_filename(g_get_home_dir(),".glclient",NULL);
-	}
-	return conf_dir;
-}
-
-char*
 gl_config_get_config_file()
 {
 	static char *conf_file = NULL;
-	char *conf_dir; 
 
 	if (conf_file == NULL) {
-		conf_dir = gl_config_get_config_dir();
-		conf_file = g_build_filename(conf_dir,"config.json",NULL);
+		conf_file = g_build_filename(GetRootDir(),"config.json",NULL);
 	}
 	return conf_file;
 }
