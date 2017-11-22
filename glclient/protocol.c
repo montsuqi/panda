@@ -188,7 +188,7 @@ REST_PostBLOB(
 	LargeByteString *lbs)
 {
 	struct curl_slist *headers = NULL;
-	char *oid,url[SIZE_URL_BUF+1],clength[256];
+	char *oid,url[SIZE_URL_BUF+1],clength[256],buf[256];
 	long http_code;
 	CURLcode res;
 
@@ -197,6 +197,8 @@ REST_PostBLOB(
 	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",ctx->RESTURI,ctx->SessionID);
 	url[sizeof(url)-1] = 0;
 
+	snprintf(buf,sizeof(buf),"User-Agent: glclient2_%s_%s",PACKAGE_VERSION,PACKAGE_DATE);
+	headers = curl_slist_append(headers, buf);
 	headers = curl_slist_append(headers,"Content-Type: application/octet-stream");
 	snprintf(clength,sizeof(clength),"Content-Length: %ld",LBS_Size(lbs));
 	headers = curl_slist_append(headers, clength);
@@ -221,6 +223,8 @@ REST_PostBLOB(
 	if (res != CURLE_OK) {
 		Error(_("comm error:%s"),curl_easy_strerror(res));
 	}
+	curl_slist_free_all(headers);
+
 	switch (http_code) {
 	case 200:
 		break;
@@ -235,7 +239,6 @@ REST_PostBLOB(
 		Error(_("http status code[%ld]"),http_code);
 		break;
 	}
-	curl_slist_free_all(headers);
 
 	return oid;
 }
@@ -245,7 +248,8 @@ REST_GetBLOB(
 	GLProtocol *ctx,
 	const char *oid)
 {
-	char url[SIZE_URL_BUF+1];
+	struct curl_slist *headers = NULL;
+	char url[SIZE_URL_BUF+1],buf[256];
 	LargeByteString *lbs;
 	long http_code;
 	CURLcode res;
@@ -260,11 +264,14 @@ REST_GetBLOB(
 	url[sizeof(url)-1] = 0;
 	Debug("REST_GetBLOB:%s",url);
 
+	snprintf(buf,sizeof(buf),"User-Agent: glclient2_%s_%s",PACKAGE_VERSION,PACKAGE_DATE);
+	headers = curl_slist_append(headers, buf);
+
 	curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
 	curl_easy_setopt(ctx->Curl, CURLOPT_POST,0);
 	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEDATA,(void*)lbs);
 	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, NULL);
+	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, headers);
 
 	res = curl_easy_perform(ctx->Curl);
 	if (res != CURLE_OK) {
@@ -275,6 +282,7 @@ REST_GetBLOB(
 	if (res != CURLE_OK) {
 		Error(_("comm error:%s"),curl_easy_strerror(res));
 	}
+	curl_slist_free_all(headers);
 
 	switch (http_code) {
 	case 200:
