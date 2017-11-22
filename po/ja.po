@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2017-08-09 11:12+0900\n"
+"POT-Creation-Date: 2017-11-22 14:30+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -16,101 +16,109 @@ msgstr ""
 "Content-Type: text/plain; charset=EUC-JP\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: glclient/bd_component.c:45
+#: glclient/bd_component.c:51
 msgid "Open File"
 msgstr "参照"
 
-#: glclient/bd_component.c:71
+#: glclient/bd_component.c:77
 msgid "Open Directory"
 msgstr "キャッシュディレクトリ名"
 
-#: glclient/bd_component.c:247 glclient/bootdialog.c:303
+#: glclient/bd_component.c:341 glclient/bootdialog.c:303
 msgid "AuthURI"
 msgstr "サーバ"
 
-#: glclient/bd_component.c:256 glclient/bootdialog.c:305
+#: glclient/bd_component.c:350 glclient/bootdialog.c:305
 msgid "User"
 msgstr "ユーザ名"
 
-#: glclient/bd_component.c:265
+#: glclient/bd_component.c:359
 msgid "Password"
 msgstr "パスワード"
 
-#: glclient/bd_component.c:276
+#: glclient/bd_component.c:370
 msgid "Remember Password"
 msgstr "パスワードの保存"
 
-#: glclient/bd_component.c:291
+#: glclient/bd_component.c:385
 msgid "Use SSL Client Verification"
 msgstr "SSLクライアント認証を使用"
 
-#: glclient/bd_component.c:306
+#: glclient/bd_component.c:400
 msgid "CA Certificate File"
 msgstr "CA証明書ファイル"
 
-#: glclient/bd_component.c:309 glclient/bd_component.c:324
-#: glclient/bd_component.c:339 glclient/bd_component.c:401
-#: glclient/bd_component.c:425 glclient/bd_component.c:441
+#: glclient/bd_component.c:403 glclient/bd_component.c:418
+#: glclient/bd_component.c:433 glclient/bd_component.c:495
+#: glclient/bd_component.c:563 glclient/bd_component.c:579
 msgid "Open"
 msgstr "参照"
 
-#: glclient/bd_component.c:321
+#: glclient/bd_component.c:415
 msgid "Certificate(*.crt)"
 msgstr "証明書ファイル名(*.crt)"
 
-#: glclient/bd_component.c:336
+#: glclient/bd_component.c:430
 msgid "CertificateKey(*.pem)"
 msgstr "秘密鍵ファイル名(*.pem)"
 
-#: glclient/bd_component.c:351
+#: glclient/bd_component.c:445
 msgid "CertificateKey Passphrase"
 msgstr "秘密鍵パスフレーズ"
 
-#: glclient/bd_component.c:362
+#: glclient/bd_component.c:456
 msgid "Remember CertificateKey Passphrase"
 msgstr "秘密鍵パスフレーズの保存"
 
-#: glclient/bd_component.c:369
+#: glclient/bd_component.c:463
 msgid "Cipher Suite"
 msgstr "暗号スイート"
 
-#: glclient/bd_component.c:380
+#: glclient/bd_component.c:474
 msgid "Use Security Device"
 msgstr "セキュリティデバイスを使う"
 
-#: glclient/bd_component.c:398
+#: glclient/bd_component.c:492
 msgid "PKCS#11 Library"
 msgstr "PKCS#11ライブラリ"
 
-#: glclient/bd_component.c:421
+#: glclient/bd_component.c:515
+msgid "Printer Name"
+msgstr "プリンタ名"
+
+#: glclient/bd_component.c:519
+msgid "Actual Printer"
+msgstr "割り当てプリンタ"
+
+#: glclient/bd_component.c:559
 msgid "Style"
 msgstr "スタイル"
 
-#: glclient/bd_component.c:437
+#: glclient/bd_component.c:575
 msgid "Gtkrc"
 msgstr "Gtkrc"
 
-#: glclient/bd_component.c:453
+#: glclient/bd_component.c:591
 msgid "FontName"
 msgstr "フォント"
 
-#: glclient/bd_component.c:465
+#: glclient/bd_component.c:603
 msgid "Debug"
 msgstr ""
 
-#: glclient/bd_component.c:473
+#: glclient/bd_component.c:611
 msgid "Enable Keybuffer"
 msgstr "キーバッファを有効にする"
 
-#: glclient/bd_component.c:481
+#: glclient/bd_component.c:619
 msgid "Disable IM control and Kana input"
 msgstr "入力メソッドの制御とカタカナ入力を無効にする"
 
-#: glclient/bd_component.c:489
+#: glclient/bd_component.c:627
 msgid "Enable Timer"
 msgstr "タイマー処理を有効にする"
 
-#: glclient/bd_component.c:507
+#: glclient/bd_component.c:645
 msgid "Timer Period(ms)"
 msgstr "タイマー起動時間(ミリ秒)"
 
@@ -134,7 +142,7 @@ msgstr "サーバ設定"
 msgid "Delete"
 msgstr "削除"
 
-#: glclient/bootdialog.c:276 glclient/bootdialog.c:533
+#: glclient/bootdialog.c:276 glclient/bootdialog.c:537
 msgid "Close"
 msgstr "閉じる"
 
@@ -159,22 +167,26 @@ msgid "SSL"
 msgstr "SSL"
 
 #: glclient/bootdialog.c:519
+msgid "Printer"
+msgstr "プリンタ"
+
+#: glclient/bootdialog.c:523
 msgid "Details"
 msgstr "詳細"
 
-#: glclient/bootdialog.c:524
+#: glclient/bootdialog.c:528
 msgid "Connect"
 msgstr "接続"
 
-#: glclient/bootdialog.c:539
+#: glclient/bootdialog.c:543
 msgid "Configuration"
 msgstr "設定"
 
-#: glclient/bootdialog.c:546
+#: glclient/bootdialog.c:550
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/dialogs.c:180 glclient/client.c:244
+#: glclient/dialogs.c:180 glclient/client.c:247
 msgid "pin:"
 msgstr "PIN:"
 
@@ -223,28 +235,28 @@ msgstr ""
 "ファイル名: %s\n"
 "サイズ: %s"
 
-#: glclient/action.c:714
+#: glclient/action.c:524
 msgid "Now loading..."
 msgstr "読み込み中..."
 
-#: glclient/action.c:1138
+#: glclient/action.c:948
 msgid "glclient message notify"
 msgstr "glclientメッセージ通知"
 
-#: glclient/action.c:1241
+#: glclient/action.c:1051
 msgid "invalid list_report response"
 msgstr ""
 
-#: glclient/print.c:67
+#: glclient/print.c:69
 #, c-format
 msgid "client printing - %s"
 msgstr "クライアント印刷 - %s"
 
-#: glclient/print.c:69
+#: glclient/print.c:71
 msgid "Preview"
 msgstr "プレビュー"
 
-#: glclient/print.c:119 glclient/print.c:126
+#: glclient/print.c:107
 #, c-format
 msgid ""
 "starting print\n"
@@ -257,118 +269,119 @@ msgstr ""
 "タイトル:%s\n"
 "出力先プリンタ:%s\n"
 
-#: glclient/print.c:122 glclient/print.c:129
+#: glclient/print.c:110
 msgid "glclient print notify"
 msgstr "glclient印刷通知"
 
-#: glclient/client.c:251
+#: glclient/client.c:254
 msgid "certificate password:"
 msgstr "証明書パスワード:"
 
-#: glclient/client.c:256
+#: glclient/client.c:259
 msgid "password:"
 msgstr "パスワード:"
 
-#: glclient/desktop.c:154
+#: glclient/desktop.c:178
 msgid "Application start failure"
 msgstr "アプリケーション起動失敗"
 
-#: glclient/desktop.c:156
+#: glclient/desktop.c:180
 #, c-format
 msgid "can't execute command.\\n\"%s\""
 msgstr "コマンドを実行できません\\n\"%s\""
 
-#: glclient/protocol.c:213 glclient/protocol.c:231 glclient/protocol.c:283
-#: glclient/protocol.c:426 glclient/protocol.c:441 glclient/protocol.c:448
+#: glclient/protocol.c:217 glclient/protocol.c:222 glclient/protocol.c:271
+#: glclient/protocol.c:276 glclient/protocol.c:446 glclient/protocol.c:453
+#: glclient/protocol.c:471
 #, c-format
 msgid "comm error:%s"
 msgstr "通信エラー:%s"
 
-#: glclient/protocol.c:221 glclient/protocol.c:276 glclient/protocol.c:434
+#: glclient/protocol.c:229 glclient/protocol.c:284 glclient/protocol.c:460
 msgid "authentication error:incorrect user or password"
 msgstr "認証エラー:ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:224
+#: glclient/protocol.c:232 glclient/protocol.c:287 glclient/protocol.c:463
 msgid "server maintenance error"
 msgstr "サーバメンテナンス中です"
 
-#: glclient/protocol.c:227 glclient/protocol.c:279 glclient/protocol.c:437
+#: glclient/protocol.c:235 glclient/protocol.c:290
 #, c-format
-msgid "http status code[%d]"
+msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:267
-#, c-format
-msgid "comm error:can not get blob:%s"
-msgstr ""
-
-#: glclient/protocol.c:316
+#: glclient/protocol.c:327
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:319
+#: glclient/protocol.c:330
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:323 glclient/protocol.c:327
+#: glclient/protocol.c:334 glclient/protocol.c:338
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:339
+#: glclient/protocol.c:350
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:343
+#: glclient/protocol.c:363
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:445
+#: glclient/protocol.c:466
+#, c-format
+msgid "http status code[%d]"
+msgstr ""
+
+#: glclient/protocol.c:474
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:455
+#: glclient/protocol.c:481
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:476
+#: glclient/protocol.c:504
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:481
+#: glclient/protocol.c:509
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:486
+#: glclient/protocol.c:514
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:512
+#: glclient/protocol.c:540
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:516
+#: glclient/protocol.c:544
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:521
+#: glclient/protocol.c:549
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:526
+#: glclient/protocol.c:554
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:641
+#: glclient/protocol.c:669
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:646
+#: glclient/protocol.c:674
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:651
+#: glclient/protocol.c:679
 msgid "invalid message data:abort"
 msgstr ""
 
