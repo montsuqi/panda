@@ -140,7 +140,7 @@ execute()
 		obj = json_tokener_parse(buf);
 		if (is_error(obj)) {
 			obj = json_object_new_array();
-			Warning("invalid json: |%s|",buf);
+			Warning("invalid json:|%s|",buf);
 		}
 		g_free(buf);
 	} else {

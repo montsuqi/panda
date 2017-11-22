@@ -78,11 +78,11 @@ InitDesktop(void)
 
 	if (g_file_get_contents(conf1,&buf,&size,NULL)) {
 		f_read = TRUE;
-		Info("use %s\n",conf1);
+		Info("use %s",conf1);
 	} else {
 		if (g_file_get_contents(conf2,&buf,&size,NULL)) {
 			f_read = TRUE;
-			Info("use %s\n",conf2);
+			Info("use %s",conf2);
 		} else {
 			Warning("cannot open applications list");
 		}
@@ -110,7 +110,7 @@ InitDesktop(void)
 				k = g_match_info_fetch(info,1);
 				v = g_match_info_fetch(info,2);
 
-				Debug("app %s:%s\n",k,v);
+				Debug("app [%s]:[%s]",k,v);
 				g_hash_table_insert(DesktopAppTable, k, v);
 
 				g_match_info_next(info,NULL);
