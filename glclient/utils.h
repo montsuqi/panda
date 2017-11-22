@@ -27,11 +27,11 @@
 #define	GLOBAL		extern
 #endif
 
-#include <glib.h>
-
 void get_human_bytes(size_t size, char *str);
 gboolean CheckAlreadyFile(char *filename);
 void rm_r_old(const char *dir,unsigned int elaps);
+int _flock(const char *lock);
+void _funlock(int);
 void gl_lock();
 void gl_unlock();
 unsigned long now(void);

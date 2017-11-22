@@ -400,6 +400,8 @@ main(
 
 	if (fDebug) {
 		SetLogLevel(GL_LOG_DEBUG);
+	} else {
+		SetLogLevel(GL_LOG_WARN);
 	}
 
 	InitStyle();

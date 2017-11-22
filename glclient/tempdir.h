@@ -27,8 +27,11 @@
 #define	GLOBAL		extern
 #endif
 
+#define GL_ROOT_DIR ".glclient"
+
 extern void InitTempDir();
 extern void InitTempDir_via_Dir(const char*);
+extern char *GetRootDir();
 extern char *GetTempDir();
 extern char *MakeTempSubDir(const char*name);
 

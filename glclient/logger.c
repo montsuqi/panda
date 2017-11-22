@@ -38,6 +38,7 @@
 #include	<time.h>
 #include	<libmondai.h>
 
+#include	"tempdir.h"
 #include	"logger.h"
 #include	"utils.h"
 
@@ -48,7 +49,7 @@
 
 static char *LogFile = NULL;
 static FILE *fp = NULL;
-static int level = GL_LOG_WARN;
+static int level = GL_LOG_DEBUG;
 static void (*ErrorFunc)(const char *,...);
 
 void
@@ -60,7 +61,7 @@ InitLogger(
 	uuid_t u;
 	gchar *dir,_uuid[64],_time[64];
 
-	dir = g_strconcat(g_get_home_dir(),"/.glclient/log",NULL);
+	dir = g_build_filename(GetRootDir(),"log",NULL);
 	mkdir_p(dir,0700);
 
 	t = time(NULL);

@@ -215,12 +215,12 @@ send_event(
 		ISRECV(Session) = FALSE;
 		t5 = now();
 
-		Info("[send_event_exec_time] "
+		Info("[send_event] "
 			"total:%lums "
 			"make_event_data:%lums "
-			"rpc_exec:%lu "
-			"server_exec:%lums "
-			"app_exec:%lums "
+			"rpc_total:%lu "
+			"server_total:%lums "
+			"server_app:%lums "
 			"update_screen:%lums",
 			(t5-t1),
 			(t2-t1),

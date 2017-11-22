@@ -28,56 +28,85 @@
 #include "logger.h"
 #include "utils.h"
 
+static char *TempDir;
+
 static void
-_Print()
+print_report(
+	json_object *obj)
 {
-	char *Title,*Printer,*ShowDialog,*oid;
-	gboolean show;
+	json_object *child;
+	char *title,*printer,*oid;
+	gboolean showdialog;
 	LargeByteString *lbs;
 
-	Title = getenv("GLPUSH_TITLE");
-	if (Title == NULL) {
-		Title = "";
-	}
+	printer = "";
+	title = "";
+	showdialog = FALSE;
 
-	Printer    = getenv("GLPUSH_PRINTER");
-	ShowDialog = getenv("GLPUSH_SHOW_DIALOG");
-	if (ShowDialog != NULL && !strcmp("T",ShowDialog)) {
-		show = TRUE;
-	} else {
-		show = FALSE;
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
+		return;
 	}
-	if (Printer == NULL || strlen(Printer) <= 0 ) {
-		show = TRUE;
-	}
-	oid = getenv("GLPUSH_OID");
+	oid = (char*)json_object_get_string(child);
 
+	if (json_object_object_get_ex(obj,"printer",&child)) {
+		printer = (char*)json_object_get_string(child);
+	}
+	if (json_object_object_get_ex(obj,"title",&child)) {
+		title = (char*)json_object_get_string(child);
+	}
+	if (json_object_object_get_ex(obj,"showdialog",&child)) {
+		showdialog = json_object_get_boolean(child);
+	}
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	if (printer == NULL || strlen(printer) <=0 ) {
+		showdialog = TRUE;
+	}
+	Info("report title:%s printer:%s showdialog:%d oid:%s",title,printer,(int)showdialog,oid);
+
+	setenv("GLPUSH_OID",oid,1);
 	lbs = REST_GetBLOB_via_ENV();
-
-	if (show) {
-		ShowPrintDialog(Title,lbs);
+	if (showdialog) {
+		ShowPrintDialog(title,lbs);
 	} else {
-		Print(oid,Title,Printer,lbs);
+		Print(oid,title,printer,lbs);
 	}
 	FreeLBS(lbs);
 }
 
 static void
-_Download()
+download_file(
+	json_object *obj)
 {
-	char *Filename,*Desc;
+	json_object *child;
+	char *oid,*filename,*desc;
 	LargeByteString *lbs;
 
-	Filename = getenv("GLPUSH_FILENAME");
-	if (Filename == NULL) {
-		Filename = "";
+	filename = "";
+	desc = "";
+
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
+		return;
 	}
-	Desc = getenv("GLPUSH_DESCRIPTION");
-	if (Desc == NULL) {
-		Desc = "";
+	oid = (char*)json_object_get_string(child);
+
+	if (json_object_object_get_ex(obj,"filename",&child)) {
+		filename = (char*)json_object_get_string(child);
 	}
+	if (json_object_object_get_ex(obj,"description",&child)) {
+		desc = (char*)json_object_get_string(child);
+	}
+
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+
+	Info("misc filename:%s description:%s oid:%s",filename,desc,oid);
+
+	setenv("GLPUSH_OID",oid,1);
 	lbs = REST_GetBLOB_via_ENV();
-	ShowDownloadDialog(Filename,Desc,lbs);
+	ShowDownloadDialog(filename,desc,lbs);
 	FreeLBS(lbs);
 }
 
@@ -88,13 +117,67 @@ push_action_exit(gpointer data)
 	return FALSE;
 }
 
+static void
+execute()
+{
+	json_object *obj,*ent,*child;
+	char *datafile,*lockfile,*buf,*tmp,*type;
+	int i,len,fd;
+	size_t size;
+
+	datafile = g_build_filename(TempDir,".client_data_ready.txt",NULL);
+	lockfile = g_build_filename(TempDir,".client_data_ready.lock",NULL);
+
+	fd = _flock(lockfile);
+	if (g_file_get_contents(datafile,&buf,&size,NULL)) {
+		tmp = realloc(buf,size+1);
+		if (tmp == NULL) {
+			Error("realloc(3) failure");
+		} else {
+			buf = tmp;
+			memset(tmp+size,0,1);
+		}
+		obj = json_tokener_parse(buf);
+		if (is_error(obj)) {
+			obj = json_object_new_array();
+			Warning("invalid json:|%s|",buf);
+		}
+		g_free(buf);
+	} else {
+		obj = json_object_new_array();
+	}
+	if (unlink(datafile) == -1) {
+		Error("unlink(2) failure %s %s",datafile,strerror(errno));
+	}
+	_funlock(fd);
+
+	len = json_object_array_length(obj);
+	for(i=0;i<len;i++) {
+		ent = json_object_array_get_idx(obj,i);
+		if (!json_object_object_get_ex(ent,"type",&child)) {
+			Warning("%s:%d type not found",__FILE__,__LINE__);
+		}
+		type = (char*)json_object_get_string(child);
+		if (type != NULL) {
+			if (!strcmp("report",type)) {
+				print_report(ent);
+			} else if (!strcmp("misc",type)) {
+				download_file(ent);
+			}
+		}
+	}
+	json_object_put(obj);
+	g_free(datafile);
+	g_free(lockfile);
+}
+
 int
 main(
 	int argc,
 	char **argv)
 {
 	struct sigaction sa;
-	char *LogFile,*TempDir,*Action;
+	char *LogFile;
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
@@ -123,19 +206,10 @@ main(
 		InitTempDir_via_Dir(TempDir);
 	}
 
-	Action = getenv("GLPUSH_ACTION");
-	if (Action == NULL) {
-		_Error("need GLPUSH_ACTION");
-	}
-
 	gl_config_init();
 	InitDesktop();
 
-	if (!strcmp(Action,"print")) {
-		_Print();
-	} else if (!strcmp(Action,"download")) {
-		_Download();
-	}
+	execute();
 
 	gtk_timeout_add(10*1000,push_action_exit,NULL);
 	gtk_main();

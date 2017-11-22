@@ -37,33 +37,55 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<dirent.h>
+#include	<glib.h>
 #include	<time.h>
 #include	<errno.h>
 
 #include	"utils.h"
+#include	"tempdir.h"
 
 static char *LockFile = NULL;
 static int   LockFD   = -1;
 
-void gl_lock()
+int
+_flock(const char *lock)
 {
-	if (LockFile == NULL) {
-		LockFile = g_strconcat(g_get_home_dir(), "/.glclient/.lock", NULL);
-		LockFD = open(LockFile,O_CREAT|O_WRONLY|O_TRUNC,644);
-		if (LockFD == -1) {
-			fprintf(stderr,"open failure:%s\n",strerror(errno));
-			exit(1);
-		}
+	int fd;
+
+	fd = open(lock,O_CREAT|O_WRONLY|O_TRUNC,644);
+	if (fd == -1) {
+		fprintf(stderr,"open failure:%s\n",strerror(errno));
+		exit(1);
+	} else {
+		flock(fd,LOCK_EX);
 	}
-	if (LockFile != NULL && LockFD != -1) {
-		flock(LockFD,LOCK_EX);
+	return fd;
+}
+
+void
+_funlock(int fd)
+{
+	if (fd != -1) {
+		flock(fd,LOCK_UN);
+		close(fd);
 	}
 }
 
-void gl_unlock()
+void
+gl_lock()
+{
+	if (LockFile == NULL) {
+		LockFile = g_build_filename(GetTempDir(),".lock",NULL);
+	}
+	LockFD = _flock(LockFile);
+}
+
+void
+gl_unlock()
 {
 	if (LockFile != NULL && LockFD != -1) {
-		flock(LockFD,LOCK_UN);
+		_funlock(LockFD);
+		LockFD = -1;
 	}
 }
 

@@ -1119,7 +1119,7 @@ CheckCloseWindow(
 		return;
 	}
 	if (strcmp("new",put_type) && strcmp("current",put_type)) {
-		Debug("close window[%s] put_type[%s]",wname,put_type);
+		Info("close window[%s] put_type[%s]",wname,put_type);
 		CloseWindow(wname);
 	}
 }

@@ -45,6 +45,7 @@ static char     *CertKeyPass;
 static char     *CAFile;
 
 static char     *SubID;
+static char		*TempDir;
 
 static int
 websocket_write_back(
@@ -91,104 +92,46 @@ exec_cmd(
 }
 
 static void
-print_report(
-	json_object *obj)
-{
-	json_object *child;
-	char *printer,*oid,*title;
-	gboolean showdialog;
-
-	printer = "";
-	title = "";
-	showdialog = FALSE;
-
-	if (!json_object_object_get_ex(obj,"object_id",&child)) {
-		return;
-	}
-	oid = (char*)json_object_get_string(child);
-
-	if (json_object_object_get_ex(obj,"printer",&child)) {
-		printer = (char*)json_object_get_string(child);
-	}
-	if (json_object_object_get_ex(obj,"title",&child)) {
-		title = (char*)json_object_get_string(child);
-	}
-	if (json_object_object_get_ex(obj,"showdialog",&child)) {
-		showdialog = json_object_get_boolean(child);
-	}
-	if (getenv("GLCLIENT_PRINTREPORT_SHOWDIALOG")!=NULL) {
-		showdialog = TRUE;
-	}
-	if (oid == NULL || strlen(oid) <= 0) {
-		return;
-	}
-	if (printer == NULL || strlen(printer) <=0 ) {
-		showdialog = TRUE;
-	}
-
-	setenv("GLPUSH_TITLE",title,1);
-	setenv("GLPUSH_PRINTER",printer,1);
-	if (showdialog) {
-	setenv("GLPUSH_SHOW_DIALOG","T",1);
-	} else {
-	setenv("GLPUSH_SHOW_DIALOG","F",1);
-	}
-	setenv("GLPUSH_OID",oid,1);
-	setenv("GLPUSH_ACTION","print",1);
-	exec_cmd(GLPushAction);
-}
-
-static void
-download_file(
-	json_object *obj)
-{
-	json_object *child;
-	char *oid,*filename,*desc;
-
-	filename = "";
-	desc = "";
-
-	if (!json_object_object_get_ex(obj,"object_id",&child)) {
-		return;
-	}
-	oid = (char*)json_object_get_string(child);
-
-	if (json_object_object_get_ex(obj,"filename",&child)) {
-		filename = (char*)json_object_get_string(child);
-	}
-	if (json_object_object_get_ex(obj,"description",&child)) {
-		desc = (char*)json_object_get_string(child);
-	}
-
-	if (oid == NULL || strlen(oid) <= 0) {
-		return;
-	}
-
-	setenv("GLPUSH_FILENAME",filename,1);
-	setenv("GLPUSH_DESCRIPTION",desc,1);
-	setenv("GLPUSH_OID",oid,1);
-	setenv("GLPUSH_ACTION","download",1);
-	exec_cmd(GLPushAction);
-}
-
-static void
 client_data_ready_handler(
-	json_object *obj)
+	json_object *ent)
 {
-	json_object *child;
-	const char *type;
+	json_object *obj;
+	char *datafile,*lockfile,*buf,*tmp;
+	int fd;
+	size_t size;
 
-	if (!json_object_object_get_ex(obj,"type",&child)) {
-		Warning("%s:%d type not found",__FILE__,__LINE__);
-	}
-	type = json_object_get_string(child);
-	if (type != NULL) {
-		if (!strcmp("report",type)) {
-			print_report(obj);
-		} else if (!strcmp("misc",type)) {
-			download_file(obj);
+	datafile = g_build_filename(TempDir,".client_data_ready.txt",NULL);
+	lockfile = g_build_filename(TempDir,".client_data_ready.lock",NULL);
+
+	fd = _flock(lockfile);
+	if (g_file_get_contents(datafile,&buf,&size,NULL)) {
+		tmp = realloc(buf,size+1);
+		if (tmp == NULL) {
+			Error("realloc(3) failure");
+		} else {
+			buf = tmp;
+			memset(tmp+size,0,1);
 		}
+		obj = json_tokener_parse(buf);
+		if (is_error(obj)) {
+			obj = json_object_new_array();
+			Warning("invalid json:|%s|",buf);
+		}
+		g_free(buf);
+	} else {
+		obj = json_object_new_array();
 	}
+	json_object_array_add(obj,ent);
+	json_object_get(ent);
+	buf = (char*)json_object_to_json_string(obj);
+	g_file_set_contents(datafile,buf,strlen(buf),NULL);
+	json_object_put(obj);
+	_funlock(fd);
+
+	g_free(datafile);
+	g_free(lockfile);
+
+	exec_cmd(GLPushAction);
 }
 
 static void
@@ -488,6 +431,11 @@ main(
 	CertKeyPass = getenv("GLPUSH_CERT_KEY_PASSWORD");
 	CAFile      = getenv("GLPUSH_CA_FILE");
 	fSSL        = Cert != NULL;
+
+	TempDir = getenv("GLPUSH_TEMPDIR");
+	if (TempDir == NULL) {
+		_Error("set env GLPUSH_TEMPDIR");
+	}
 
 	Execute();
 

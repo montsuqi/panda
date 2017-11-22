@@ -40,6 +40,7 @@
 #define		WIDGETCACHE
 
 #include	"widgetcache.h"
+#include	"tempdir.h"
 #include	"utils.h"
 #include	"logger.h"
 
@@ -48,7 +49,7 @@ static json_object *obj = NULL;
 static char*
 get_path(void)
 {
-	return g_strconcat(g_get_home_dir(),"/.glclient/widgetcache.json",NULL);
+	return g_build_filename(GetRootDir(),"widgetcache.json",NULL);
 }
 
 static void
