@@ -199,6 +199,10 @@ Print(
 
 	printer = (char*)g_hash_table_lookup(PrinterTable,pname);
 	cp = GPOINTER_TO_INT(g_hash_table_lookup(CopiesTable,pname));
+	if (printer == NULL) {
+		printer = (char*)g_hash_table_lookup(PrinterTable,"default");
+		cp = GPOINTER_TO_INT(g_hash_table_lookup(CopiesTable,"default"));
+	}
 	if (printer != NULL) {
 		Info("%s %s(%s) %d",title,pname,printer,cp);
 		_Print(title,printer,cp,lbs);
