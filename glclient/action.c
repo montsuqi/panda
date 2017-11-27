@@ -940,6 +940,7 @@ Ping()
 	RPC_GetMessage(GLP(Session),&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
 		RPC_EndSession(GLP(Session));
+		ISRECV(Session) = TRUE;
 		InfoDialog(abort);
 		exit(1);
 	} else if (strlen(dialog)>0) {
