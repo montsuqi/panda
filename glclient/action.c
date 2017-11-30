@@ -1077,9 +1077,7 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	if (!UsePushClient) {
-		ListDownloads();
-	}
+	ListDownloads();
 	Ping();
 	return 1;
 }
@@ -1087,6 +1085,9 @@ PingTimerFunc(
 extern	void
 SetPingTimerFunc()
 {
+	if (UsePushClient) {
+		return;
+	}
 	g_timeout_add(PingTimerPeriod,PingTimerFunc,NULL);
 }
 
