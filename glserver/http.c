@@ -704,8 +704,8 @@ APISendResponse(
 		status = 404;
 		break;
 	case WFC_API_ERROR:
-		status = 500;
 	default:
+		status = 500;
 		break;
 	}
 
