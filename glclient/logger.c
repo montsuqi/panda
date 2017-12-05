@@ -56,17 +56,17 @@ void
 InitLogger(
 	const char *prefix)
 {
-	struct tm cur;
-	time_t t;
+	struct	timeval	tv;
+	struct	tm	now;
 	uuid_t u;
 	gchar *dir,_uuid[64],_time[64];
 
 	dir = g_build_filename(GetRootDir(),"log",NULL);
 	mkdir_p(dir,0700);
 
-	t = time(NULL);
-	gmtime_r(&t,&cur);
-	strftime(_time,sizeof(_time),"%Y%m%d%H%M%S",&cur);
+	gettimeofday(&tv,NULL);
+	localtime_r((time_t *)&tv.tv_sec, &now);
+	strftime(_time,sizeof(_time),"%Y%m%d%H%M%S",&now);
 
 	uuid_generate(u);
 	uuid_unparse(u,_uuid);
