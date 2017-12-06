@@ -548,10 +548,21 @@ RPC_StartSession(
 		Error(_("no meta object"));
 	}
 
+	if (json_object_object_get_ex(meta,"tenant_id",&child)) {
+		ctx->TenantID = g_strdup(json_object_get_string(child));
+	}
+	if (json_object_object_get_ex(meta,"group_id",&child)) {
+		ctx->GroupID = g_strdup(json_object_get_string(child));
+	}
+
 	if (!json_object_object_get_ex(meta,"session_id",&child)) {
 		Error(_("no session_id object"));
 	}
 	ctx->SessionID = g_strdup(json_object_get_string(child));
+
+	if (json_object_object_get_ex(result,"startup_message",&child)) {
+		ctx->StartupMessage = g_strdup((char*)json_object_get_string(child));
+	}
 
 	if (!json_object_object_get_ex(result,"app_rpc_endpoint_uri",&child)) {
 		Error(_("no jsonrpc_uri object"));
@@ -761,6 +772,27 @@ GLP_GetPusherURI(
 	GLProtocol *ctx)
 {
 	return ctx->PusherURI;
+}
+
+char*
+GLP_GetStartupMessage(
+	GLProtocol *ctx)
+{
+	return ctx->StartupMessage;
+}
+
+char*
+GLP_GetTenantID(
+	GLProtocol *ctx)
+{
+	return ctx->TenantID;
+}
+
+char*
+GLP_GetGroupID(
+	GLProtocol *ctx)
+{
+	return ctx->GroupID;
 }
 
 void 

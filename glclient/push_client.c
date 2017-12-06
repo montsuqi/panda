@@ -36,6 +36,7 @@ static char     *GLPushAction;
 static char     *PusherURI;
 static char     *RESTURI;
 static char     *SessionID;
+static char     *GroupID;
 static char     *APIUser;
 static char     *APIPass;
 static gboolean fSSL;
@@ -92,7 +93,7 @@ exec_cmd(
 }
 
 static void
-client_data_ready_handler(
+event_handler(
 	json_object *ent)
 {
 	json_object *obj;
@@ -138,8 +139,8 @@ static void
 message_handler(
 	char *in)
 {
-	json_object *obj,*child,*data;
-	const char *command,*event;
+	json_object *obj,*child;
+	const char *command;
 
 	obj = json_tokener_parse(in);
 	if (!CheckJSONObject(obj,json_type_object)) {
@@ -162,25 +163,7 @@ message_handler(
     	}
 		SubID = strdup(json_object_get_string(child));
 	} else if (!strcmp(command,"event")) {
-	    if (!json_object_object_get_ex(obj,"data",&data)) {
-    	    Warning("%s:%d data not found",__FILE__,__LINE__);
-			goto message_handler_error;
-    	}
-
-	    if (!json_object_object_get_ex(data,"event",&child)) {
-    	    Warning("%s:%d event not found",__FILE__,__LINE__);
-			goto message_handler_error;
-    	}
-		event = json_object_get_string(child);
-
-	    if (!json_object_object_get_ex(data,"body",&child)) {
-    	    Warning("%s:%d body not found",__FILE__,__LINE__);
-			goto message_handler_error;
-    	}
-
-		if (!strcmp(event,"client_data_ready")) {
-			client_data_ready_handler(child);
-		}
+		event_handler(obj);
 	}
 message_handler_error:
 	json_object_put(obj);
@@ -198,13 +181,13 @@ callback_push_receive(
 	char buf[BUF_SIZE],reqid[64];
 	uuid_t u;
 
-	uuid_generate(u);
-	uuid_unparse(u,reqid);
 
 	switch (reason) {
 
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
 		/* subscribe */
+		uuid_generate(u);
+		uuid_unparse(u,reqid);
 		snprintf(buf,sizeof(buf)-1,"{"
 			"\"command\"    : \"subscribe\","
 			"\"req.id\"     : \"%s\","
@@ -212,6 +195,19 @@ callback_push_receive(
 			"\"session_id\" : \"%s\""
 		"}",reqid,SessionID);
 		websocket_write_back(wsi, buf, -1);
+
+		if (GroupID) {
+			uuid_generate(u);
+			uuid_unparse(u,reqid);
+			snprintf(buf,sizeof(buf)-1,"{"
+				"\"command\"    : \"subscribe\","
+				"\"req.id\"     : \"%s\","
+				"\"event\"      : \"*\","
+				"\"group_id\" : \"%s\""
+			"}",reqid,GroupID);
+			websocket_write_back(wsi, buf, -1);
+		}
+
 		conn_wait = CONN_WAIT_INIT;
 		break;
 
@@ -413,6 +409,8 @@ main(
 	if (SessionID == NULL) {
 		_Error("set env GLSPUSH_SESSION_ID");
 	}
+	GroupID = getenv("GLPUSH_GROUP_ID");
+
 	APIUser = getenv("GLPUSH_API_USER");
 	if (APIUser == NULL) {
 		_Error("set env GLPUSH_API_USER");
@@ -425,6 +423,7 @@ main(
 	Info("GLPUSH_PUSHER_URI:%s",PusherURI);
 	Info("GLPUSH_REST_URI:%s",RESTURI);
 	Info("GLPUSH_SESSION_ID:%s",SessionID);
+	Info("GLPUSH_GROUP_ID:%s",GroupID);
 
 	Cert        = getenv("GLPUSH_CERT");
 	CertKey     = getenv("GLPUSH_CERT_KEY");

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 2.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2017-11-22 14:30+0900\n"
+"POT-Creation-Date: 2017-12-06 10:10+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -187,7 +187,7 @@ msgstr ""
 msgid "INFOMATION"
 msgstr ""
 
-#: glclient/dialogs.c:180 glclient/client.c:247
+#: glclient/dialogs.c:180 glclient/client.c:263
 msgid "pin:"
 msgstr ""
 
@@ -231,11 +231,11 @@ msgstr ""
 msgid "Now loading..."
 msgstr ""
 
-#: glclient/action.c:948
+#: glclient/action.c:949
 msgid "glclient message notify"
 msgstr ""
 
-#: glclient/action.c:1051
+#: glclient/action.c:1052
 msgid "invalid list_report response"
 msgstr ""
 
@@ -261,11 +261,15 @@ msgstr ""
 msgid "glclient print notify"
 msgstr ""
 
-#: glclient/client.c:254
+#: glclient/client.c:152
+msgid "orca cloud announce"
+msgstr ""
+
+#: glclient/client.c:270
 msgid "certificate password:"
 msgstr ""
 
-#: glclient/client.c:259
+#: glclient/client.c:275
 msgid "password:"
 msgstr ""
 
@@ -278,98 +282,98 @@ msgstr ""
 msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
-#: glclient/protocol.c:217 glclient/protocol.c:222 glclient/protocol.c:271
-#: glclient/protocol.c:276 glclient/protocol.c:446 glclient/protocol.c:453
-#: glclient/protocol.c:471
+#: glclient/protocol.c:219 glclient/protocol.c:224 glclient/protocol.c:278
+#: glclient/protocol.c:283 glclient/protocol.c:454 glclient/protocol.c:461
+#: glclient/protocol.c:479
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:229 glclient/protocol.c:284 glclient/protocol.c:460
+#: glclient/protocol.c:233 glclient/protocol.c:292 glclient/protocol.c:468
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:232 glclient/protocol.c:287 glclient/protocol.c:463
+#: glclient/protocol.c:236 glclient/protocol.c:295 glclient/protocol.c:471
 msgid "server maintenance error"
 msgstr ""
 
-#: glclient/protocol.c:235 glclient/protocol.c:290
+#: glclient/protocol.c:239 glclient/protocol.c:298
 #, c-format
 msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:327
+#: glclient/protocol.c:335
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:330
+#: glclient/protocol.c:338
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:334 glclient/protocol.c:338
+#: glclient/protocol.c:342 glclient/protocol.c:346
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:350
+#: glclient/protocol.c:358
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:363
+#: glclient/protocol.c:371
 msgid "no result object"
-msgstr ""
-
-#: glclient/protocol.c:466
-#, c-format
-msgid "http status code[%d]"
 msgstr ""
 
 #: glclient/protocol.c:474
 #, c-format
+msgid "http status code[%d]"
+msgstr ""
+
+#: glclient/protocol.c:482
+#, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:481
+#: glclient/protocol.c:489
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:504
+#: glclient/protocol.c:512
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:509
+#: glclient/protocol.c:517
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:514
+#: glclient/protocol.c:522
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:540
+#: glclient/protocol.c:548
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:544
+#: glclient/protocol.c:559
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:549
+#: glclient/protocol.c:568
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:554
+#: glclient/protocol.c:573
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:669
+#: glclient/protocol.c:688
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:674
+#: glclient/protocol.c:693
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:679
+#: glclient/protocol.c:698
 msgid "invalid message data:abort"
 msgstr ""
 
