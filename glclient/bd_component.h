@@ -47,6 +47,7 @@ struct _BDComponent {
   GtkWidget *timer;
   GtkWidget *timerperiod;
   GtkWidget *timer_container;
+  GtkWidget *startup_message;
 // ssl
   GtkWidget *ssltable;
   GtkWidget *ssl_container;

@@ -74,6 +74,7 @@ _new_server()
 	json_object_object_add(child,"password",json_object_new_string(""));
 	json_object_object_add(child,"timer",json_object_new_boolean(TRUE));
 	json_object_object_add(child,"timerperiod",json_object_new_int(1000));
+	json_object_object_add(child,"show_startup_message",json_object_new_boolean(TRUE));
 	json_object_object_add(child,"printer_config",json_object_new_string(""));
 
 	json_object_object_add(child,"ssl",json_object_new_boolean(FALSE));
@@ -359,6 +360,24 @@ gl_config_get_boolean(
 	return json_object_get_boolean(child);
 }
 
+gboolean
+gl_config_get_boolean_val(
+	int i,
+	const char *key,
+	gboolean val)
+{
+	json_object *list,*server,*child;
+
+	json_object_object_get_ex(config_obj,"list",&list);
+	server = json_object_array_get_idx(list,i);
+	if (!check_json_object(server,json_type_object)) {
+		return val;
+	}
+	if (!json_object_object_get_ex(server,key,&child)) {
+		return val;
+	}
+	return json_object_get_boolean(child);
+}
 
 extern	void
 ListConfig()

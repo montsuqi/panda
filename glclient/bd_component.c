@@ -205,6 +205,8 @@ bd_component_set_value(
   gtk_entry_set_text (GTK_ENTRY(self->timerperiod),buf);
 
   gtk_widget_set_sensitive(self->timer_container,gl_config_get_boolean(n,"timer"));  
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->startup_message), gl_config_get_boolean_val(n,"show_startup_message",TRUE));
 }
 
 void
@@ -312,6 +314,7 @@ bd_component_value_to_config(
   gl_config_set_boolean(n,"im_kana_off", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff)));
   gl_config_set_boolean(n,"timer", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->timer)));
   gl_config_set_int(n,"timerperiod", atoi(gtk_entry_get_text(GTK_ENTRY(self->timerperiod))));
+  gl_config_set_boolean(n,"show_startup_message", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->startup_message)));
 }
 
 BDComponent *
@@ -648,6 +651,15 @@ bd_component_new()
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  /* show startup message  */
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Show Startup Message"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->startup_message = check;
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 

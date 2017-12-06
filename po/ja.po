@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2017-12-06 10:10+0900\n"
+"POT-Creation-Date: 2017-12-06 14:47+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -24,103 +24,107 @@ msgstr "参照"
 msgid "Open Directory"
 msgstr "キャッシュディレクトリ名"
 
-#: glclient/bd_component.c:341 glclient/bootdialog.c:303
+#: glclient/bd_component.c:344 glclient/bootdialog.c:303
 msgid "AuthURI"
 msgstr "サーバ"
 
-#: glclient/bd_component.c:350 glclient/bootdialog.c:305
+#: glclient/bd_component.c:353 glclient/bootdialog.c:305
 msgid "User"
 msgstr "ユーザ名"
 
-#: glclient/bd_component.c:359
+#: glclient/bd_component.c:362
 msgid "Password"
 msgstr "パスワード"
 
-#: glclient/bd_component.c:370
+#: glclient/bd_component.c:373
 msgid "Remember Password"
 msgstr "パスワードの保存"
 
-#: glclient/bd_component.c:385
+#: glclient/bd_component.c:388
 msgid "Use SSL Client Verification"
 msgstr "SSLクライアント認証を使用"
 
-#: glclient/bd_component.c:400
+#: glclient/bd_component.c:403
 msgid "CA Certificate File"
 msgstr "CA証明書ファイル"
 
-#: glclient/bd_component.c:403 glclient/bd_component.c:418
-#: glclient/bd_component.c:433 glclient/bd_component.c:495
-#: glclient/bd_component.c:563 glclient/bd_component.c:579
+#: glclient/bd_component.c:406 glclient/bd_component.c:421
+#: glclient/bd_component.c:436 glclient/bd_component.c:498
+#: glclient/bd_component.c:566 glclient/bd_component.c:582
 msgid "Open"
 msgstr "参照"
 
-#: glclient/bd_component.c:415
+#: glclient/bd_component.c:418
 msgid "Certificate(*.crt)"
 msgstr "証明書ファイル名(*.crt)"
 
-#: glclient/bd_component.c:430
+#: glclient/bd_component.c:433
 msgid "CertificateKey(*.pem)"
 msgstr "秘密鍵ファイル名(*.pem)"
 
-#: glclient/bd_component.c:445
+#: glclient/bd_component.c:448
 msgid "CertificateKey Passphrase"
 msgstr "秘密鍵パスフレーズ"
 
-#: glclient/bd_component.c:456
+#: glclient/bd_component.c:459
 msgid "Remember CertificateKey Passphrase"
 msgstr "秘密鍵パスフレーズの保存"
 
-#: glclient/bd_component.c:463
+#: glclient/bd_component.c:466
 msgid "Cipher Suite"
 msgstr "暗号スイート"
 
-#: glclient/bd_component.c:474
+#: glclient/bd_component.c:477
 msgid "Use Security Device"
 msgstr "セキュリティデバイスを使う"
 
-#: glclient/bd_component.c:492
+#: glclient/bd_component.c:495
 msgid "PKCS#11 Library"
 msgstr "PKCS#11ライブラリ"
 
-#: glclient/bd_component.c:515
+#: glclient/bd_component.c:518
 msgid "Printer Name"
 msgstr "プリンタ名"
 
-#: glclient/bd_component.c:519
+#: glclient/bd_component.c:522
 msgid "Actual Printer"
 msgstr "割り当てプリンタ"
 
-#: glclient/bd_component.c:559
+#: glclient/bd_component.c:562
 msgid "Style"
 msgstr "スタイル"
 
-#: glclient/bd_component.c:575
+#: glclient/bd_component.c:578
 msgid "Gtkrc"
 msgstr "Gtkrc"
 
-#: glclient/bd_component.c:591
+#: glclient/bd_component.c:594
 msgid "FontName"
 msgstr "フォント"
 
-#: glclient/bd_component.c:603
+#: glclient/bd_component.c:606
 msgid "Debug"
 msgstr ""
 
-#: glclient/bd_component.c:611
+#: glclient/bd_component.c:614
 msgid "Enable Keybuffer"
 msgstr "キーバッファを有効にする"
 
-#: glclient/bd_component.c:619
+#: glclient/bd_component.c:622
 msgid "Disable IM control and Kana input"
 msgstr "入力メソッドの制御とカタカナ入力を無効にする"
 
-#: glclient/bd_component.c:627
+#: glclient/bd_component.c:630
 msgid "Enable Timer"
 msgstr "タイマー処理を有効にする"
 
-#: glclient/bd_component.c:645
+#: glclient/bd_component.c:648
 msgid "Timer Period(ms)"
 msgstr "タイマー起動時間(ミリ秒)"
+
+#: glclient/bd_component.c:659
+msgid "Show Startup Message"
+msgstr "接続時お知らせ表示"
 
 #: glclient/bootdialog.c:58 glclient/bootdialog.c:249
 msgid "New"
@@ -186,7 +190,7 @@ msgstr "設定"
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/dialogs.c:180 glclient/client.c:263
+#: glclient/dialogs.c:180 glclient/client.c:265
 msgid "pin:"
 msgstr "PIN:"
 
@@ -273,15 +277,15 @@ msgstr ""
 msgid "glclient print notify"
 msgstr "glclient印刷通知"
 
-#: glclient/client.c:152
+#: glclient/client.c:153
 msgid "orca cloud announce"
 msgstr "日レセクラウドからのお知らせ"
 
-#: glclient/client.c:270
+#: glclient/client.c:272
 msgid "certificate password:"
 msgstr "証明書パスワード:"
 
-#: glclient/client.c:275
+#: glclient/client.c:277
 msgid "password:"
 msgstr "パスワード:"
 
@@ -377,15 +381,15 @@ msgstr ""
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:688
+#: glclient/protocol.c:690
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:693
+#: glclient/protocol.c:695
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:698
+#: glclient/protocol.c:700
 msgid "invalid message data:abort"
 msgstr ""
 

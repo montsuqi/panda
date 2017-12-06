@@ -147,9 +147,11 @@ ShowStartupMessage()
 {
 	char *msg;
 
-	msg = GLP_GetStartupMessage(GLP(Session));
-	if (msg != NULL && strlen(msg) > 0) {
-		Notify(_("orca cloud announce"),msg,"gtk-dialog-info",30);
+	if (fStartupMessage) {
+		msg = GLP_GetStartupMessage(GLP(Session));
+		if (msg != NULL && strlen(msg) > 0) {
+			Notify(_("orca cloud announce"),msg,"gtk-dialog-info",30);
+		}
 	}
 }
 
@@ -301,6 +303,10 @@ LoadConfig (
 		Pass = g_strdup("");
 	} 
 	setenv("GLPRINTER_CONFIG",gl_config_get_string(n,"printer_config"),1);
+	fTimer = gl_config_get_boolean(n,"timer");
+	TimerPeriod = gl_config_get_int(n,"timerperiod");
+	FontName = g_strdup(gl_config_get_string(n,"fontname"));
+	fStartupMessage = gl_config_get_boolean(n,"show_startup_message");
 
 	fSSL = gl_config_get_boolean(n,"ssl");
 	{
@@ -340,10 +346,6 @@ LoadConfig (
 	PKCS11Lib = g_strdup(gl_config_get_string(n,"pkcs11lib"));
 	PIN = g_strdup(gl_config_get_string(n,"pin"));
 	fSavePIN = gl_config_get_boolean(n,"savepin");
-
-	fTimer = gl_config_get_boolean(n,"timer");
-	TimerPeriod = gl_config_get_int(n,"timerperiod");
-	FontName = g_strdup(gl_config_get_string(n,"fontname"));
 }
 
 extern void

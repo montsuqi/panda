@@ -101,6 +101,7 @@ GLOBAL	Bool		fTimer;
 GLOBAL	int			TimerPeriod;
 GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
+GLOBAL	Bool		fStartupMessage;
 
 GLOBAL	Bool		fDialog;
 
