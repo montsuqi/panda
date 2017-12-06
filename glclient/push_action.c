@@ -27,7 +27,6 @@
 #include "protocol.h"
 #include "download.h"
 #include "print.h"
-#include "notify.h"
 #include "tempdir.h"
 #include "logger.h"
 #include "utils.h"

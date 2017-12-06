@@ -53,6 +53,7 @@
 #include	"desktop.h"
 #include	"bootdialog.h"
 #include	"action.h"
+#include	"notify.h"
 #include	"gettext.h"
 #include	"logger.h"
 #include	"utils.h"
@@ -96,7 +97,9 @@ StartPushClient()
 	setenv("GLPUSH_PUSHER_URI"   ,pusher,1);
 	setenv("GLPUSH_REST_URI"     ,GLP_GetRESTURI(GLP(Session)),1);
 	setenv("GLPUSH_SESSION_ID"   ,GLP_GetSessionID(GLP(Session)),1);
-	setenv("GLPUSH_GROUP_ID"     ,"1",1);
+	if (GLP_GetGroupID(GLP(Session)) != NULL) {
+		setenv("GLPUSH_GROUP_ID"     ,GLP_GetGroupID(GLP(Session)),1);
+	}
 	setenv("GLPUSH_API_USER"     ,User,1);
 	setenv("GLPUSH_API_PASSWORD" ,Pass,1);
 
@@ -139,6 +142,17 @@ StopPushClient()
 	}
 }
 
+static void
+ShowStartupMessage()
+{
+	char *msg;
+
+	msg = GLP_GetStartupMessage(GLP(Session));
+	if (msg != NULL && strlen(msg) > 0) {
+		Notify(_("orca cloud announce"),msg,"gtk-dialog-info",30);
+	}
+}
+
 static gboolean
 StartClient()
 {
@@ -163,6 +177,7 @@ StartClient()
 	StartPushClient();
 	SCREENDATA(Session) = RPC_GetWindow(GLP(Session));
 	UpdateScreen();
+	ShowStartupMessage();
 	SetPingTimerFunc();
 	UI_Main();
 
