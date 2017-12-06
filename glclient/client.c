@@ -96,6 +96,7 @@ StartPushClient()
 	setenv("GLPUSH_PUSHER_URI"   ,pusher,1);
 	setenv("GLPUSH_REST_URI"     ,GLP_GetRESTURI(GLP(Session)),1);
 	setenv("GLPUSH_SESSION_ID"   ,GLP_GetSessionID(GLP(Session)),1);
+	setenv("GLPUSH_GROUP_ID"     ,"1",1);
 	setenv("GLPUSH_API_USER"     ,User,1);
 	setenv("GLPUSH_API_PASSWORD" ,Pass,1);
 

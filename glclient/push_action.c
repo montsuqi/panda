@@ -8,8 +8,11 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <uuid/uuid.h>
 #include <json.h>
 #include <glib.h>
@@ -24,6 +27,7 @@
 #include "protocol.h"
 #include "download.h"
 #include "print.h"
+#include "notify.h"
 #include "tempdir.h"
 #include "logger.h"
 #include "utils.h"
@@ -118,53 +122,89 @@ push_action_exit(gpointer data)
 }
 
 static void
-execute()
+event_handler(json_object *obj)
 {
-	json_object *obj,*ent,*child;
-	char *datafile,*lockfile,*buf,*tmp,*type;
-	int i,len,fd;
-	size_t size;
+	json_object *child,*data,*body,*event;
+	char *ev,*type,*message;
 
-	datafile = g_build_filename(TempDir,".client_data_ready.txt",NULL);
-	lockfile = g_build_filename(TempDir,".client_data_ready.lock",NULL);
-
-	fd = _flock(lockfile);
-	if (g_file_get_contents(datafile,&buf,&size,NULL)) {
-		tmp = realloc(buf,size+1);
-		if (tmp == NULL) {
-			Error("realloc(3) failure");
-		} else {
-			buf = tmp;
-			memset(tmp+size,0,1);
-		}
-		obj = json_tokener_parse(buf);
-		if (is_error(obj)) {
-			obj = json_object_new_array();
-			Warning("invalid json:|%s|",buf);
-		}
-		g_free(buf);
-	} else {
-		obj = json_object_new_array();
+	if (!json_object_object_get_ex(obj,"data",&data)) {
+		Warning("data not found");
+		return;
 	}
-	if (unlink(datafile) == -1) {
-		Error("unlink(2) failure %s %s",datafile,strerror(errno));
+	if (!json_object_object_get_ex(data,"event",&event)) {
+		Warning("event not found");
+		return;
 	}
-	_funlock(fd);
-
-	len = json_object_array_length(obj);
-	for(i=0;i<len;i++) {
-		ent = json_object_array_get_idx(obj,i);
-		if (!json_object_object_get_ex(ent,"type",&child)) {
-			Warning("%s:%d type not found",__FILE__,__LINE__);
+	if (!json_object_object_get_ex(data,"body",&body)) {
+		Warning("body not found");
+		return;
+	}
+	ev = (char*)json_object_get_string(event);
+	if (!strcmp(ev,"client_data_ready")) {
+		if (!json_object_object_get_ex(body,"type",&child)) {
+			Warning("type not found");
+			return;
 		}
 		type = (char*)json_object_get_string(child);
 		if (type != NULL) {
 			if (!strcmp("report",type)) {
-				print_report(ent);
+				print_report(body);
 			} else if (!strcmp("misc",type)) {
-				download_file(ent);
+				download_file(body);
 			}
 		}
+	} else if (!strcmp(ev,"announcement")) {
+		if (!json_object_object_get_ex(body,"message",&child)) {
+			Warning("message not found");
+			return;
+		}
+		message = (char*)json_object_get_string(child);
+		Notify(_("orca cloud announce"),message,"gtk-dialog-info",30);
+	} else {
+		Warning("unknown event:%s",ev);
+	}
+}
+
+static void
+execute()
+{
+	json_object *obj;
+	char *datafile,*lockfile,*buf;
+	int i,len,lockfd,datafd;
+	struct stat st;
+
+	datafile = g_build_filename(TempDir,".client_data_ready.txt",NULL);
+	lockfile = g_build_filename(TempDir,".client_data_ready.lock",NULL);
+
+	lockfd = _flock(lockfile);
+	if (stat(datafile,&st) == -1) {
+		Error("stat(2) failure:%s",strerror(errno));
+	}
+	if ((datafd = open(datafile,O_RDONLY)) == -1) {
+		Error("open(2) failure:%s %s",datafile,strerror(errno));
+	}
+	if (unlink(datafile) == -1) {
+		Error("unlink(2) failure %s %s",datafile,strerror(errno));
+	}
+	_funlock(lockfd);
+	buf = xmalloc(st.st_size+1);
+	memset(buf,0,st.st_size+1);
+	if ((read(datafd,buf,st.st_size)) != st.st_size) {
+		Error("read(2) failure %s %s",datafile,strerror(errno));
+	}
+	obj = json_tokener_parse(buf);
+	if (is_error(obj)) {
+		obj = json_object_new_array();
+		Warning("invalid json:|%s|",buf);
+	}
+	xfree(buf);
+	if (close(datafd) == -1) {
+		Error("close(2) failure %s %s",datafile,strerror(errno));
+	}
+
+	len = json_object_array_length(obj);
+	for(i=0;i<len;i++) {
+		event_handler(json_object_array_get_idx(obj,i));
 	}
 	json_object_put(obj);
 	g_free(datafile);
