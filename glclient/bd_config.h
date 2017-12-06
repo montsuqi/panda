@@ -47,6 +47,7 @@ void        gl_config_set_int(int,const char*,int);
 int         gl_config_get_int(int,const char*);
 void        gl_config_set_boolean(int,const char*,gboolean);
 gboolean    gl_config_get_boolean(int,const char*);
+gboolean    gl_config_get_boolean_val(int,const char*,gboolean);
 
 void        ListConfig();
 int         GetConfigIndexByDesc(const char *configname);
