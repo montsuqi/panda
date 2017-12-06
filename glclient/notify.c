@@ -70,7 +70,12 @@ Notify(gchar *summary,
 	GdkScreen *scr;
 	int w,h;
 
-	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_OTHER,GTK_BUTTONS_NONE,"%s\n\n%s",summary,body);
+#if 0
+	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,"%s\n\n%s",summary,body);
+#else
+	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,"%s",summary);
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(widget),"%s",body);
+#endif
 	gtk_window_set_decorated(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_modal(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_focus_on_map(GTK_WINDOW(widget),FALSE);
