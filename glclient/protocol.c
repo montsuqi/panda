@@ -581,6 +581,8 @@ RPC_StartSession(
 	}
 
 	fprintf(stderr,"SessionID: %s\n",ctx->SessionID);
+	Info("TenantID : %s",ctx->TenantID);
+	Info("GroupID  : %s",ctx->GroupID);
 	Info("SessionID: %s",ctx->SessionID);
 	Info("RPCURI   : %s",ctx->RPCURI);
 	Info("RESTURI  : %s",ctx->RESTURI);
