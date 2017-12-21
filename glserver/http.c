@@ -60,6 +60,7 @@
 #include	"blobreq.h"
 #include	"sysdataio.h"
 #include	"wfcio.h"
+#include	"wfcdata.h"
 #include	"dirs.h"
 #include	"message.h"
 #include	"debug.h"
@@ -654,7 +655,7 @@ APISendResponse(
 	HTTP_REQUEST *req,
 	json_object *obj)
 {
-	json_object *json_result,*json_status,*json_body,*json_ctype;
+	json_object *json_result,*json_status,*json_body,*json_ctype,*api_status;
 	int status;
 	char *blob;
 	const char* ctype;
@@ -662,34 +663,50 @@ APISendResponse(
 	MonObjectType mon;
 
 	if (!CheckJSONObject(obj,json_type_object)) {
-		Warning("panda_api response json is invalid");
+		Warning("json error: invalid json");
 		SendResponse(req,500,NULL,0,NULL);
 		return;
 	}
 	if (!json_object_object_get_ex(obj,"result",&json_result)) {
-		Warning("panda_api response json result is invalid");
+		Warning("json error: no result");
+		SendResponse(req,500,NULL,0,NULL);
+		return;
+	}
+	if (!json_object_object_get_ex(obj,"api_status",&api_status)) {
+		Warning("json error: no api_status");
 		SendResponse(req,500,NULL,0,NULL);
 		return;
 	}
 
 	status = 200;
-	if (json_object_object_get_ex(json_result,"http_status",&json_status)) {
-		status = json_object_get_int(json_status);
-	}
-	if (json_object_object_get_ex(json_result,"httpstatus",&json_status)) {
-		status = json_object_get_int(json_status);
-	}
-
-	ctype = "";
-	if (json_object_object_get_ex(json_result,"content_type",&json_ctype)) {
-		ctype = (const char*)json_object_get_string(json_ctype);
-	}
-	if (json_object_object_get_ex(json_result,"contenttype",&json_ctype)) {
-		ctype = (const char*)json_object_get_string(json_ctype);
-	}
 	mon = 0;
-	if (json_object_object_get_ex(json_result,"body",&json_body)) {
-		mon = (MonObjectType)atoll(json_object_get_string(json_body));
+	switch(json_object_get_int(api_status)) {
+	case WFC_API_OK:
+		if (json_object_object_get_ex(json_result,"http_status",&json_status)) {
+			status = json_object_get_int(json_status);
+		}
+		if (json_object_object_get_ex(json_result,"httpstatus",&json_status)) {
+			status = json_object_get_int(json_status);
+		}
+
+		ctype = "";
+		if (json_object_object_get_ex(json_result,"content_type",&json_ctype)) {
+			ctype = (const char*)json_object_get_string(json_ctype);
+		}
+		if (json_object_object_get_ex(json_result,"contenttype",&json_ctype)) {
+			ctype = (const char*)json_object_get_string(json_ctype);
+		}
+		if (json_object_object_get_ex(json_result,"body",&json_body)) {
+			mon = (MonObjectType)atoll(json_object_get_string(json_body));
+		}
+		break;
+	case WFC_API_NOT_FOUND:
+		status = 404;
+		break;
+	case WFC_API_ERROR:
+	default:
+		status = 500;
+		break;
 	}
 
 	if (status == 200 && mon != 0) {

@@ -963,11 +963,13 @@ ENTER_FUNC;
 	res = MakeJSONResponseTemplate(obj);
 	NativeUnPackValue(NULL,LBS_Body(api->rec),rec->value);
 	buf = xmalloc(JSON_SizeValue(NULL,rec->value));
+
 	JSON_PackValue(NULL,buf,rec->value);
 	child = json_tokener_parse(buf);
 	xfree(buf);
 
 	json_object_object_add(res,"result",child);
+	json_object_object_add(res,"api_status",json_object_new_int(api->status));
 
 	SendString(term->fp,(char*)json_object_to_json_string(res));
 	if (CheckNetFile(term->fp)) {
