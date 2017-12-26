@@ -356,72 +356,6 @@ ENTER_FUNC;
 	return node;
 }
 
-static	ValueStruct	*
-_OpenXML(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct		*obj,*mode,*context,*ret;
-	XMLCtx			*ctx;
-
-ENTER_FUNC;
-	ctrl->rc = MCP_BAD_ARG;
-	ret = NULL;
-
-	if (rec->type  !=  RECORD_DB) {
-		return NULL;
-	}
-	if ((obj = GetItemLongName(args,"object")) == NULL) {
-		Warning("no [object] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((mode = GetItemLongName(args,"mode")) == NULL) {
-		Warning("no [mode] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((context = GetItemLongName(args,"context")) == NULL) {
-		Warning("no [context] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-
-	ctx = NewXMLCtx();
-	ValueInteger(context) = ctx->num;
-	ret = DuplicateValue(args,TRUE);
-	ctx->mode = ValueInteger(mode);
-	switch(ctx->mode) {
-	case MODE_WRITE:
-	case MODE_WRITE_XML:
-	case MODE_WRITE_JSON:
-		break;
-	case MODE_READ:
-        ctx->obj = ValueObjectId(obj);
-		break;
-	default:
-		Warning("not reach here");
-		break;
-	}
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	ret;
-}
-
-static	ValueStruct	*
-_CloseXML(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-ENTER_FUNC;
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	NULL;
-}
 
 static	XMLMode
 CheckFormat(
@@ -445,7 +379,7 @@ CheckFormat(
 }
 
 static	int
-_ReadXML_XML(
+_ReadXML(
 	ValueStruct *ret,
 	unsigned char *buff,
 	size_t size)
@@ -478,7 +412,7 @@ _ReadXML_XML(
 }
 
 static	int
-_ReadXML_JSON(
+_ReadJSON(
 	ValueStruct *ret,
 	unsigned char *buff,
 	size_t size)
@@ -514,7 +448,7 @@ _ReadXML_JSON(
 }
 
 static	ValueStruct	*
-_ReadXML(
+_Read(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -550,10 +484,10 @@ ENTER_FUNC;
 			PrevMode = CheckFormat(buff,size);
 			switch(PrevMode) {
 			case MODE_WRITE_XML:
-				ctrl->rc = _ReadXML_XML(ret,buff,size);
+				ctrl->rc = _ReadXML(ret,buff,size);
 				break;
 			case MODE_WRITE_JSON:
-				ctrl->rc = _ReadXML_JSON(ret,buff,size);
+				ctrl->rc = _ReadJSON(ret,buff,size);
 				break;
 			default:
 				Warning("not reach");
@@ -574,7 +508,7 @@ LEAVE_FUNC;
 }
 
 static	int
-_WriteXML_XML(
+_WriteXML(
 	DBG_Struct *dbg,
 	XMLCtx *ctx,
 	ValueStruct *ret)
@@ -615,7 +549,7 @@ _WriteXML_XML(
 }
 
 static	int
-_WriteXML_JSON(
+_WriteJSON(
 	DBG_Struct *dbg,
 	XMLCtx *ctx,
 	ValueStruct *ret)
@@ -658,7 +592,7 @@ _WriteXML_JSON(
 }
 
 static	ValueStruct	*
-_WriteXML(
+_Write(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -707,21 +641,109 @@ ENTER_FUNC;
 	}
 	switch(ctx->mode) {
 	case MODE_WRITE_XML:
-		ctrl->rc = _WriteXML_XML(dbg,ctx,ret);
+		ctrl->rc = _WriteXML(dbg,ctx,ret);
 		break;
 	case MODE_WRITE_JSON:
-		ctrl->rc = _WriteXML_JSON(dbg,ctx,ret);
+		ctrl->rc = _WriteJSON(dbg,ctx,ret);
 		break;
 	default:
 		Warning("not reach");
 		break;
 	}
-	FreeXMLCtx(ctx);
-	g_hash_table_remove(XMLCtxTable,GINT_TO_POINTER(ctxnum));
 	val = GetRecordItem(ret,ValueToString(rname,NULL));
 	InitializeValue(val);
 LEAVE_FUNC;
 	return ret;
+}
+
+static	ValueStruct	*
+_Open(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct		*obj,*mode,*context,*ret;
+	XMLCtx			*ctx;
+
+ENTER_FUNC;
+	ctrl->rc = MCP_BAD_ARG;
+	ret = NULL;
+
+	if (rec->type  !=  RECORD_DB) {
+		return NULL;
+	}
+	if ((obj = GetItemLongName(args,"object")) == NULL) {
+		Warning("no [object] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	if ((mode = GetItemLongName(args,"mode")) == NULL) {
+		Warning("no [mode] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	if ((context = GetItemLongName(args,"context")) == NULL) {
+		Warning("no [context] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+
+	ctx = NewXMLCtx();
+	ValueInteger(context) = ctx->num;
+
+	ret = DuplicateValue(args,TRUE);
+	ctx->mode = ValueInteger(mode);
+	switch(ctx->mode) {
+	case MODE_WRITE:
+	case MODE_WRITE_XML:
+	case MODE_WRITE_JSON:
+		break;
+	case MODE_READ:
+        ctx->obj = ValueObjectId(obj);
+		break;
+	default:
+		Warning("not reach here");
+		break;
+	}
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	ret;
+}
+
+static	ValueStruct	*
+_Close(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*context;
+	XMLCtx		*ctx;
+	int 		ctxnum;
+ENTER_FUNC;
+	ctrl->rc = MCP_BAD_OTHER;
+	if (rec->type != RECORD_DB) {
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
+		Warning("no [context] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	ctxnum = ValueInteger(context);
+	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ctxnum));
+	if (ctx == NULL) {
+		Warning("ctx is null");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	FreeXMLCtx(ctx);
+	g_hash_table_remove(XMLCtxTable,GINT_TO_POINTER(ctxnum));
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	NULL;
 }
 
 extern	ValueStruct	*
@@ -764,10 +786,10 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)XML_BEGIN },
 	{	"DBCOMMIT",		(DB_FUNC)XML_END },
 	/*	table operations	*/
-	{	"XMLOPEN",		_OpenXML		},
-	{	"XMLREAD",		_ReadXML		},
-	{	"XMLWRITE",		_WriteXML		},
-	{	"XMLCLOSE",		_CloseXML		},
+	{	"XMLOPEN",		_Open		},
+	{	"XMLREAD",		_Read		},
+	{	"XMLWRITE",		_Write		},
+	{	"XMLCLOSE",		_Close		},
 
 	{	NULL,			NULL }
 };
