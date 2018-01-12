@@ -28,6 +28,7 @@
 #include	"debug.h"
 
 static	char			*Directory;
+static	char			*DBConfig;
 static	char			*ImportFile;
 static	Bool			List;
 static	Bool			Blob;
@@ -59,6 +60,8 @@ static	ARG_TABLE	option[] = {
 		"output file name"								},
 	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
 		"lifetime type"									},
+	{	"dbconfig",	STRING,		TRUE,	(void*)&DBConfig,
+		"database connection config file" 				},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -72,6 +75,7 @@ SetDefault(void)
 	InfoID		= NULL;
 	CheckID		= NULL;
 	OutputFile	= NULL;
+	DBConfig	= NULL;
 	LifeType	= 1;
 	List		= FALSE;
 	Blob		= FALSE;
@@ -206,6 +210,14 @@ _blob_check_id(
 	}
 }
 
+static void
+SetDBConfig()
+{
+	if (DBConfig == NULL) {
+		return;
+	}
+}
+
 extern	int
 main(
 	int		argc,
@@ -239,6 +251,8 @@ main(
 
 	dbg = GetDBG_monsys();
 	dbg->dbt = NewNameHash();
+
+	SetDBConfig();
 
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
