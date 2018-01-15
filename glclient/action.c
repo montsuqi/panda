@@ -899,6 +899,7 @@ InitStyle(void)
 			"  fg[PRELIGHT] = \"#000000\""
 			"  text[NORMAL] = \"#000000\""
 			"  text[PRELIGHT] = \"#000000\""
+			"  bg[NORMAL] = @bg_color"
 			"}"
 			"style \"tooltip\" {"
 			"  fg[NORMAL] = \"#000000\""
