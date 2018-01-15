@@ -11,6 +11,7 @@
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
+#include	<locale.h>
 #include	<signal.h>
 #include	<time.h>
 #include	<errno.h>
