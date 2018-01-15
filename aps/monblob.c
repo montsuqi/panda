@@ -82,6 +82,45 @@ SetDefault(void)
 	fTimer		= TRUE;
 }
 
+static void
+SetDBConfig()
+{
+	char *buf,*tmp;
+	size_t size;
+	GRegex *reg;
+	GMatchInfo *info;
+
+	if (DBConfig == NULL) {
+		return;
+	}
+	if (!g_file_get_contents(DBConfig,&buf,&size,NULL)) {
+		Error("can not read %s",DBConfig);
+	}
+
+	tmp = realloc(buf,size+1);
+	if (tmp == NULL) {
+		Error("realloc(3) failure");
+	} else {
+		buf = tmp;
+		memset(tmp+size,0,1);
+	}
+
+	reg = g_regex_new("(.*):(.*):(.*):(.*):(.*)",0,0,NULL);
+	g_regex_match(reg,buf,0,&info);
+	if (g_match_info_matches(info)) {
+		DB_Host = g_match_info_fetch(info,1);
+		DB_Port = g_match_info_fetch(info,2);
+		DB_Name = g_match_info_fetch(info,3);
+		DB_User = g_match_info_fetch(info,4);
+		DB_Pass = g_match_info_fetch(info,5);
+	} else {
+		Warning("invalid DBConfig format. <Host>:<Port>:<Database>:<User>:<Password>");
+	}
+	g_match_info_free(info);
+	g_regex_unref(reg);
+	g_free(buf);
+}
+
 static	void
 InitSystem(void)
 {
@@ -95,6 +134,7 @@ InitSystem(void)
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
+	SetDBConfig();
 }
 
 static char *
@@ -210,45 +250,6 @@ _blob_check_id(
 	}
 }
 
-static void
-SetDBConfig()
-{
-	char *buf,*tmp;
-	size_t size;
-	GRegex *reg;
-	GMatchInfo *info;
-
-	if (DBConfig == NULL) {
-		return;
-	}
-	if (!g_file_get_contents(DBConfig,&buf,&size,NULL)) {
-		Error("can not read %s",DBConfig);
-	}
-
-	tmp = realloc(buf,size+1);
-	if (tmp == NULL) {
-		Error("realloc(3) failure");
-	} else {
-		buf = tmp;
-		memset(tmp+size,0,1);
-	}
-
-	reg = g_regex_new("(.*):(.*):(.*):(.*):(.*)",0,0,NULL);
-	g_regex_match(reg,buf,0,&info);
-	if (g_match_info_matches(info)) {
-		DB_Host = g_match_info_fetch(info,1);
-		DB_Port = g_match_info_fetch(info,2);
-		DB_Name = g_match_info_fetch(info,3);
-		DB_User = g_match_info_fetch(info,4);
-		DB_Pass = g_match_info_fetch(info,5);
-	} else {
-		Warning("invalid DBConfig format. <Host>:<Port>:<Database>:<User>:<Password>");
-	}
-	g_match_info_free(info);
-	g_regex_unref(reg);
-	g_free(buf);
-}
-
 extern	int
 main(
 	int		argc,
@@ -283,8 +284,6 @@ main(
 
 	dbg = GetDBG_monsys();
 	dbg->dbt = NewNameHash();
-
-	SetDBConfig();
 
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
