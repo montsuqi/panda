@@ -937,6 +937,8 @@ Ping()
 {
 	char *dialog,*popup,*abort;
 
+	Debug("Ping()");
+
 	RPC_GetMessage(GLP(Session),&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
 		RPC_EndSession(GLP(Session));
@@ -1077,7 +1079,9 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	ListDownloads();
+	if (!UsePushClient) {
+		ListDownloads();
+	}
 	Ping();
 	return 1;
 }
@@ -1085,10 +1089,20 @@ PingTimerFunc(
 extern	void
 SetPingTimerFunc()
 {
+	char *p;
+	int period;
+
+	period = DEFAULT_PING_TIMER_PERIOD;
 	if (UsePushClient) {
-		return;
+		period = PUSH_CLIENT_PING_TIMER_PERIOD;
 	}
-	g_timeout_add(PingTimerPeriod,PingTimerFunc,NULL);
+	if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
+		period = atoi(p) * 1000;
+		if (period < DEFAULT_PING_TIMER_PERIOD) {
+			period = DEFAULT_PING_TIMER_PERIOD;
+		}
+	}
+	g_timeout_add(period,PingTimerFunc,NULL);
 }
 
 extern	WindowData *
