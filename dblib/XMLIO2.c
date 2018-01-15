@@ -60,40 +60,8 @@ typedef enum xml_open_mode {
 	MODE_NONE,
 } XMLMode;
 
-typedef struct {
-	XMLMode mode;
-	MonObjectType obj;
-	int	pos;
-	int num;
-} XMLCtx;
-
-static GHashTable *XMLCtxTable = NULL;
+static MonObjectType ObjectID = 0;
 static XMLMode PrevMode = MODE_WRITE_XML;
-
-static void
-FreeXMLCtx(XMLCtx *ctx)
-{
-	if (ctx == NULL) {
-		return;
-	}
-	g_free(ctx);
-}
-
-static XMLCtx*
-NewXMLCtx()
-{
-	XMLCtx *ctx;
-	int i;
-
-	if (XMLCtxTable == NULL) {
-		Error("CtxTable = NULL...something wrong");
-	}
-	ctx = g_new0(XMLCtx,1);
-	for(i=0;g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(i))!=NULL;i++);
-	g_hash_table_insert(XMLCtxTable,GINT_TO_POINTER(i),ctx);
-	ctx->num = i;
-	return ctx;
-}
 
 static gchar*
 XMLGetString(
@@ -356,72 +324,6 @@ ENTER_FUNC;
 	return node;
 }
 
-static	ValueStruct	*
-_OpenXML(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct		*obj,*mode,*context,*ret;
-	XMLCtx			*ctx;
-
-ENTER_FUNC;
-	ctrl->rc = MCP_BAD_ARG;
-	ret = NULL;
-
-	if (rec->type  !=  RECORD_DB) {
-		return NULL;
-	}
-	if ((obj = GetItemLongName(args,"object")) == NULL) {
-		Warning("no [object] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((mode = GetItemLongName(args,"mode")) == NULL) {
-		Warning("no [mode] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((context = GetItemLongName(args,"context")) == NULL) {
-		Warning("no [context] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-
-	ctx = NewXMLCtx();
-	ValueInteger(context) = ctx->num;
-	ret = DuplicateValue(args,TRUE);
-	ctx->mode = ValueInteger(mode);
-	switch(ctx->mode) {
-	case MODE_WRITE:
-	case MODE_WRITE_XML:
-	case MODE_WRITE_JSON:
-		break;
-	case MODE_READ:
-        ctx->obj = ValueObjectId(obj);
-		break;
-	default:
-		Warning("not reach here");
-		break;
-	}
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	ret;
-}
-
-static	ValueStruct	*
-_CloseXML(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-ENTER_FUNC;
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	NULL;
-}
 
 static	XMLMode
 CheckFormat(
@@ -445,7 +347,7 @@ CheckFormat(
 }
 
 static	int
-_ReadXML_XML(
+_ReadXML(
 	ValueStruct *ret,
 	unsigned char *buff,
 	size_t size)
@@ -478,7 +380,7 @@ _ReadXML_XML(
 }
 
 static	int
-_ReadXML_JSON(
+_ReadJSON(
 	ValueStruct *ret,
 	unsigned char *buff,
 	size_t size)
@@ -514,18 +416,17 @@ _ReadXML_JSON(
 }
 
 static	ValueStruct	*
-_ReadXML(
+_Read(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*ret,*context;
-	XMLCtx		*ctx;
+	ValueStruct	*ret,*val;
 	char		*buff;
 	size_t		size;
+	int mode;
 	DBG_Struct	*mondbg;
-
 ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = MCP_BAD_OTHER;
@@ -533,27 +434,28 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
-		Warning("no [context] record");
+	if ((val = GetItemLongName(args,"mode"))  ==  NULL) {
+		Warning("no [mode] record");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ValueInteger(context)));
-	if (ctx == NULL || ctx->mode != MODE_READ) {
+	mode = ValueInteger(val);
+	if (mode != MODE_READ) {
+		Warning("invalid mode:%d",mode);
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
 	mondbg = GetDBG_monsys();
-	if (blob_export_mem(mondbg,ctx->obj,&buff,&size)) {
+	if (blob_export_mem(mondbg,ObjectID,&buff,&size)) {
 		ret = DuplicateValue(args,TRUE);
 		if (size > 0) {
 			PrevMode = CheckFormat(buff,size);
 			switch(PrevMode) {
 			case MODE_WRITE_XML:
-				ctrl->rc = _ReadXML_XML(ret,buff,size);
+				ctrl->rc = _ReadXML(ret,buff,size);
 				break;
 			case MODE_WRITE_JSON:
-				ctrl->rc = _ReadXML_JSON(ret,buff,size);
+				ctrl->rc = _ReadJSON(ret,buff,size);
 				break;
 			default:
 				Warning("not reach");
@@ -574,9 +476,8 @@ LEAVE_FUNC;
 }
 
 static	int
-_WriteXML_XML(
+_WriteXML(
 	DBG_Struct *dbg,
-	XMLCtx *ctx,
 	ValueStruct *ret)
 {
 	ValueStruct *rname,*val,*obj;
@@ -615,9 +516,8 @@ _WriteXML_XML(
 }
 
 static	int
-_WriteXML_JSON(
+_WriteJSON(
 	DBG_Struct *dbg,
-	XMLCtx *ctx,
 	ValueStruct *ret)
 {
 	ValueStruct *val,*obj;
@@ -658,35 +558,34 @@ _WriteXML_JSON(
 }
 
 static	ValueStruct	*
-_WriteXML(
+_Write(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*rname,*val,*context,*obj,*ret;
-	XMLCtx		*ctx;
-	int 		ctxnum;
+	ValueStruct	*rname,*val,*ret;
+	int mode;
 ENTER_FUNC;
 	ctrl->rc = MCP_BAD_OTHER;
 	if (rec->type != RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
-		Warning("no [context] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	ctxnum = ValueInteger(context);
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ctxnum));
-	if (ctx == NULL || ctx->mode == MODE_READ) {
-		Warning("ctx is null or invalid READ mode");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((obj = GetItemLongName(args,"object"))  ==  NULL) {
+	if ((val = GetItemLongName(args,"object"))  ==  NULL) {
 		Warning("no [object] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	if ((val = GetItemLongName(args,"mode"))  ==  NULL) {
+		Warning("no [mode] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	mode = ValueInteger(val);
+	if (MODE_WRITE <= mode && mode <= MODE_WRITE_JSON) {
+	} else {
+		Warning("invalid mode:%d",mode);
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
@@ -702,26 +601,61 @@ ENTER_FUNC;
 		return NULL;
 	}
 	ret = DuplicateValue(args,TRUE);
-	if (ctx->mode == MODE_WRITE) {
-		ctx->mode = PrevMode;
+	if (mode == MODE_WRITE) {
+		mode = PrevMode;
 	}
-	switch(ctx->mode) {
+	switch(mode) {
 	case MODE_WRITE_XML:
-		ctrl->rc = _WriteXML_XML(dbg,ctx,ret);
+		ctrl->rc = _WriteXML(dbg,ret);
 		break;
 	case MODE_WRITE_JSON:
-		ctrl->rc = _WriteXML_JSON(dbg,ctx,ret);
+		ctrl->rc = _WriteJSON(dbg,ret);
 		break;
 	default:
 		Warning("not reach");
 		break;
 	}
-	FreeXMLCtx(ctx);
-	g_hash_table_remove(XMLCtxTable,GINT_TO_POINTER(ctxnum));
 	val = GetRecordItem(ret,ValueToString(rname,NULL));
 	InitializeValue(val);
 LEAVE_FUNC;
 	return ret;
+}
+
+static	ValueStruct	*
+_Open(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct		*val;
+ENTER_FUNC;
+	ctrl->rc = MCP_BAD_ARG;
+	if (rec->type  !=  RECORD_DB) {
+		return NULL;
+	}
+	if ((val = GetItemLongName(args,"object")) == NULL) {
+		Warning("no [object] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	ObjectID = ValueObjectId(val);
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	NULL;
+}
+
+static	ValueStruct	*
+_Close(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+ENTER_FUNC;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	NULL;
 }
 
 extern	ValueStruct	*
@@ -730,20 +664,9 @@ XML_BEGIN(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-    if (XMLCtxTable == NULL){
-		XMLCtxTable = g_hash_table_new(g_direct_hash,g_direct_equal);
-	}
+	ObjectID = 0;
 LEAVE_FUNC;
 	return	(NULL);
-}
-
-static gboolean
-EachRemoveCtx(gpointer key,
-	gpointer value,
-	gpointer data)
-{
-	FreeXMLCtx((XMLCtx*)value);
-	return TRUE;
 }
 
 extern	ValueStruct	*
@@ -752,7 +675,7 @@ XML_END(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	g_hash_table_foreach_remove(XMLCtxTable,EachRemoveCtx,NULL);
+	ObjectID = 0;
 LEAVE_FUNC;
 	return	(NULL);
 }
@@ -764,10 +687,10 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)XML_BEGIN },
 	{	"DBCOMMIT",		(DB_FUNC)XML_END },
 	/*	table operations	*/
-	{	"XMLOPEN",		_OpenXML		},
-	{	"XMLREAD",		_ReadXML		},
-	{	"XMLWRITE",		_WriteXML		},
-	{	"XMLCLOSE",		_CloseXML		},
+	{	"XMLOPEN",		_Open		},
+	{	"XMLREAD",		_Read		},
+	{	"XMLWRITE",		_Write		},
+	{	"XMLCLOSE",		_Close		},
 
 	{	NULL,			NULL }
 };
