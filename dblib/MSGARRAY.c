@@ -66,8 +66,7 @@ enum MSGTYPE {
 };
 
 typedef struct {
-	MSGMode mode;
-	MonObjectType oid;
+	int mode;
 	int format;
 	int	pos;
 	/*for XML*/
@@ -83,12 +82,11 @@ static void
 _ResetCTX()
 {
 	CTX.mode = MODE_NONE;
-	CTX.oid = 0;
 	CTX.format = MSG_NONE;
 	CTX.pos = 0;
-	if (CTX.xml_doc != NULL) {
+	if (CTX.doc != NULL) {
 		xmlFreeDoc(CTX.doc);
-		CTX.xml_doc = NULL;
+		CTX.doc = NULL;
 	}
 	if (CTX.obj != NULL) {
 		json_object_put(CTX.obj);
@@ -101,7 +99,7 @@ CheckContentType(
 	const char* ctype)
 {
 	gchar *upper;
-	MSGTYPE ret;
+	enum MSGTYPE ret;
 
 	ret = MSG_NONE;
 	upper = g_utf8_strup(ctype,-1);
@@ -188,7 +186,7 @@ _ReadJSON(
 		Warning("invalid json object");
 		return MCP_BAD_OTHER;
 	}
-	JSON_UnPackValue(NULL,json_object_to_json_string(obj),data);
+	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(obj),data);
 	return MCP_OK;
 }
 
@@ -200,12 +198,7 @@ _Read(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*ret,*obj,*ctype,*data;
-	MSGTYPE		type;
-	char		*buff;
-	size_t		size;
-	DBG_Struct	*mondbg;
-
+	ValueStruct *ret,*data;
 ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = MCP_BAD_OTHER;
@@ -329,7 +322,7 @@ ENTER_FUNC;
 		ctrl->rc = _WriteXML(ret);
 		break;
 	case MODE_WRITE_JSON:
-		ctrl->rc = _WritJSON(ret);
+		ctrl->rc = _WriteJSON(ret);
 		break;
 	default:
 		Warning("not reach");
@@ -346,7 +339,7 @@ _OpenXML(
 	size_t size)
 {
 	CTX.doc = xmlReadMemory(buf,size,"http://www.montsuqi.org/",NULL,XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
-	if (doc == NULL) {
+	if (CTX.doc == NULL) {
 		Warning("_ReadXML_XML failure");
 		return MCP_BAD_ARG;
 	}
@@ -369,11 +362,11 @@ _OpenJSON(
 		memset(tmp+size,0,1);
 	}
 	CTX.obj = json_tokener_parse(buf);
-	if (is_error(obj)) {
+	if (CTX.obj == NULL || is_error(CTX.obj)) {
 		Warning("_ReadXML_JSON failure");
 		return MCP_BAD_ARG;
 	}
-	if (json_object_get_type(obj) != json_type_array) {
+	if (json_object_get_type(CTX.obj) != json_type_array) {
 		Warning("invalid json type");
 		return MCP_BAD_ARG;
 	}
@@ -388,7 +381,7 @@ _Open(
 	ValueStruct		*args)
 {
 	ValueStruct *ret,*oid,*mode;
-	xmlNodePtr *root;
+	xmlNodePtr root;
 	char *buf;
 	size_t size;
 	int format;
@@ -418,9 +411,9 @@ _Open(
 	switch(CTX.mode) {
 	case MODE_WRITE_XML:
 		CTX.doc = xmlNewDoc("1.0");
-		root = xmlNewDocNode(doc, NULL, ValueName(args), NULL);
+		root = xmlNewDocNode(CTX.doc, NULL, ValueName(args), NULL);
 		xmlNewProp(root,"type","array");
-		xmlDocSetRootElement(doc,root);
+		xmlDocSetRootElement(CTX.doc,root);
 		ctrl->rc = MCP_OK;
 		break;
 	case MODE_WRITE_JSON:

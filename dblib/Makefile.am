@@ -77,6 +77,7 @@ DB_OBJECTS			=		\
 	XMLIO.la				\
 	XMLIO2.la				\
 	MSGIO.la				\
+	MSGARRAY.la				\
 	PushEvent.la
 
 PostgreSQL_la_LDFLAGS	=		\
@@ -164,6 +165,16 @@ MSGIO_la_LDFLAGS	=	\
 MSGIO_la_SOURCES	=	\
 	MSGIO.c
 MSGIO_la_LIBADD			=			\
+	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la
+
+MSGARRAY_la_LDFLAGS	=	\
+	-avoid-version				\
+	-module						\
+	-export-dynamic
+MSGARRAY_la_SOURCES	=	\
+	MSGARRAY.c
+MSGARRAY_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/dblib/libpandadb.la
 
