@@ -86,10 +86,9 @@ SetDefault(void)
 static void
 SetDBConfig()
 {
-	char *buf,*tmp;
+	char *buf,*tmp,**elem;
 	size_t size;
-	GRegex *reg;
-	GMatchInfo *info;
+	int i;
 
 	if (DBConfig == NULL) {
 		return;
@@ -106,20 +105,20 @@ SetDBConfig()
 		memset(tmp+size,0,1);
 	}
 
-	reg = g_regex_new("(.*):(.*):(.*):(.*):(.*)",0,0,NULL);
-	g_regex_match(reg,buf,0,&info);
-	if (g_match_info_matches(info)) {
-		DB_Host = g_match_info_fetch(info,1);
-		DB_Port = g_match_info_fetch(info,2);
-		DB_Name = g_match_info_fetch(info,3);
-		DB_User = g_match_info_fetch(info,4);
-		DB_Pass = g_match_info_fetch(info,5);
+	elem = g_strsplit(buf,":",-1);
+	g_free(buf);
+	for(i=0;i<elem[i]!=NULL;i++) {
+	}
+	if (i>=5) {
+		DB_Host = g_strdup(elem[0]);
+		DB_Port = g_strdup(elem[1]);
+		DB_Name = g_strdup(elem[2]);
+		DB_User = g_strdup(elem[3]);
+		DB_Pass = g_strdup(elem[4]);
 	} else {
 		Warning("invalid DBConfig format. <Host>:<Port>:<Database>:<User>:<Password>");
 	}
-	g_match_info_free(info);
-	g_regex_unref(reg);
-	g_free(buf);
+	g_strfreev(elem);
 }
 
 static	void
