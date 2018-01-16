@@ -105,9 +105,9 @@ SetDBConfig()
 		memset(tmp+size,0,1);
 	}
 
-	elem = g_strsplit(buf,":",-1);
+	elem = g_strsplit_set(buf,":\n",-1);
 	g_free(buf);
-	for(i=0;i<elem[i]!=NULL;i++) {
+	for(i=0;elem[i]!=NULL;i++) {
 	}
 	if (i>=5) {
 		DB_Host = g_strdup(elem[0]);
