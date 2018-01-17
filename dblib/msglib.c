@@ -314,12 +314,12 @@ CheckFormat(
 	p = buf;
 	for(i=0;i<size;i++) {
 		if (*p == '<') {
-			return 0;
+			return MSG_XML;
 		}
 		if (*p == '{') {
-			return 1;
+			return MSG_JSON;
 		}
 		p++;
 	}
-	return 2;
+	return MSG_NONE;
 }

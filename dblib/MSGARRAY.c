@@ -59,12 +59,6 @@ typedef enum __MODE {
 	MODE_NONE,
 } _MODE;
 
-enum MSGTYPE {
-	MSG_XML = 0,
-	MSG_JSON,
-	MSG_NONE
-};
-
 typedef struct {
 	int mode;
 	int format;
@@ -92,25 +86,6 @@ _ResetCTX()
 		json_object_put(CTX.obj);
 		CTX.obj = NULL;
 	}
-}
-
-static int
-CheckContentType(
-	const char* ctype)
-{
-	gchar *upper;
-	enum MSGTYPE ret;
-
-	ret = MSG_NONE;
-	upper = g_utf8_strup(ctype,-1);
-	if (strstr(upper,"XML") != NULL) {
-		ret = MSG_XML;
-	}
-	if (strstr(upper,"JSON") != NULL) {
-		ret = MSG_JSON;
-	}
-	g_free(upper);
-	return ret;
 }
 
 static	int
@@ -380,15 +355,14 @@ _Open(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct *ret,*oid,*mode;
+	ValueStruct *oid,*mode;
 	xmlNodePtr root;
+	DBG_Struct *mondbg;
 	char *buf;
 	size_t size;
-	int format;
 
 	_ResetCTX();
 	ctrl->rc = MCP_BAD_ARG;
-	ret = NULL;
 
 	if (rec->type  !=  RECORD_DB) {
 		return NULL;
@@ -421,9 +395,8 @@ _Open(
 		ctrl->rc = MCP_OK;
 		break;
 	case MODE_READ:
-        CTX.oid = ValueObjectId(oid);
 		mondbg = GetDBG_monsys();
-		if (blob_export_mem(mondbg,CTX.oid,&buf,&size)) {
+		if (blob_export_mem(mondbg,ValueObjectId(oid),&buf,&size)) {
 			if (size > 0) {
 				CTX.format = CheckFormat(buf,size);
 				switch(CTX.format) {
@@ -463,8 +436,8 @@ _Close(
 {
 	ValueStruct *ret,*oid;
 	DBG_Struct *mondbg;
-	char *buf;
-	size_t size;
+	xmlChar *buf;
+	int size;
 
 
 	ctrl->rc = MCP_BAD_OTHER;
@@ -481,7 +454,7 @@ _Close(
 
 	ret = DuplicateValue(args,TRUE);
 	oid = GetItemLongName(ret,"object");
-	ValueObjectID(oid) = GL_OBJ_NULL;
+	ValueObjectId(oid) = GL_OBJ_NULL;
 
 	switch(CTX.mode) {
 	case MODE_WRITE_XML:
@@ -496,7 +469,7 @@ _Close(
 		break;
 	case MODE_WRITE_JSON:
     	mondbg = GetDBG_monsys();
-		buf = json_object_to_json_string(CTX.obj);
+		buf = (char*)json_object_to_json_string(CTX.obj);
 		ValueObjectId(oid) = blob_import_mem(mondbg,0,"MSGARRAY.json","application/json",0,buf,strlen(buf));
 		break;
 	}
