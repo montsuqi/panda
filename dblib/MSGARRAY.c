@@ -519,7 +519,7 @@ static	DB_Primitives	Core = {
 };
 
 extern	DB_Func	*
-InitMSGIO(void)
+InitMSGARRAY(void)
 {
 	return	(EnterDB_Function("MSGARRAY",Operations,DB_PARSER_NULL,&Core,"",""));
 }
