@@ -315,8 +315,9 @@ CheckFormat(
 	for(i=0;i<size;i++) {
 		if (*p == '<') {
 			return MSG_XML;
-		}
-		if (*p == '{') {
+		} else if (*p == '{') {
+			return MSG_JSON;
+		} else if (*p == '[') {
 			return MSG_JSON;
 		}
 		p++;
