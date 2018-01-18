@@ -25,11 +25,12 @@ libpandadb_la_LIBADD = \
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
-	dblib.h \
-	dbutils.h \
-	dbgroup.h \
-	monsys.h \
-	bytea.h
+	dblib.h		\
+	dbutils.h	\
+	dbgroup.h	\
+	monsys.h	\
+	bytea.h		\
+	msglib.h
 
 noinst_PROGRAMS		=
 
@@ -52,8 +53,9 @@ libpandadb_la_SOURCES	=	\
 	dbutils.c	dbutils.h	\
 	redirect.c	redirect.h	\
 	monsys.c	monsys.h	\
-	dbops.c		dbops.h	\
-	bytea.c		bytea.h
+	dbops.c		dbops.h		\
+	bytea.c		bytea.h		\
+	msglib.c	msglib.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\

@@ -52,6 +52,9 @@ ENTER_FUNC;
 		ret = New(RecordStruct);
 		ret->value = value;
 		ret->name = StrDup(in->ValueName);
+		if (ValueName(value) == NULL) {
+			ValueName(value) = ret->name;
+		}
 		ret->type = RECORD_NULL;
 	} else {
 		ret = NULL;

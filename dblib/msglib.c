@@ -35,10 +35,11 @@
 #include	<signal.h>
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
+#include	<libmondai.h>
 
 #include	"const.h"
 #include	"enum.h"
-#include	"libmondai.h"
+#include	"msglib.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -55,7 +56,7 @@ XMLGetString(
 	return buf;
 }
 
-void int
+int
 XMLNode2Value(
 	ValueStruct	*val,
 	xmlNodePtr	root)
@@ -201,7 +202,7 @@ IsEmptyValue(ValueStruct *val)
 	return ret;
 }
 
-void	xmlNodePtr
+xmlNodePtr
 Value2XMLNode(
 	char		*name,
 	ValueStruct	*val)

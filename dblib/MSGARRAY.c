@@ -213,7 +213,7 @@ _WriteXML(
 	ValueStruct *ret)
 {
 	ValueStruct *val;
-	xmlNodePtr root,node,box;
+	xmlNodePtr root,node,record;
 	char *name;
 
 	if (CTX.doc == NULL) {
@@ -226,11 +226,11 @@ _WriteXML(
 	node = Value2XMLNode("data",val);
 	if (node != NULL) {
 		name = g_strdup_printf("%s_child",ValueName(ret));
-		box = xmlNewNode(NULL, name);
+		record = xmlNewNode(NULL, name);
 		g_free(name);
-		xmlNewProp(box,"type","record");
-		xmlAddChildList(box,node);
-		xmlAddChildList(root,box);
+		xmlNewProp(record,"type","record");
+		xmlAddChildList(record,node);
+		xmlAddChildList(root,record);
 	} else {
 		Warning("node is NULL");
 		return MCP_BAD_OTHER;
