@@ -26,9 +26,8 @@
 #define MSG_XML  (1)
 #define MSG_JSON (2)
 
-int		XMLNode2Value(ValueStruct *val,xmlNodePtr root);
+int			XMLNode2Value(ValueStruct *val,xmlNodePtr root);
 xmlNodePtr	Value2XMLNode(char *name,ValueStruct *val);
-int CheckFormat(char *buff,size_t size);
-
+int 		CheckFormat(char *buff,size_t size);
 
 #endif
