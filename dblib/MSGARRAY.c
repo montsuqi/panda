@@ -35,6 +35,8 @@
 #include	<signal.h>
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
+#include	<json.h>
+#include	<json_object_private.h> /*for json_object_object_foreachC()*/
 
 #include	"const.h"
 #include	"enum.h"
@@ -162,6 +164,7 @@ _ReadJSON(
 		return MCP_BAD_OTHER;
 	}
 	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(obj),data);
+DumpValueStruct(data);
 	return MCP_OK;
 }
 
@@ -315,7 +318,7 @@ _OpenXML(
 {
 	CTX.doc = xmlReadMemory(buf,size,"http://www.montsuqi.org/",NULL,XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
 	if (CTX.doc == NULL) {
-		Warning("_ReadXML_XML failure");
+		Warning("xmlREadMemory failure");
 		return MCP_BAD_ARG;
 	}
 	return MCP_OK;
@@ -338,7 +341,7 @@ _OpenJSON(
 	}
 	CTX.obj = json_tokener_parse(buf);
 	if (CTX.obj == NULL || is_error(CTX.obj)) {
-		Warning("_ReadXML_JSON failure");
+		Warning("json_tokener_parse failure");
 		return MCP_BAD_ARG;
 	}
 	if (json_object_get_type(CTX.obj) != json_type_array) {
@@ -478,6 +481,185 @@ _Close(
 	return	ret;
 }
 
+static int
+_UnEscapeXML()
+{
+	Warning("not implement");
+	return MCP_BAD_OTHER;
+}
+
+static gboolean
+eval_cb(
+	const GMatchInfo *info,
+	GString *res,
+	gpointer data)
+{
+	gchar *match;
+
+	match = g_match_info_fetch(info,0);
+	if (!strcmp(match,"\\\"")) {
+		g_string_append(res,"\"");
+	} else if (!strcmp(match,"\\\\")) {
+		g_string_append(res,"\\");
+	} else if (!strcmp(match,"\\/")) {
+		g_string_append(res,"/");
+	} else if (!strcmp(match,"\\b")) {
+		g_string_append(res,"\b");
+	} else if (!strcmp(match,"\\f")) {
+		g_string_append(res,"\f");
+	} else if (!strcmp(match,"\\n")) {
+		g_string_append(res,"\n");
+	} else if (!strcmp(match,"\\r")) {
+		g_string_append(res,"\r");
+	} else if (!strcmp(match,"\\t")) {
+		g_string_append(res,"\t");
+	}
+	g_free(match);
+	return FALSE;
+}
+
+json_object*
+__UnEscapeJSONString(json_object *obj)
+{
+	GRegex *reg;
+	GMatchInfo *match_info;
+	int compile_op,match_op;
+	const char *pat,*str;
+	char *res,*res2;
+	json_object *newobj;
+
+	compile_op = G_REGEX_DOTALL | G_REGEX_MULTILINE;
+	match_op = 0;
+	pat = "^\\s*\"\\s*{.*}|\\[.*\\]\\s*\"\\s*$";
+	str = json_object_to_json_string(obj);
+	if (!g_regex_match_simple(pat,str,compile_op,match_op)) {
+		return NULL;
+	}
+
+	reg = g_regex_new(""
+		"\\\\\"|"
+		"\\\\\\\\|"
+		"\\\\/|"
+		"\\\\b|"
+		"\\\\f|"
+		"\\\\n|"
+		"\\\\r|"
+		"\\\\t"
+		"",0,0,NULL);
+	res = g_regex_replace_eval(reg,str,-1,0,0,eval_cb,NULL,NULL);
+	g_regex_unref(reg);
+	if (res == NULL) {
+		return NULL;
+	}
+
+	reg = g_regex_new("\"(.*)\"",compile_op,match_op,NULL);
+	if (g_regex_match(reg,res,0,&match_info)) {
+		res2 = g_match_info_fetch(match_info,1);
+		newobj = json_tokener_parse(res2);
+		g_free(res2);
+	} else {
+		newobj = NULL;
+	}
+	g_match_info_free(match_info);
+	g_regex_unref(reg);
+	g_free(res);
+
+	return newobj;
+}
+
+static void
+__UnEscapeJSON(
+	json_object *obj,
+	json_object *parent,
+	const char *key,
+	int idx)
+{
+	json_object *newobj;
+	json_object_iter iter;
+	json_type type;
+	int i,l;
+
+	if (obj == NULL) {
+		Warning("something wrong");
+		return;
+	}
+
+	type = json_object_get_type(obj);
+	switch (type) {
+	case json_type_boolean:
+	case json_type_double:
+	case json_type_int:
+	case json_type_null:
+		break;
+	case json_type_string:
+		newobj = __UnEscapeJSONString(obj);
+		if (newobj != NULL && parent != NULL) {
+			type = json_object_get_type(parent);
+			switch (type) {
+			case json_type_object: 
+				json_object_object_add(parent,key,newobj);
+				json_object_put(obj);
+				break;
+			case json_type_array:
+				json_object_array_put_idx(parent,idx,newobj);
+				json_object_put(obj);
+				break;
+			default:
+				Warning("does not reach here");
+				break;
+			}
+		}
+		break;
+	case json_type_object:
+		json_object_object_foreachC(obj,iter) {
+			__UnEscapeJSON(iter.val,obj,iter.key,0);
+		}
+		break;
+	case json_type_array:
+		l = json_object_array_length(obj);
+		for(i=0;i<l;i++) {
+			__UnEscapeJSON(json_object_array_get_idx(obj,i),obj,NULL,i);
+		}
+		break;
+	default:
+		Warning("does not reach here");
+		break;
+	}
+}
+
+static int
+_UnEscapeJSON()
+{
+	if (CTX.obj == NULL) {
+		Warning("invalid json context");
+		return MCP_BAD_OTHER;
+	}
+	__UnEscapeJSON(CTX.obj,NULL,NULL,0);
+	return MCP_OK;
+}
+
+static	ValueStruct	*
+_UnEscape(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ctrl->rc = MCP_BAD_OTHER;
+	switch(CTX.mode) {
+	case MODE_WRITE_XML:
+		ctrl->rc = _UnEscapeXML();
+		break;
+	case MODE_WRITE_JSON:
+		ctrl->rc = _UnEscapeJSON();
+		break;
+	default:
+		Warning("not reach");
+		break;
+	}
+	return	NULL;
+}
+
 extern	ValueStruct	*
 _START(
 	DBG_Struct	*dbg,
@@ -503,10 +685,11 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)_START },
 	{	"DBCOMMIT",		(DB_FUNC)_COMMIT },
 	/*	table operations	*/
-	{	"MSGARRAYOPEN",		_Open		},
-	{	"MSGARRAYREAD",		_Read		},
-	{	"MSGARRAYWRITE",	_Write		},
-	{	"MSGARRAYCLOSE",	_Close		},
+	{	"MSGOPEN",		_Open		},
+	{	"MSGREAD",		_Read		},
+	{	"MSGWRITE",		_Write		},
+	{	"MSGCLOSE",		_Close		},
+	{	"MSGUNESCAPE",	_UnEscape	},
 
 	{	NULL,			NULL }
 };
