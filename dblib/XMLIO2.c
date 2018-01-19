@@ -47,6 +47,7 @@
 #include	"monsys.h"
 #include	"bytea.h"
 #include	"dbops.h"
+#include	"msglib.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -60,392 +61,11 @@ typedef enum xml_open_mode {
 	MODE_NONE,
 } XMLMode;
 
-typedef struct {
-	XMLMode mode;
-	MonObjectType obj;
-	int	pos;
-	int num;
-} XMLCtx;
-
-static GHashTable *XMLCtxTable = NULL;
+static MonObjectType ObjectID = 0;
 static XMLMode PrevMode = MODE_WRITE_XML;
 
-static void
-FreeXMLCtx(XMLCtx *ctx)
-{
-	if (ctx == NULL) {
-		return;
-	}
-	g_free(ctx);
-}
-
-static XMLCtx*
-NewXMLCtx()
-{
-	XMLCtx *ctx;
-	int i;
-
-	if (XMLCtxTable == NULL) {
-		Error("CtxTable = NULL...something wrong");
-	}
-	ctx = g_new0(XMLCtx,1);
-	for(i=0;g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(i))!=NULL;i++);
-	g_hash_table_insert(XMLCtxTable,GINT_TO_POINTER(i),ctx);
-	ctx->num = i;
-	return ctx;
-}
-
-static gchar*
-XMLGetString(
-	xmlNodePtr node,
-	char *value)
-{
-	gchar	*buf;
-	buf = xmlNodeGetContent(node);
-	if (buf == NULL) {
-		buf = g_strdup(value);
-	}
-	return buf;
-}
-
-static int
-XMLNode2Value(
-	ValueStruct	*val,
-	xmlNodePtr	root)
-{
-	int			i;
-	xmlNodePtr	node;
-    char 		*type;
-	char		*buf;
-
-ENTER_FUNC;
-	if (val == NULL || root == NULL) {
-		Warning("XMLNode2Value val = NULL || root = NULL");
-		return MCP_BAD_OTHER;
-	}
-	type = xmlGetProp(root,"type");
-	if (type == NULL) {
-		Warning("XMLNode2Value root type is NULL");
-		return MCP_BAD_OTHER;
-	}
-	switch	(ValueType(val)) {
-	  case	GL_TYPE_INT:
-		if (xmlStrcmp(type, "int") != 0) {
-			break;
-		}
-		buf = XMLGetString(root, "0");
-		SetValueStringWithLength(val, buf, strlen(buf), NULL);
-		g_free(buf);
-		break;
-	  case	GL_TYPE_FLOAT:
-		if (xmlStrcmp(type, "float") != 0) {
-			break;
-		}
-		buf = XMLGetString(root, "0");
-		SetValueStringWithLength(val, buf, strlen(buf), NULL);
-		g_free(buf);
-		break;
-	  case	GL_TYPE_NUMBER:
-		if (xmlStrcmp(type, "number") != 0) {
-			break;
-		}
-		buf = XMLGetString(root, "0.0");
-		SetValueStringWithLength(val, buf, strlen(buf), NULL);
-		g_free(buf);
-		break;
-	  case	GL_TYPE_BOOL:
-		if (xmlStrcmp(type, "bool") != 0) {
-			break;
-		}
-		buf = XMLGetString(root, "FALSE");
-		SetValueStringWithLength(val, buf, strlen(buf), NULL);
-		g_free(buf);
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_SYMBOL:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		if (xmlStrcmp(type, "string") != 0) {
-			break;
-		}
-		buf = XMLGetString(root, "");
-		SetValueStringWithLength(val, buf, strlen(buf), NULL);
-		g_free(buf);
-		break;
-	  case	GL_TYPE_ARRAY:
-		if (xmlStrcmp(type, "array") != 0) {
-			break;
-		}
-		i = 0;
-		for(node=root->children;node!=NULL;node=node->next) {
-			if (node->type != XML_ELEMENT_NODE) {
-				continue;
-			}
-			if (i < ValueArraySize(val)) {
-				XMLNode2Value(ValueArrayItem(val,i), node);
-			} else {
-				break;
-			}
-			i++;
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		if (xmlStrcmp(type, "record") != 0) {
-			break;
-		}
-		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
-			for( node = root->children; node != NULL; node = node->next) {
-				if (!xmlStrcmp(node->name, ValueRecordName(val, i))) {
-					XMLNode2Value(ValueRecordItem(val,i), node);
-					break;
-				}
-			}
-		}
-		break;
-	  case	GL_TYPE_OBJECT:
-		break;
-	  default:
-		Warning("XMLNode2Value");
-		return MCP_BAD_ARG;
-		break;
-	}
-	if (type != NULL) {
-		xmlFree(type);
-	}
-LEAVE_FUNC;
-	return MCP_OK;
-}
-
-static gboolean
-IsEmptyValue(ValueStruct *val)
-{
-	gboolean ret;
-	int i;
-
-	ret = FALSE;
-	switch	(ValueType(val)) {
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_SYMBOL:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		if (strlen(ValueToString(val,NULL))==0) {
-			ret = TRUE;
-		}
-		break;
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
-			ret = IsEmptyValue(ValueArrayItem(val,i));
-			if (ret == FALSE) {
-				break;
-			}
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
-			ret = IsEmptyValue(ValueRecordItem(val,i));
-			if (ret == FALSE) {
-				break;
-			}
-		}
-		break;
-	}
-	return ret;
-}
-
-static	xmlNodePtr
-Value2XMLNode(
-	char		*name,
-	ValueStruct	*val)
-{
-	xmlNodePtr	node;
-	xmlNodePtr	child;
-	char		*type;
-	char		*childname;
-	int			i;
-	gboolean	have_data;
-
-ENTER_FUNC;
-	if (val == NULL || name == NULL) {
-		Warning("val or name = null,val:%p name:%p",val,name);
-		return NULL;
-	}
-	node = NULL;
-	type = NULL;
-
-	switch	(ValueType(val)) {
-	  case	GL_TYPE_INT:
-		type = "int";
-		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL));
-		break;
-	  case	GL_TYPE_FLOAT:
-		type = "float";
-		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL));
-		break;
-	  case	GL_TYPE_NUMBER:
-		type = "number";
-		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL));
-		break;
-	  case	GL_TYPE_BOOL:
-		type = ("bool");
-		node =xmlNewNode(NULL, name);
-		xmlNodeAddContent(node, ValueToString(val,NULL));
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_SYMBOL:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		type = ("string");
-		if (!IsEmptyValue(val)) {
-			node =xmlNewNode(NULL, name);
-			xmlNodeAddContent(node, ValueToString(val,NULL));
-		}
-		break;
-	  case	GL_TYPE_ARRAY:
-		have_data = FALSE;
-		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
-			if (!IsEmptyValue(ValueArrayItem(val,i))) {
-				have_data = TRUE;
-			}
-		}
-		if (have_data) {
-			type = ("array");
-			node =xmlNewNode(NULL, name);
-        	childname = g_strdup_printf("%s_child",name);
-			for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
-				if (!IsEmptyValue(ValueArrayItem(val,i))) {
-					child = Value2XMLNode(childname, ValueArrayItem(val,i));
-					if (child != NULL) {
-						xmlAddChildList(node, child);
-					}
-				}
-			}
-        	g_free(childname);
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		have_data = FALSE;
-		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
-			if (!IsEmptyValue(ValueRecordItem(val,i))) {
-				have_data = TRUE;
-			}
-		}
-		if (have_data) {
-			type = ("record");
-			node =xmlNewNode(NULL, name);
-			for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
-				if (!IsEmptyValue(ValueRecordItem(val,i))) {
-					child = Value2XMLNode(ValueRecordName(val, i),
-								ValueRecordItem(val,i));
-					if (child != NULL) {
-						xmlAddChildList(node, child);
-					}
-				}
-			}
-		}
-		break;
-	}
-	if (node != NULL && type != NULL) {
-		xmlNewProp(node, "type", type);
-	}
-	return node;
-}
-
-static	ValueStruct	*
-_OpenXML(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct		*obj,*mode,*context,*ret;
-	XMLCtx			*ctx;
-
-ENTER_FUNC;
-	ctrl->rc = MCP_BAD_ARG;
-	ret = NULL;
-
-	if (rec->type  !=  RECORD_DB) {
-		return NULL;
-	}
-	if ((obj = GetItemLongName(args,"object")) == NULL) {
-		Warning("no [object] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((mode = GetItemLongName(args,"mode")) == NULL) {
-		Warning("no [mode] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((context = GetItemLongName(args,"context")) == NULL) {
-		Warning("no [context] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-
-	ctx = NewXMLCtx();
-	ValueInteger(context) = ctx->num;
-	ret = DuplicateValue(args,TRUE);
-	ctx->mode = ValueInteger(mode);
-	switch(ctx->mode) {
-	case MODE_WRITE:
-	case MODE_WRITE_XML:
-	case MODE_WRITE_JSON:
-		break;
-	case MODE_READ:
-        ctx->obj = ValueObjectId(obj);
-		break;
-	default:
-		Warning("not reach here");
-		break;
-	}
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	ret;
-}
-
-static	ValueStruct	*
-_CloseXML(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-ENTER_FUNC;
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	NULL;
-}
-
-static	XMLMode
-CheckFormat(
-	char	*buff,
-	size_t	size)
-{
-	int i;
-	char *p;
-
-	p = buff;
-	for(i=0;i<size;i++) {
-		if (*p == '<') {
-			return MODE_WRITE_XML;
-		}
-		if (*p == '{') {
-			return MODE_WRITE_JSON;
-		}
-		p++;
-	}
-	return MODE_NONE;
-}
-
 static	int
-_ReadXML_XML(
+_ReadXML(
 	ValueStruct *ret,
 	unsigned char *buff,
 	size_t size)
@@ -478,7 +98,7 @@ _ReadXML_XML(
 }
 
 static	int
-_ReadXML_JSON(
+_ReadJSON(
 	ValueStruct *ret,
 	unsigned char *buff,
 	size_t size)
@@ -514,18 +134,17 @@ _ReadXML_JSON(
 }
 
 static	ValueStruct	*
-_ReadXML(
+_Read(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*ret,*context;
-	XMLCtx		*ctx;
+	ValueStruct	*ret,*val;
 	char		*buff;
 	size_t		size;
+	int			mode;
 	DBG_Struct	*mondbg;
-
 ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = MCP_BAD_OTHER;
@@ -533,27 +152,29 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
-		Warning("no [context] record");
+	if ((val = GetItemLongName(args,"mode"))  ==  NULL) {
+		Warning("no [mode] record");
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ValueInteger(context)));
-	if (ctx == NULL || ctx->mode != MODE_READ) {
+	mode = ValueInteger(val);
+	if (mode != MODE_READ) {
+		Warning("invalid mode:%d",mode);
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
 	mondbg = GetDBG_monsys();
-	if (blob_export_mem(mondbg,ctx->obj,&buff,&size)) {
+	if (blob_export_mem(mondbg,ObjectID,&buff,&size)) {
 		ret = DuplicateValue(args,TRUE);
 		if (size > 0) {
-			PrevMode = CheckFormat(buff,size);
-			switch(PrevMode) {
-			case MODE_WRITE_XML:
-				ctrl->rc = _ReadXML_XML(ret,buff,size);
+			switch(CheckFormat(buff,size)) {
+			case MSG_XML:
+				PrevMode = MODE_WRITE_XML;
+				ctrl->rc = _ReadXML(ret,buff,size);
 				break;
-			case MODE_WRITE_JSON:
-				ctrl->rc = _ReadXML_JSON(ret,buff,size);
+			case MSG_JSON:
+				PrevMode = MODE_WRITE_JSON;
+				ctrl->rc = _ReadJSON(ret,buff,size);
 				break;
 			default:
 				Warning("not reach");
@@ -574,9 +195,8 @@ LEAVE_FUNC;
 }
 
 static	int
-_WriteXML_XML(
+_WriteXML(
 	DBG_Struct *dbg,
-	XMLCtx *ctx,
 	ValueStruct *ret)
 {
 	ValueStruct *rname,*val,*obj;
@@ -615,9 +235,8 @@ _WriteXML_XML(
 }
 
 static	int
-_WriteXML_JSON(
+_WriteJSON(
 	DBG_Struct *dbg,
-	XMLCtx *ctx,
 	ValueStruct *ret)
 {
 	ValueStruct *val,*obj;
@@ -658,35 +277,36 @@ _WriteXML_JSON(
 }
 
 static	ValueStruct	*
-_WriteXML(
+_Write(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*rname,*val,*context,*obj,*ret;
-	XMLCtx		*ctx;
-	int 		ctxnum;
+	ValueStruct	*rname,*val,*ret;
+	int mode;
 ENTER_FUNC;
 	ctrl->rc = MCP_BAD_OTHER;
 	if (rec->type != RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((context = GetItemLongName(args,"context"))  ==  NULL) {
-		Warning("no [context] record");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	ctxnum = ValueInteger(context);
-	ctx = (XMLCtx*)g_hash_table_lookup(XMLCtxTable,GINT_TO_POINTER(ctxnum));
-	if (ctx == NULL || ctx->mode == MODE_READ) {
-		Warning("ctx is null or invalid READ mode");
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	if ((obj = GetItemLongName(args,"object"))  ==  NULL) {
+	if ((val = GetItemLongName(args,"object"))  ==  NULL) {
 		Warning("no [object] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	if ((val = GetItemLongName(args,"mode"))  ==  NULL) {
+		Warning("no [mode] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	mode = ValueInteger(val);
+	if (mode == MODE_WRITE) {
+		mode = PrevMode;
+	} else if (mode == MODE_WRITE_XML || mode == MODE_WRITE_JSON) {
+	} else {
+		Warning("invalid mode:%d",mode);
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
@@ -702,26 +322,58 @@ ENTER_FUNC;
 		return NULL;
 	}
 	ret = DuplicateValue(args,TRUE);
-	if (ctx->mode == MODE_WRITE) {
-		ctx->mode = PrevMode;
-	}
-	switch(ctx->mode) {
+	switch(mode) {
 	case MODE_WRITE_XML:
-		ctrl->rc = _WriteXML_XML(dbg,ctx,ret);
+		ctrl->rc = _WriteXML(dbg,ret);
 		break;
 	case MODE_WRITE_JSON:
-		ctrl->rc = _WriteXML_JSON(dbg,ctx,ret);
+		ctrl->rc = _WriteJSON(dbg,ret);
 		break;
 	default:
 		Warning("not reach");
 		break;
 	}
-	FreeXMLCtx(ctx);
-	g_hash_table_remove(XMLCtxTable,GINT_TO_POINTER(ctxnum));
 	val = GetRecordItem(ret,ValueToString(rname,NULL));
 	InitializeValue(val);
 LEAVE_FUNC;
 	return ret;
+}
+
+static	ValueStruct	*
+_Open(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct		*val;
+ENTER_FUNC;
+	ctrl->rc = MCP_BAD_ARG;
+	if (rec->type  !=  RECORD_DB) {
+		return NULL;
+	}
+	if ((val = GetItemLongName(args,"object")) == NULL) {
+		Warning("no [object] record");
+		ctrl->rc = MCP_BAD_ARG;
+		return NULL;
+	}
+	ObjectID = ValueObjectId(val);
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	NULL;
+}
+
+static	ValueStruct	*
+_Close(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+ENTER_FUNC;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	NULL;
 }
 
 extern	ValueStruct	*
@@ -730,20 +382,9 @@ XML_BEGIN(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-    if (XMLCtxTable == NULL){
-		XMLCtxTable = g_hash_table_new(g_direct_hash,g_direct_equal);
-	}
+	ObjectID = 0;
 LEAVE_FUNC;
 	return	(NULL);
-}
-
-static gboolean
-EachRemoveCtx(gpointer key,
-	gpointer value,
-	gpointer data)
-{
-	FreeXMLCtx((XMLCtx*)value);
-	return TRUE;
 }
 
 extern	ValueStruct	*
@@ -752,7 +393,7 @@ XML_END(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	g_hash_table_foreach_remove(XMLCtxTable,EachRemoveCtx,NULL);
+	ObjectID = 0;
 LEAVE_FUNC;
 	return	(NULL);
 }
@@ -764,10 +405,10 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)XML_BEGIN },
 	{	"DBCOMMIT",		(DB_FUNC)XML_END },
 	/*	table operations	*/
-	{	"XMLOPEN",		_OpenXML		},
-	{	"XMLREAD",		_ReadXML		},
-	{	"XMLWRITE",		_WriteXML		},
-	{	"XMLCLOSE",		_CloseXML		},
+	{	"XMLOPEN",		_Open		},
+	{	"XMLREAD",		_Read		},
+	{	"XMLWRITE",		_Write		},
+	{	"XMLCLOSE",		_Close		},
 
 	{	NULL,			NULL }
 };
