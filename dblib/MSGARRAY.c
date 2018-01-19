@@ -329,17 +329,12 @@ _OpenJSON(
 	char *buf,
 	size_t size)
 {
-	char *tmp;
+	char *buf2;
 
-	tmp = realloc(buf,size+1);
-	if (tmp == NULL) {
-		Warning("realloc(3) failure");
-		return MCP_BAD_OTHER;
-	} else {
-		buf = tmp;
-		memset(tmp+size,0,1);
-	}
-	CTX.obj = json_tokener_parse(buf);
+	buf2 = g_malloc0(size+1);
+	memcpy(buf2,buf,size);
+	CTX.obj = json_tokener_parse(buf2);
+	g_free(buf2);
 	if (CTX.obj == NULL || is_error(CTX.obj)) {
 		Warning("json_tokener_parse failure");
 		return MCP_BAD_ARG;
@@ -416,7 +411,7 @@ _Open(
 					break;
 				}
 			}
-			xfree(buf);
+			free(buf);
 		} else {
 			Warning("RequestReadBLOB failure");
 			ctrl->rc = MCP_BAD_OTHER;
@@ -597,12 +592,11 @@ __UnEscapeJSON(
 			type = json_object_get_type(parent);
 			switch (type) {
 			case json_type_object: 
+				json_object_object_del(parent,key);
 				json_object_object_add(parent,key,newobj);
-				json_object_put(obj);
 				break;
 			case json_type_array:
 				json_object_array_put_idx(parent,idx,newobj);
-				json_object_put(obj);
 				break;
 			default:
 				Warning("does not reach here");
