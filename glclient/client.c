@@ -212,15 +212,6 @@ InitSystem()
 		}
 	}
 
-	if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
-		PingTimerPeriod = atoi(p) * 1000;
-		if (PingTimerPeriod < 1000) {
-			PingTimerPeriod = DEFAULT_PING_TIMER_PERIOD;
-		}
-	} else {
-		PingTimerPeriod = DEFAULT_PING_TIMER_PERIOD;
-	}
-
 	p = getenv ("GL_SEND_EVENT_DELAY");
 	if (p) {
 		delay = atoi(p);

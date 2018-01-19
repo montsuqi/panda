@@ -11,6 +11,7 @@
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
+#include	<locale.h>
 #include	<signal.h>
 #include	<time.h>
 #include	<errno.h>
@@ -28,6 +29,7 @@
 #include	"debug.h"
 
 static	char			*Directory;
+static	char			*DBConfig;
 static	char			*ImportFile;
 static	Bool			List;
 static	Bool			Blob;
@@ -59,6 +61,8 @@ static	ARG_TABLE	option[] = {
 		"output file name"								},
 	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
 		"lifetime type"									},
+	{	"dbconfig",	STRING,		TRUE,	(void*)&DBConfig,
+		"database connection config file" 				},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -72,10 +76,49 @@ SetDefault(void)
 	InfoID		= NULL;
 	CheckID		= NULL;
 	OutputFile	= NULL;
+	DBConfig	= NULL;
 	LifeType	= 1;
 	List		= FALSE;
 	Blob		= FALSE;
 	fTimer		= TRUE;
+}
+
+static void
+SetDBConfig()
+{
+	char *buf,*tmp,**elem;
+	size_t size;
+	int i;
+
+	if (DBConfig == NULL) {
+		return;
+	}
+	if (!g_file_get_contents(DBConfig,&buf,&size,NULL)) {
+		Error("can not read %s",DBConfig);
+	}
+
+	tmp = realloc(buf,size+1);
+	if (tmp == NULL) {
+		Error("realloc(3) failure");
+	} else {
+		buf = tmp;
+		memset(tmp+size,0,1);
+	}
+
+	elem = g_strsplit_set(buf,":\n",-1);
+	g_free(buf);
+	for(i=0;elem[i]!=NULL;i++) {
+	}
+	if (i>=5) {
+		DB_Host = g_strdup(elem[0]);
+		DB_Port = g_strdup(elem[1]);
+		DB_Name = g_strdup(elem[2]);
+		DB_User = g_strdup(elem[3]);
+		DB_Pass = g_strdup(elem[4]);
+	} else {
+		Warning("invalid DBConfig format. <Host>:<Port>:<Database>:<User>:<Password>");
+	}
+	g_strfreev(elem);
 }
 
 static	void
@@ -91,6 +134,7 @@ InitSystem(void)
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
+	SetDBConfig();
 }
 
 static char *
@@ -216,6 +260,7 @@ main(
 	Bool rc;
 	MonObjectType oid;
 
+	setlocale(LC_CTYPE,"ja_JP.UTF-8");
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
 	InitSystem();
