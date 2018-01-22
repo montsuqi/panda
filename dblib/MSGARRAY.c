@@ -572,6 +572,7 @@ __UnEscapeJSON(
 	json_object *newobj;
 	json_object_iter iter;
 	json_type type;
+	char *newkey;
 	int i,l;
 
 	if (obj == NULL) {
@@ -592,8 +593,13 @@ __UnEscapeJSON(
 			type = json_object_get_type(parent);
 			switch (type) {
 			case json_type_object: 
+fprintf(stderr,"key1[%s]\n",key);
+				newkey = g_strdup(key);
 				json_object_object_del(parent,key);
-				json_object_object_add(parent,key,newobj);
+fprintf(stderr,"key2[%s]\n",key);
+				json_object_object_add(parent,newkey,newobj);
+fprintf(stderr,"key3[%s]\n",newkey);
+				g_free(newkey);
 				break;
 			case json_type_array:
 				json_object_array_put_idx(parent,idx,newobj);
