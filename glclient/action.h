@@ -26,6 +26,9 @@
 #define	DEFAULT_WINDOW_WIDTH	1000
 #define	DEFAULT_WINDOW_HEIGHT	720
 
+#define DEFAULT_PING_TIMER_PERIOD     (7   * 1000) //7sec
+#define PUSH_CLIENT_PING_TIMER_PERIOD (180 * 1000) //180sec
+
 #undef	GLOBAL
 #ifdef	ACTION_MAIN
 #define	GLOBAL		/*	*/

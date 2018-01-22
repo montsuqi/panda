@@ -41,8 +41,6 @@
 #define	GLOBAL		extern
 #endif
 
-#define DEFAULT_PING_TIMER_PERIOD   (7000) //7sec
-
 typedef struct {
 	GLProtocol 		*protocol;
 	char			*title;
@@ -99,7 +97,6 @@ GLOBAL	Bool		fKeyBuff;
 GLOBAL	Bool		fIMKanaOff;
 GLOBAL	Bool		fTimer;
 GLOBAL	int			TimerPeriod;
-GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
 GLOBAL	Bool		fStartupMessage;
 
