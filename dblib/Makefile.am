@@ -25,15 +25,16 @@ libpandadb_la_LIBADD = \
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
-	dblib.h \
-	dbutils.h \
-	dbgroup.h \
-	monsys.h \
-	bytea.h
+	dblib.h			\
+	dbutils.h		\
+	dbgroup.h		\
+	monsys.h		\
+	bytea.h			\
+	monpushevent.h
 
 noinst_PROGRAMS		=
 
-AM_CPPFLAGS 			=		\
+AM_CPPFLAGS 			=	\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
@@ -43,17 +44,18 @@ AM_CPPFLAGS 			=		\
 	-DBIN_DIR=\"$(bindir)\"
 
 libpandadb_la_CFLAGS = $(AM_CFLAGS)
-libpandadb_la_LDFLAGS	=			\
+libpandadb_la_LDFLAGS	=		\
 	-version-info $(LTVERSION)	\
 	-export-dynamic
 
-libpandadb_la_SOURCES	=	\
-	dbgroup.c	dbgroup.h	\
-	dbutils.c	dbutils.h	\
-	redirect.c	redirect.h	\
-	monsys.c	monsys.h	\
-	dbops.c		dbops.h	\
-	bytea.c		bytea.h
+libpandadb_la_SOURCES	=			\
+	dbgroup.c		dbgroup.h		\
+	dbutils.c		dbutils.h		\
+	redirect.c		redirect.h		\
+	monsys.c		monsys.h		\
+	dbops.c			dbops.h			\
+	bytea.c			bytea.h			\
+	monpushevent.c	monpushevent.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\

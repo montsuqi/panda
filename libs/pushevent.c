@@ -34,14 +34,17 @@
 #include	<glib.h>
 #include	<time.h>
 #include	<sys/time.h>
+#include	<libmondai.h>
 
 #include	<amqp_tcp_socket.h>
 #include	<amqp.h>
 #include	<amqp_framing.h>
 
+#include	"dbgroup.h"
+#include	"dbutils.h"
+#include	"monsys.h"
 #include	"const.h"
 #include	"enum.h"
-#include	"libmondai.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"pushevent.h"
@@ -247,6 +250,8 @@ PushEvent_via_json(
 	json_object_object_add(obj,"time",json_object_new_string(str_now));
 
 	ret = AMQPSend(event,(const char*)json_object_to_json_string(obj));
+
+
 	json_object_put(obj);
 	return ret;
 }
