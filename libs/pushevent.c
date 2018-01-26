@@ -204,7 +204,8 @@ AMQPSend(
 
 gboolean
 PushEvent_via_ValueStruct(
-	ValueStruct		*val)
+	DBG_Struct *dbg,
+	ValueStruct *val)
 {
 	ValueStruct *v,*body;
 	json_object *obj;
@@ -220,27 +221,35 @@ PushEvent_via_ValueStruct(
 		return FALSE;
 	}
 	obj = MakeBodyJSON(body);
-	return PushEvent_via_json(event,obj);
+	return PushEvent_via_json(dbg,event,obj);
 }
 
 gboolean
 PushEvent_via_json(
+	DBG_Struct *dbg,
 	const char *event,
 	json_object *body)
 {
+	DBG_Struct	*dbg;
 	json_object *obj;
 	gboolean    ret;
 	time_t now;
 	struct tm tm_now;
 	char str_now[128],*user;
+	const char *data;
+	int id;
 
+	dbg = GetDBG_monsys();
+	TransactionStart(dbg);
 	user = getenv("MCP_USER");
 	if (user == NULL) {
 		Warning("MCP_USER set __nobody");
 		user = "__nobody";
 	}
+	id = new_monpushevent_id(dbg);
 
 	obj = json_object_new_object();
+	json_object_object_add(obj,"monpushevent_id",json_object_new_int(id));
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	json_object_object_add(obj,"user",json_object_new_string(user));
 	json_object_object_add(obj,"body",body);
@@ -248,10 +257,15 @@ PushEvent_via_json(
 	localtime_r(&now, &tm_now);
 	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
 	json_object_object_add(obj,"time",json_object_new_string(str_now));
+	data = (const char*)json_object_to_json_string(obj);
 
-	ret = AMQPSend(event,(const char*)json_object_to_json_string(obj));
-
+	ret = AMQPSend(event,data);
+	if (ret) {
+		monpushevent_insert(dbg,id,event,user,str_now,data);
+	}
 
 	json_object_put(obj);
+	TransactionEnd(dbg);
+	
 	return ret;
 }

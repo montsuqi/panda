@@ -23,7 +23,10 @@
 #include	"dblib.h"
 #define 	MONPUSHEVENT		"monpushevent"
 #define 	MONPUSHEVENT_EXPIRE "7"
+#define 	SEQMONPUSHEVENT 	"seqmonpushevent"
 
+
+extern int new_monpushevent_id(DBG_Struct *dbg);
 extern Bool	monpushevent_setup(DBG_Struct *dbg);
 extern Bool	monpushevent_insert(DBG_Struct *dbg, const char *event, const char *user, const char *pushed_at,const char *data);
 #endif

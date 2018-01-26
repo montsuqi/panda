@@ -65,6 +65,8 @@ extern	void	AuditLog(ValueStruct *mcp);
 extern	Bool	IsDBOperation(char *func);
 extern	Bool	IsDBUpdateFunc(char *func);
 
+extern	void	SetDBConfig(const char *config);
+
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/

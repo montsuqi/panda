@@ -54,13 +54,14 @@ _PushEvent(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-ENTER_FUNC;
+	DBG_Struct *mondbg;
+
+	mondbg = GetDBG_monsys();
 	if (ctrl == NULL) {
 		return NULL;
 	}
-	PushEvent_via_ValueStruct(args);
+	PushEvent_via_ValueStruct(mondbg,args);
 	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
 	return	NULL;
 }
 

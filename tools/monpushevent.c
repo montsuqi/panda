@@ -42,16 +42,35 @@
 #include	<RecParser.h>
 
 #include	"enum.h"
-#include	"net.h"
-#include	"comm.h"
-#include	"comms.h"
 #include	"const.h"
 #include	"wfcdata.h"
+#include	"directory.h"
 #include	"dbgroup.h"
-#include	"sysdatacom.h"
+#include	"dbutils.h"
+#include	"monsys.h"
 #include	"pushevent.h"
+#include	"option.h"
+#include	"gettext.h"
 #include	"message.h"
 #include	"debug.h"
+
+static char *Directory;
+static char *DBConfig;
+
+static	ARG_TABLE	option[] = {
+	{	"dir",		STRING,		TRUE,	(void*)&Directory,
+		N_("directory file name")						},
+	{	"dbconfig",	STRING,		TRUE,	(void*)&DBConfig,
+		"database connection config file" 				},
+	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+};
+
+static	void
+SetDefault(void)
+{
+	Directory	= "/usr/lib/jma-receipt/lddef/directory";
+	DBConfig	= NULL;
+}
 
 static	void
 MonPushEvent(
@@ -90,18 +109,48 @@ MonPushEvent(
 	}
 }
 
+static	void
+InitSystem(void)
+{
+	char *dir;
+	InitMessage("monpusheventp",NULL);
+	if ( (dir = getenv("MON_DIRECTORY_PATH")) != NULL ) {
+		Directory = dir;
+	}
+	InitDirectory();
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
+	}
+	SetDBConfig(DBConfig);
+}
+
 extern	int
 main(
 	int		argc,
 	char	*argv[])
 {
+	DBG_Struct *dbg;
+
 	setlocale(LC_CTYPE,"ja_JP.UTF-8");
+	SetDefault();
+	GetOption(option,argc,argv,NULL);
+	InitSystem();
+
 	if (argc < 3) {
 		g_print("%% monpushevent <recfile> <COBOL data file>\n");
 		exit(1);
 	}
-	InitMessage("monpushevent",NULL);
-	MonPushEvent(argv[1],argv[2]);
+
+	dbg = GetDBG_monsys();
+	dbg->dbt = NewNameHash();
+
+	monpushevent_setup(dbg);
+
+	TransactionStart(dbg);
+	MonPushEvent(dbg,argv[1],argv[2]);
+	TransactionEnd(dbg);
+	CloseDB(dbg);
 
 	return 0;
 }

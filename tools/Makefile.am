@@ -53,7 +53,7 @@ dbgen_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-pandadb_LDFLAGS	=			\
+pandadb_LDFLAGS	=				\
 	-export-dynamic
 pandadb_LDADD 		=					\
 	-lm									\
@@ -74,18 +74,19 @@ checkdir_LDADD 		=					\
 
 monupload_LDFLAGS	=			\
 	-export-dynamic
-monupload_LDADD 		=					\
+monupload_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-monpushevent_LDFLAGS	=			\
+monpushevent_LDFLAGS	=		\
 	-export-dynamic
-monpushevent_LDADD 		=					\
+monpushevent_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -108,7 +109,7 @@ monsql_LDADD 		=					\
 
 monsetup_SOURCES = \
 	monsetup.c
-monsetup_DEPENDENCIES	=					\
+monsetup_DEPENDENCIES	=				\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la
@@ -124,13 +125,13 @@ monsetup_LDADD 		=					\
 
 monbatch_ps_SOURCES = \
 	monbatch_ps.c
-monbatch_ps_DEPENDENCIES	=					\
+monbatch_ps_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la
 monbatch_ps_LDFLAGS	=			\
 	-export-dynamic
-monbatch_ps_LDADD 		=					\
+monbatch_ps_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la	\
@@ -138,7 +139,7 @@ monbatch_ps_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-monitor_LDFLAGS	=			\
+monitor_LDFLAGS	=						\
 	-export-dynamic
 monitor_LDADD 		=					\
 	-lm									\
@@ -147,23 +148,23 @@ monitor_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-msgd_LDADD 		=					\
+msgd_LDADD 		=						\
 	-lm									\
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-AM_CPPFLAGS 			= 		\
-	-I$(top_srcdir)			\
-	-I$(top_srcdir)/include	\
-	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/dblib	\
-	$(P11_CFLAGS)			\
-	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)		\
-	$(POSTGRES_CFLAGS)		\
-	-DBIN_DIR=\"$(bindir)\"			\
+AM_CPPFLAGS 			= 				\
+	-I$(top_srcdir)						\
+	-I$(top_srcdir)/include				\
+	-I$(top_srcdir)/libs				\
+	-I$(top_srcdir)/dblib				\
+	$(P11_CFLAGS)						\
+	$(SSL_CFLAGS)						\
+	$(COMMON_CFLAGS)					\
+	$(POSTGRES_CFLAGS)					\
+	-DBIN_DIR=\"$(bindir)\"				\
 	-DSERVER_DIR=\"$(sbindir)\"
 
 monitor_DEPENDENCIES	=				\
@@ -198,8 +199,8 @@ dbsyncbin = dbsync
 dbsync_SOURCES	= \
 	dbsync.c
 
-dbsync_LDADD			=		\
-	-lm		\
+dbsync_LDADD			=						\
+	-lm											\
 	$(top_builddir)/dblib/libpandadb.la			\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la			\
@@ -210,8 +211,8 @@ dbsync_LDADD			=		\
 
 dbsync_LDFLAGS	=	-export-dynamic
 
-dbsync_DEPENDENCIES	=					\
-	$(top_builddir)/defaults.h			\
+dbsync_DEPENDENCIES	=							\
+	$(top_builddir)/defaults.h					\
 	$(top_builddir)/libs/libpanda.la			\
 	$(top_builddir)/dblib/libpostgresqlutils.a	
 

@@ -49,6 +49,7 @@
 #define	DefaultOutput "JSON"
 
 static	char	*Directory;
+static	char	*DBConfig;
 static	char	*DBG_Name;
 static	char	*Command;
 static	char	*SQLFile;
@@ -68,6 +69,8 @@ static	ARG_TABLE	option[] = {
 		N_("execute commands from file")				},
 	{	"o",		STRING,		TRUE,	(void*)&Output,
 		N_("out put type [JSON] [XML] [CSV]...")		},
+	{	"dbconfig",	STRING,		TRUE,	(void*)&DBConfig,
+		"database connection config file" 				},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -75,6 +78,7 @@ static	void
 SetDefault(void)
 {
 	Directory = "./directory";
+	DBConfig = NULL;
 	Redirect = FALSE;
 }
 
@@ -91,6 +95,7 @@ InitSystem(void)
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
+	SetDBConfig(DBConfig);
 }
 
 static char *
