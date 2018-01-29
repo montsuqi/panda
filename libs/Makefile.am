@@ -54,8 +54,7 @@ libpanda_la_SOURCES	=				\
 	socket.c		socket.h		\
 	sysdatacom.h					\
 	sysdbreq.c		sysdbreq.h		\
-	term.c			term.h			\
-	pushevent.c		pushevent.h
+	term.c			term.h
 
 libpanda_la_LIBADD		=	\
 	-lm									\
@@ -94,8 +93,7 @@ libpandainclude_HEADERS =	\
 	socket.h			\
 	sysdatacom.h		\
 	sysdbreq.h			\
-	term.h				\
-	pushevent.h
+	term.h
 
 AM_CPPFLAGS 			= 	\
 	-I$(top_srcdir)					\

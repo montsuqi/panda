@@ -48,7 +48,7 @@
 #include	"dbgroup.h"
 #include	"dbutils.h"
 #include	"monsys.h"
-#include	"pushevent.h"
+#include	"monpushevent.h"
 #include	"option.h"
 #include	"gettext.h"
 #include	"message.h"
@@ -74,6 +74,7 @@ SetDefault(void)
 
 static	void
 MonPushEvent(
+	DBG_Struct *dbg,
 	const char *recfile,
 	const char *datafile)
 {
@@ -104,7 +105,7 @@ MonPushEvent(
     OpenCOBOL_UnPackValue(conv,(unsigned char*)buf,val);
 	g_free(buf);
 
-	if (!PushEvent_via_ValueStruct(val)) {
+	if (!push_event_via_value(dbg,val)) {
 		exit(1);
 	}
 }

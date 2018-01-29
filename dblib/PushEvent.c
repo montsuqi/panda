@@ -43,7 +43,8 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"dbops.h"
-#include	"pushevent.h"
+#include	"monsys.h"
+#include	"monpushevent.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -60,7 +61,7 @@ _PushEvent(
 	if (ctrl == NULL) {
 		return NULL;
 	}
-	PushEvent_via_ValueStruct(mondbg,args);
+	push_event_via_value(mondbg,args);
 	ctrl->rc = MCP_OK;
 	return	NULL;
 }

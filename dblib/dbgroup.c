@@ -1014,7 +1014,7 @@ SetDBConfig(
 		return;
 	}
 	if (!g_file_get_contents(file,&_buf,&size,NULL)) {
-		Error("can not read %s",DBConfig);
+		Error("can not read %s",file);
 	}
 
 	buf = g_malloc0(size+1);
