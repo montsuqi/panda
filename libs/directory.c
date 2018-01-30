@@ -56,6 +56,7 @@ typedef struct {
 REQUIRED_DBG RDBG[] = {
 	{"system", "System"},
 	{"monblob", "MONBLOB"},
+	{"msgarray", "MSGARRAY"},
 	{NULL,NULL}
 };
 

@@ -25,11 +25,12 @@ libpandadb_la_LIBADD = \
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
-	dblib.h \
-	dbutils.h \
-	dbgroup.h \
-	monsys.h \
-	bytea.h
+	dblib.h		\
+	dbutils.h	\
+	dbgroup.h	\
+	monsys.h	\
+	bytea.h		\
+	msglib.h
 
 noinst_PROGRAMS		=
 
@@ -52,8 +53,9 @@ libpandadb_la_SOURCES	=	\
 	dbutils.c	dbutils.h	\
 	redirect.c	redirect.h	\
 	monsys.c	monsys.h	\
-	dbops.c		dbops.h	\
-	bytea.c		bytea.h
+	dbops.c		dbops.h		\
+	bytea.c		bytea.h		\
+	msglib.c	msglib.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\
@@ -77,6 +79,7 @@ DB_OBJECTS			=		\
 	XMLIO.la				\
 	XMLIO2.la				\
 	MSGIO.la				\
+	MSGARRAY.la				\
 	PushEvent.la
 
 PostgreSQL_la_LDFLAGS	=		\
@@ -164,6 +167,16 @@ MSGIO_la_LDFLAGS	=	\
 MSGIO_la_SOURCES	=	\
 	MSGIO.c
 MSGIO_la_LIBADD			=			\
+	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la
+
+MSGARRAY_la_LDFLAGS	=	\
+	-avoid-version				\
+	-module						\
+	-export-dynamic
+MSGARRAY_la_SOURCES	=	\
+	MSGARRAY.c
+MSGARRAY_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/dblib/libpandadb.la
 
