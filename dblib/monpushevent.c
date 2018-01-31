@@ -376,7 +376,7 @@ push_event_via_json(
 	id = new_monpushevent_id(dbg);
 
 	obj = json_object_new_object();
-	json_object_object_add(obj,"monpushevent_id",json_object_new_int(id));
+	json_object_object_add(obj,"id",json_object_new_int(id));
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	json_object_object_add(obj,"user",json_object_new_string(user));
 	json_object_object_add(obj,"body",body);
