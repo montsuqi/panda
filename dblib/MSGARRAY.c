@@ -467,7 +467,7 @@ _Close(
 		break;
 	case MODE_WRITE_JSON:
     	mondbg = GetDBG_monsys();
-		buf = (char*)json_object_to_json_string(CTX.obj);
+		buf = (char*)json_object_to_json_string_ext(CTX.obj,JSON_C_TO_STRING_PLAIN);
 		ValueObjectId(oid) = blob_import_mem(mondbg,0,"MSGARRAY.json","application/json",0,buf,strlen(buf));
 		break;
 	}

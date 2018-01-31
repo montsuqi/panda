@@ -125,7 +125,7 @@ _ReadJSON(
 		val = GetRecordItem(ret,iter.key);
 		if (val != NULL) {
 			SetValueString(rname,iter.key,NULL);
-			JSON_UnPackValue(NULL,(unsigned char*)json_object_to_json_string(iter.val),val);
+			JSON_UnPackValue(NULL,(unsigned char*)json_object_to_json_string_ext(iter.val,JSON_C_TO_STRING_PLAIN),val);
 		}
 		break;
 	}
@@ -262,7 +262,7 @@ _WriteJSON(
 	}
 	root = json_object_new_object();
 	json_object_object_add(root,rname,jobj);
-	buff = (char*)json_object_to_json_string(root);
+	buff = (char*)json_object_to_json_string_ext(root,JSON_C_TO_STRING_PLAIN);
 	size = strlen(buff);
 	mondbg = GetDBG_monsys();
 	ValueObjectId(obj) = blob_import_mem(mondbg,0,"XMLIO2.json","application/json",0,buff,size);
