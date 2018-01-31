@@ -38,6 +38,7 @@
 #include	<pthread.h>
 #include	<sys/file.h>
 #include	<locale.h>
+#include	<json.h>
 #include	<libmondai.h>
 #include	<RecParser.h>
 
@@ -56,12 +57,15 @@
 
 static char *Directory;
 static char *DBConfig;
+static char *JSONFile;
 
 static	ARG_TABLE	option[] = {
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		N_("directory file name")						},
 	{	"dbconfig",	STRING,		TRUE,	(void*)&DBConfig,
 		"database connection config file" 				},
+	{	"json",		STRING,		TRUE,	(void*)&JSONFile,
+		"json input file" 								},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -70,6 +74,7 @@ SetDefault(void)
 {
 	Directory	= "/usr/lib/jma-receipt/lddef/directory";
 	DBConfig	= NULL;
+	JSONFile	= NULL;
 }
 
 static	void
@@ -91,8 +96,9 @@ MonPushEvent(
 	if (!g_file_get_contents(recfile,&_buf,&size,NULL)) {
 		g_error("read rec file failure:%s\n",recfile);
 	}
-	buf = g_realloc(_buf,size+1);
-    buf[size] = 0;
+	buf = g_malloc0(size+1);
+	memcpy(buf,_buf,size);
+	g_free(_buf);
 	val = RecParseValueMem(buf,NULL);
 	if (val == NULL) {
 		g_error("Error: unable to read rec %s\n",recfile);
@@ -106,8 +112,41 @@ MonPushEvent(
 	g_free(buf);
 
 	if (!push_event_via_value(dbg,val)) {
-		exit(1);
+		g_error("push_event_via_value failure");
 	}
+}
+
+static	void
+MonPushEventJSON(
+	DBG_Struct *dbg)
+{
+	json_object *obj,*event,*body;
+	gchar *buf,*_buf;
+	gsize size;
+
+	if (!g_file_get_contents(JSONFile,&_buf,&size,NULL)) {
+		g_error("read json file failure:%s\n",JSONFile);
+	}
+	buf = g_malloc0(size+1);
+	memcpy(buf,_buf,size);
+	g_free(_buf);
+
+	obj = json_tokener_parse(buf);
+	g_free(buf);
+	if (obj == NULL || is_error(obj)) {
+		g_error("invalid json file:%s",JSONFile);
+	}
+	if (!json_object_object_get_ex(obj,"event",&event)) {
+		g_error("invalid json: need \"event\" object");
+	}
+	if (!json_object_object_get_ex(obj,"body",&body)) {
+		g_error("invalid json: need \"body\" object");
+	}
+
+	if (!push_event_via_json(dbg,(const char*)json_object_get_string(event),body)) {
+		g_error("push_event_via_json failure");
+	}
+	json_object_put(obj);
 }
 
 static	void
@@ -138,18 +177,24 @@ main(
 	GetOption(option,argc,argv,NULL);
 	InitSystem();
 
-	if (argc < 3) {
-		g_print("%% monpushevent <recfile> <COBOL data file>\n");
-		exit(1);
-	}
-
 	dbg = GetDBG_monsys();
 	dbg->dbt = NewNameHash();
 
+	if (OpenDB(dbg) != MCP_OK ) {
+		g_error("OpenDB failure");
+	}
 	monpushevent_setup(dbg);
 
 	TransactionStart(dbg);
-	MonPushEvent(dbg,argv[1],argv[2]);
+	if (JSONFile != NULL) {
+		MonPushEventJSON(dbg);
+	} else {
+		if (argc < 3) {
+			g_print("%% monpushevent <recfile> <COBOL data file>\n");
+			exit(1);
+		}
+		MonPushEvent(dbg,argv[1],argv[2]);
+	}
 	TransactionEnd(dbg);
 	CloseDB(dbg);
 

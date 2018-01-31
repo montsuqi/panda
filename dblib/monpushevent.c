@@ -76,13 +76,13 @@ create_monpushevent(
 	char *sql;	
 
 	sql = ""
-	"CREATE TABLE " MONPUSHEVENT " {"
+	"CREATE TABLE " MONPUSHEVENT " ("
 	"  id        int,"
 	"  event     varchar(128),"
 	"  user_     varchar(128),"
-	"  pushed_at timestamp with time_zone,"
+	"  pushed_at timestamp with time zone,"
 	"  data	     varchar(2048)"
-	"};";
+	");";
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	if (rc != MCP_OK) {
 		Warning("SQL Error:%s",sql);
