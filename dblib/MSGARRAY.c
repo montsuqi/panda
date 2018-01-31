@@ -517,20 +517,18 @@ json_object*
 __UnEscapeJSONString(json_object *obj)
 {
 	GRegex *reg;
-	GMatchInfo *match_info;
 	int compile_op,match_op;
 	const char *pat,*str;
-	char *res,*res2;
+	char *res;
 	json_object *newobj;
 
 	compile_op = G_REGEX_DOTALL | G_REGEX_MULTILINE;
 	match_op = 0;
-	pat = "^\\s*\"\\s*{.*}|\\[.*\\]\\s*\"\\s*$";
-	str = json_object_to_json_string(obj);
+	pat = "^\\s*({.*}|\\[.*\\])\\s*$";
+	str = json_object_get_string(obj);
 	if (!g_regex_match_simple(pat,str,compile_op,match_op)) {
 		return NULL;
 	}
-
 	reg = g_regex_new(""
 		"\\\\\"|"
 		"\\\\\\\\|"
@@ -546,17 +544,7 @@ __UnEscapeJSONString(json_object *obj)
 	if (res == NULL) {
 		return NULL;
 	}
-
-	reg = g_regex_new("\"(.*)\"",compile_op,match_op,NULL);
-	if (g_regex_match(reg,res,0,&match_info)) {
-		res2 = g_match_info_fetch(match_info,1);
-		newobj = json_tokener_parse(res2);
-		g_free(res2);
-	} else {
-		newobj = NULL;
-	}
-	g_match_info_free(match_info);
-	g_regex_unref(reg);
+	newobj = json_tokener_parse(res);
 	g_free(res);
 
 	return newobj;
@@ -593,12 +581,9 @@ __UnEscapeJSON(
 			type = json_object_get_type(parent);
 			switch (type) {
 			case json_type_object: 
-fprintf(stderr,"key1[%s]\n",key);
 				newkey = g_strdup(key);
 				json_object_object_del(parent,key);
-fprintf(stderr,"key2[%s]\n",key);
 				json_object_object_add(parent,newkey,newobj);
-fprintf(stderr,"key3[%s]\n",newkey);
 				g_free(newkey);
 				break;
 			case json_type_array:
