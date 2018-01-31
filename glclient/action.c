@@ -851,6 +851,8 @@ extern  void
 UI_Init(int argc, 
 	char **argv)
 {
+	gchar *rcstr;
+
 	gtk_init(&argc, &argv);
 #if 1
 	/* set gtk-entry-select-on-focus */
@@ -864,6 +866,14 @@ UI_Init(int argc,
 #endif
 	glade_init();
 	SetErrorFunc(ErrorDialog);
+
+	rcstr = ""
+		"style \"glclient2\" {"
+		"  bg[NORMAL] = @bg_color"
+		"}"
+		"widget_class \"*.*\" style \"glclient2\"";
+	gtk_rc_parse_string(rcstr);
+	gtk_rc_reset_styles(gtk_settings_get_default());
 }
 
 extern	void
