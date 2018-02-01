@@ -130,19 +130,6 @@ StartPushClient()
 }
 
 static void
-StopPushClient()
-{
-	if (!UsePushClient) {
-		return ;
-	}
-	if (kill(PushClientPID,SIGINT) == 0) {
-		Info("%s(%d) kill",PushClientCMD,(int)PushClientPID);
-	} else {
-		Info("kill error:%s",strerror(errno));
-	}
-}
-
-static void
 ShowStartupMessage()
 {
 	char *msg;
@@ -240,7 +227,6 @@ FinalSystem(void)
 {
 	FinalProtocol(GLP(Session));
 	FinalLogger();
-	StopPushClient();
 	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
 		rm_r(GetTempDir());
 	}
