@@ -8,11 +8,13 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <time.h>
 #include <errno.h>
 #include <unistd.h>
 #include <libwebsockets.h>
 #include <uuid/uuid.h>
 #include <json.h>
+#include <sys/prctl.h>
 #include <glib.h>
 #include <libgen.h>
 #include <libmondai.h>
@@ -27,7 +29,7 @@
 static unsigned int conn_wait = CONN_WAIT_INIT;
 
 static volatile int force_exit;
-static struct lws *wsi_pr;
+static struct lws *wsi;
 
 /* option*/
 static char     *GLPushAction;
@@ -50,27 +52,28 @@ static char		*TempDir;
 
 static int
 websocket_write_back(
-	struct lws *wsi_in, 
+	struct lws *wsi, 
 	char *str, 
-	int str_size_in) 
+	int size,
+	int protocol) 
 {
 	int n;
 	int len;
 	char *out = NULL;
 
-	if (str == NULL || wsi_in == NULL) {
+	if (str == NULL || wsi == NULL) {
 		return -1;
 	}
 	
-	if (str_size_in < 1) {
+	if (size < 1) {
 		len = strlen(str);
 	} else {
-		len = str_size_in;
+		len = size;
 	}
 	
 	out = (char *)malloc(sizeof(char)*(LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING));
 	memcpy (out + LWS_SEND_BUFFER_PRE_PADDING, str, len );
-	n = lws_write(wsi_in, out + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT);
+	n = lws_write(wsi, out + LWS_SEND_BUFFER_PRE_PADDING, len, protocol);
 	free(out);
 	
 	return n;
@@ -194,7 +197,7 @@ callback_push_receive(
 			"\"event\"      : \"*\","
 			"\"session_id\" : \"%s\""
 		"}",reqid,SessionID);
-		websocket_write_back(wsi, buf, -1);
+		websocket_write_back(wsi,buf,-1,LWS_WRITE_TEXT);
 
 		if (GroupID) {
 			uuid_generate(u);
@@ -205,14 +208,14 @@ callback_push_receive(
 				"\"event\"      : \"*\","
 				"\"group_id\" : \"%s\""
 			"}",reqid,GroupID);
-			websocket_write_back(wsi, buf, -1);
+			websocket_write_back(wsi,buf,-1,LWS_WRITE_TEXT);
 		}
 
 		conn_wait = CONN_WAIT_INIT;
 		break;
 
 	case LWS_CALLBACK_CLOSED:
-		wsi_pr = NULL;
+		wsi = NULL;
 		break;
 
 	case LWS_CALLBACK_CLIENT_RECEIVE:
@@ -223,10 +226,14 @@ callback_push_receive(
 		break;
 
 	case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-		if (wsi == wsi_pr) {
+		if (wsi == wsi) {
 			Info("LWS_CALLBACK_CLIENT_CONNECTION_ERROR:%s",(char*)in);
-			wsi_pr = NULL;
+			wsi = NULL;
 		}
+		break;
+
+	case LWS_CALLBACK_CLIENT_RECEIVE_PONG:
+		Debug("WSPong");
 		break;
 
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
@@ -242,6 +249,7 @@ callback_push_receive(
 			g_free(userpass);
 			*p += sprintf(*p, "Authorization: Basic %s\x0d\x0a",b64);
 			*p += sprintf(*p, "X-GINBEE-TENANT-ID: 1\x0d\x0a");
+			*p += sprintf(*p, "Sec-WebSocket-Version: 13\x0d\x0a");
 			g_free(b64);
 		}
 		break;
@@ -284,11 +292,14 @@ ratelimit_connects(
 	return 1;
 }
 
+#define PING_PERIOD (10L)
+
 static void
 Execute()
 {
+	time_t ping_last,ping_now;
 	int ietf_version = -1;
-	unsigned int rl_pr = 0;
+	unsigned int conn_last = 0;
 	struct lws_context_creation_info info;
 	struct lws_client_connect_info i;
 	struct lws_context *context;
@@ -333,18 +344,25 @@ Execute()
 	i.ietf_version_or_minus_one = ietf_version;
 	i.client_exts = exts;
 
+	ping_last = time(NULL);
+
 	while (!force_exit) {
 
-		if (!wsi_pr && ratelimit_connects(&rl_pr, conn_wait)) {
+		if (!wsi && ratelimit_connects(&conn_last, conn_wait)) {
 			i.protocol = protocols[0].name;
-			wsi_pr = lws_client_connect_via_info(&i);
+			wsi = lws_client_connect_via_info(&i);
 			conn_wait *= 2;
 			if (conn_wait > CONN_WAIT_MAX) {
 				conn_wait = CONN_WAIT_MAX;
 			}
 		}
-
 		lws_service(context, 500);
+		usleep(100);
+		ping_now = time(NULL);
+		if ((ping_now - ping_last) >= PING_PERIOD) {
+			ping_last = ping_now;
+			websocket_write_back(wsi,"ping",-1,LWS_WRITE_PING);
+		}
 	}
 
 	Info("exit gl-push-client");
@@ -375,6 +393,8 @@ main(
 	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
 		fprintf(stderr,"sigaction(2) failure: %s",strerror(errno));
 	}
+
+	prctl(PR_SET_PDEATHSIG, SIGHUP);
 
 	ctx = g_option_context_new("");
 	g_option_context_add_main_entries(ctx, entries, NULL);
