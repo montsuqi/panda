@@ -22,10 +22,12 @@
 #include "utils.h"
 #include "logger.h"
 
-#define BUF_SIZE (10*1024)
+#define BUF_SIZE		(10*1024)
+#define CONN_WAIT_INIT	2
+#define CONN_WAIT_MAX	600
+#define PING_PERIOD		(10L)
+#define PING_TIMEOUT	(30L)
 
-#define CONN_WAIT_INIT 2
-#define CONN_WAIT_MAX  600
 static unsigned int conn_wait = CONN_WAIT_INIT;
 
 static volatile int force_exit;
@@ -49,6 +51,8 @@ static char     *CAFile;
 
 static char     *SubID;
 static char		*TempDir;
+
+static time_t	PongLast;
 
 static int
 websocket_write_back(
@@ -212,6 +216,7 @@ callback_push_receive(
 		}
 
 		conn_wait = CONN_WAIT_INIT;
+		PongLast = time(NULL);
 		break;
 
 	case LWS_CALLBACK_CLOSED:
@@ -234,6 +239,7 @@ callback_push_receive(
 
 	case LWS_CALLBACK_CLIENT_RECEIVE_PONG:
 		Debug("WSPong");
+		PongLast = time(NULL);
 		break;
 
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
@@ -292,7 +298,6 @@ ratelimit_connects(
 	return 1;
 }
 
-#define PING_PERIOD (10L)
 
 static void
 Execute()
@@ -344,7 +349,7 @@ Execute()
 	i.ietf_version_or_minus_one = ietf_version;
 	i.client_exts = exts;
 
-	ping_last = time(NULL);
+	ping_last = PongLast = time(NULL);
 
 	while (!force_exit) {
 
@@ -357,11 +362,18 @@ Execute()
 			}
 		}
 		lws_service(context, 500);
+
 		usleep(100);
 		ping_now = time(NULL);
 		if ((ping_now - ping_last) >= PING_PERIOD) {
-			ping_last = ping_now;
-			websocket_write_back(wsi,"ping",-1,LWS_WRITE_PING);
+			if (wsi != NULL) {
+				ping_last = ping_now;
+				if ((ping_now - PongLast) >= PING_TIMEOUT) {
+					Warning("websocket ping timeout");
+				} else {
+					websocket_write_back(wsi,"ping",-1,LWS_WRITE_PING);
+				}
+			}
 		}
 	}
 
