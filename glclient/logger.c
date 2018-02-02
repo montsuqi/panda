@@ -198,7 +198,7 @@ logger(
 
 	gettimeofday(&tv,NULL);
 	localtime_r((time_t *)&tv.tv_sec, &now);
-	strftime(tbuf,sizeof(tbuf),"%Y-%m-%dT%H:%M:%d%z",&now);
+	strftime(tbuf,sizeof(tbuf),"%Y-%m-%dT%H:%M:%S%z",&now);
 
 	flock(fileno(fp),LOCK_EX);
 	fprintf(fp,"%s %s %s:%d: %s\n",tbuf,lp,file,line,buf);
