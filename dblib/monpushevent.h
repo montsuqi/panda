@@ -27,7 +27,6 @@
 
 extern int new_monpushevent_id(DBG_Struct *dbg);
 extern Bool	monpushevent_setup(DBG_Struct *dbg);
-extern Bool	monpushevent_insert(DBG_Struct *dbg,int id,const char *event, const char *user, const char *pushed_at,const char *data);
 
 gboolean push_event_via_value(DBG_Struct *dbg,ValueStruct *val);
 gboolean push_event_via_json(DBG_Struct *dbg,const char *event,json_object*);

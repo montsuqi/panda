@@ -17,6 +17,7 @@
 #include	<time.h>
 #include	<libmondai.h>
 #include	<glib.h>
+#include	<uuid.h>
 
 #include	<amqp_tcp_socket.h>
 #include	<amqp.h>
@@ -77,12 +78,19 @@ create_monpushevent(
 
 	sql = ""
 	"CREATE TABLE " MONPUSHEVENT " ("
+    "  uuid      varchar(37) PRIMARY KEY,"
 	"  id        int,"
 	"  event     varchar(128),"
 	"  user_     varchar(128),"
 	"  pushed_at timestamp with time zone,"
 	"  data	     varchar(2048)"
 	");";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+	sql = "CREATE INDEX " MONPUSHEVENT "_uuid ON " MONPUSHEVENT " (uuid);";
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	if (rc != MCP_OK) {
 		Warning("SQL Error:%s",sql);
@@ -143,9 +151,10 @@ monpushevent_expire(
 	return (rc == MCP_OK);
 }
 
-extern Bool
+static Bool
 monpushevent_insert(
 	DBG_Struct *dbg,
+	const char *uuid,
 	int id,
 	const char *user,
 	const char *event,
@@ -162,7 +171,7 @@ monpushevent_insert(
 	e_pushed_at	= Escape_monsys(dbg,pushed_at);
 	e_data		= Escape_monsys(dbg,data);
 
-	sql = g_strdup_printf("INSERT INTO %s (id,event,user_,pushed_at,data) VALUES ('%d','%s','%s','%s','%s');",MONPUSHEVENT,id,e_user,e_event,e_pushed_at,e_data);
+	sql = g_strdup_printf("INSERT INTO %s (uuid,id,event,user_,pushed_at,data) VALUES ('%s','%d','%s','%s','%s','%s');",MONPUSHEVENT,uuid,id,e_user,e_event,e_pushed_at,e_data);
 	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 
 	xfree(e_user);
@@ -356,12 +365,13 @@ push_event_via_json(
 	json_object *body)
 {
 	json_object *obj;
-	gboolean    ret;
+	gboolean ret;
 	time_t now;
 	struct tm tm_now;
-	char str_now[128],*user;
+	char uuid[64],str_now[128],*user;
 	const char *data;
 	int id;
+	uuid_t u;
 
 	if (dbg == NULL) {
 		Warning("dbg null");
@@ -373,9 +383,12 @@ push_event_via_json(
 		Warning("MCP_USER set __nobody");
 		user = "__nobody";
 	}
+	uuid_generate(u);
+	uuid_unparse(u,uuid);
 	id = new_monpushevent_id(dbg);
 
 	obj = json_object_new_object();
+	json_object_object_add(obj,"uuid",json_object_new_string(uuid));
 	json_object_object_add(obj,"id",json_object_new_int(id));
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	json_object_object_add(obj,"user",json_object_new_string(user));
@@ -388,7 +401,7 @@ push_event_via_json(
 
 	ret = AMQPSend(event,data);
 	if (ret) {
-		monpushevent_insert(dbg,id,event,user,str_now,data);
+		monpushevent_insert(dbg,uuid,id,event,user,str_now,data);
 	}
 
 	json_object_put(obj);
