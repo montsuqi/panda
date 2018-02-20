@@ -171,6 +171,8 @@ message_handler(
 		SubID = strdup(json_object_get_string(child));
 	} else if (!strcmp(command,"event")) {
 		event_handler(obj);
+	} else if (!strcmp(command,"error")) {
+		wsi = NULL;
 	}
 message_handler_error:
 	json_object_put(obj);
@@ -370,6 +372,7 @@ Execute()
 				ping_last = ping_now;
 				if ((ping_now - PongLast) >= PING_TIMEOUT) {
 					Warning("websocket ping timeout");
+					wsi = NULL;
 				} else {
 					websocket_write_back(wsi,"ping",-1,LWS_WRITE_PING);
 				}
