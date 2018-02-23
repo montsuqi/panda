@@ -77,7 +77,7 @@ SetDefault(void)
 	JSONFile	= NULL;
 }
 
-static	void
+static	int
 MonPushEvent(
 	DBG_Struct *dbg,
 	const char *recfile,
@@ -111,18 +111,17 @@ MonPushEvent(
     OpenCOBOL_UnPackValue(conv,(unsigned char*)buf,val);
 	g_free(buf);
 
-	if (!push_event_via_value(dbg,val)) {
-		g_error("push_event_via_value failure");
-	}
+	return push_event_via_value(dbg,val);
 }
 
-static	void
+static	int
 MonPushEventJSON(
 	DBG_Struct *dbg)
 {
 	json_object *obj,*event,*body;
 	gchar *buf,*_buf;
 	gsize size;
+	int ret;
 
 	if (!g_file_get_contents(JSONFile,&_buf,&size,NULL)) {
 		g_error("read json file failure:%s\n",JSONFile);
@@ -143,10 +142,9 @@ MonPushEventJSON(
 		g_error("invalid json: need \"body\" object");
 	}
 
-	if (!push_event_via_json(dbg,(const char*)json_object_get_string(event),body)) {
-		g_error("push_event_via_json failure");
-	}
+	ret = push_event_via_json(dbg,(const char*)json_object_get_string(event),body);
 	json_object_put(obj);
+	return ret;
 }
 
 static	void
@@ -171,6 +169,7 @@ main(
 	char	*argv[])
 {
 	DBG_Struct *dbg;
+	int ret;
 
 	setlocale(LC_CTYPE,"ja_JP.UTF-8");
 	SetDefault();
@@ -187,16 +186,20 @@ main(
 
 	TransactionStart(dbg);
 	if (JSONFile != NULL) {
-		MonPushEventJSON(dbg);
+		ret = MonPushEventJSON(dbg);
 	} else {
 		if (argc < 3) {
 			g_print("%% monpushevent <recfile> <COBOL data file>\n");
 			exit(1);
 		}
-		MonPushEvent(dbg,argv[1],argv[2]);
+		ret = MonPushEvent(dbg,argv[1],argv[2]);
 	}
 	TransactionEnd(dbg);
 	CloseDB(dbg);
 
-	return 0;
+	if (ret) {
+		return 0;
+	} else {
+		Error("monpushevent failure");
+	}
 }
