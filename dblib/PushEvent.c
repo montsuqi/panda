@@ -61,8 +61,11 @@ _PushEvent(
 	if (ctrl == NULL) {
 		return NULL;
 	}
-	push_event_via_value(mondbg,args);
-	ctrl->rc = MCP_OK;
+	if (push_event_via_value(mondbg,args)) {
+		ctrl->rc = MCP_OK;
+	} else {
+		ctrl->rc = MCP_BAD_OTHER;
+	}
 	return	NULL;
 }
 
