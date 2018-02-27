@@ -42,6 +42,7 @@
 #include	"dbutils.h"
 #include	"monsys.h"
 #include	"bytea.h"
+#include	"monpushevent.h"
 #include	"gettext.h"
 #include	"option.h"
 #include	"enum.h"
@@ -328,6 +329,9 @@ monsysdb_setup(
 	}
 	if (rc) {
 		rc = monblob_setup(dbg, fRECREATE);
+	}
+	if (rc) {
+		rc = monpushevent_setup(dbg);
 	}
 	if (CloseDB(dbg) != MCP_OK ) {
 		return FALSE;

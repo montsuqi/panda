@@ -43,7 +43,8 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"dbops.h"
-#include	"pushevent.h"
+#include	"monsys.h"
+#include	"monpushevent.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -54,13 +55,17 @@ _PushEvent(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-ENTER_FUNC;
+	DBG_Struct *mondbg;
+
+	mondbg = GetDBG_monsys();
 	if (ctrl == NULL) {
 		return NULL;
 	}
-	PushEvent_via_ValueStruct(args);
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
+	if (push_event_via_value(mondbg,args)) {
+		ctrl->rc = MCP_OK;
+	} else {
+		ctrl->rc = MCP_BAD_OTHER;
+	}
 	return	NULL;
 }
 

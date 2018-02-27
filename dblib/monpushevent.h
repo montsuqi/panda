@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,18 +17,17 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_PUSHEVENT_H
-#define	_INC_PUSHEVENT_H
+#ifndef	_MONPUSHEVENT_H
+#define	_MONPUSHEVENT_H
 
-gboolean PushEvent_via_ValueStruct(ValueStruct *val);
-gboolean PushEvent_via_json(const char *event,json_object*);
+#include	"dblib.h"
+#define 	MONPUSHEVENT		"monpushevent"
+#define 	MONPUSHEVENT_EXPIRE "7"
+#define 	SEQMONPUSHEVENT 	"seqmonpushevent"
 
-#undef	GLOBAL
-#ifdef	_MONAPI
-#define	GLOBAL	/*	*/
-#else
-#define	GLOBAL	extern
-#endif
-/* GLOBAL define here*/
-#undef	GLOBAL
+extern int new_monpushevent_id(DBG_Struct *dbg);
+extern Bool	monpushevent_setup(DBG_Struct *dbg);
+
+gboolean push_event_via_value(DBG_Struct *dbg,ValueStruct *val);
+gboolean push_event_via_json(DBG_Struct *dbg,const char *event,json_object*);
 #endif

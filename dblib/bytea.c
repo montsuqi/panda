@@ -465,6 +465,22 @@ _monblob_import(
 	return (char*)id;
 }
 
+static	Bool
+monblob_expire(
+	DBG_Struct *dbg)
+{
+	Bool rc;
+	char *sql;
+	size_t sql_len = SIZE_SQL;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "DELETE FROM %s WHERE (lifetype = 0 AND (now() > importtime + CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > importtime + CAST('%d days' AS INTERVAL)));", MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	return (rc == MCP_OK);
+}
+
 extern	char *
 monblob_import(
 	DBG_Struct	*dbg,
@@ -905,21 +921,6 @@ blob_delete(
 	return rc;
 }
 
-extern	Bool
-monblob_expire(
-	DBG_Struct *dbg)
-{
-	Bool rc;
-	char *sql;
-	size_t sql_len = SIZE_SQL;
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "DELETE FROM %s WHERE (lifetype = 0 AND (now() > importtime + CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > importtime + CAST('%d days' AS INTERVAL)));", MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	xfree(sql);
-	return (rc == MCP_OK);
-}
 
 extern	char *
 monblob_get_filename(

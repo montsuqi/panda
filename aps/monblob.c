@@ -83,44 +83,6 @@ SetDefault(void)
 	fTimer		= TRUE;
 }
 
-static void
-SetDBConfig()
-{
-	char *buf,*tmp,**elem;
-	size_t size;
-	int i;
-
-	if (DBConfig == NULL) {
-		return;
-	}
-	if (!g_file_get_contents(DBConfig,&buf,&size,NULL)) {
-		Error("can not read %s",DBConfig);
-	}
-
-	tmp = realloc(buf,size+1);
-	if (tmp == NULL) {
-		Error("realloc(3) failure");
-	} else {
-		buf = tmp;
-		memset(tmp+size,0,1);
-	}
-
-	elem = g_strsplit_set(buf,":\n",-1);
-	g_free(buf);
-	for(i=0;elem[i]!=NULL;i++) {
-	}
-	if (i>=5) {
-		DB_Host = g_strdup(elem[0]);
-		DB_Port = g_strdup(elem[1]);
-		DB_Name = g_strdup(elem[2]);
-		DB_User = g_strdup(elem[3]);
-		DB_Pass = g_strdup(elem[4]);
-	} else {
-		Warning("invalid DBConfig format. <Host>:<Port>:<Database>:<User>:<Password>");
-	}
-	g_strfreev(elem);
-}
-
 static	void
 InitSystem(void)
 {
@@ -134,7 +96,7 @@ InitSystem(void)
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	SetDBConfig();
+	SetDBConfig(DBConfig);
 }
 
 static char *

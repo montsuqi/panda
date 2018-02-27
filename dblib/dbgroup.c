@@ -1002,3 +1002,37 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+extern	void
+SetDBConfig(
+	const char *file)
+{
+	char *buf,*_buf,**elem;
+	size_t size;
+	int i;
+
+	if (file == NULL) {
+		return;
+	}
+	if (!g_file_get_contents(file,&_buf,&size,NULL)) {
+		Error("can not read %s",file);
+	}
+
+	buf = g_malloc0(size+1);
+	memcpy(buf,_buf,size);
+	g_free(_buf);
+
+	elem = g_strsplit_set(buf,":\n",-1);
+	g_free(buf);
+	for(i=0;elem[i]!=NULL;i++) {
+	}
+	if (i>=5) {
+		DB_Host = g_strdup(elem[0]);
+		DB_Port = g_strdup(elem[1]);
+		DB_Name = g_strdup(elem[2]);
+		DB_User = g_strdup(elem[3]);
+		DB_Pass = g_strdup(elem[4]);
+	} else {
+		Warning("invalid DBConfig format. <Host>:<Port>:<Database>:<User>:<Password>");
+	}
+	g_strfreev(elem);
+}

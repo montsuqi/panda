@@ -1,50 +1,187 @@
-/*
- * PANDA -- a simple transaction monitor
- * Copyright (C) 2009 NaCl.
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
-/*
-#define	DEBUG
-#define	TRACE
-*/
-
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<errno.h>
 #include	<string.h>
 #include	<ctype.h>
-#include	<glib.h>
+#include	<libgen.h>
+#include	<unistd.h>
 #include	<time.h>
 #include	<sys/time.h>
+#include	<sys/wait.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<unistd.h>
+#include	<time.h>
+#include	<libmondai.h>
+#include	<glib.h>
+#include	<uuid.h>
 
 #include	<amqp_tcp_socket.h>
 #include	<amqp.h>
 #include	<amqp_framing.h>
 
-#include	"const.h"
+#include	"directory.h"
+#include	"dbgroup.h"
+#include	"dbutils.h"
+#include	"monsys.h"
+#include	"option.h"
 #include	"enum.h"
-#include	"libmondai.h"
+#include	"comm.h"
+#include	"monpushevent.h"
 #include	"message.h"
 #include	"debug.h"
-#include	"pushevent.h"
+
+static void
+reset_id(
+	DBG_Struct	*dbg)
+{
+	char *sql;
+	ValueStruct *ret;
+
+	sql = "SELECT setval('" SEQMONPUSHEVENT  "', 1, false);";
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	FreeValueStruct(ret);
+}
+
+extern int
+new_monpushevent_id(
+	DBG_Struct	*dbg)
+{
+	ValueStruct	*ret, *val;
+	char *sql;
+	int id;
+
+	sql = "SELECT nextval('" SEQMONPUSHEVENT  "') AS id;";
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ret) {
+		val = GetItemLongName(ret,"id");
+		id = ValueToInteger(val);
+		FreeValueStruct(ret);
+	} else {
+		id = 0;
+	}
+	if ((unsigned int)id >= USHRT_MAX) {
+		reset_id(dbg);
+	}
+	return id;
+}
+
+static Bool
+create_monpushevent(
+	DBG_Struct *dbg)
+{
+	Bool rc;
+	char *sql;	
+
+	sql = ""
+	"CREATE TABLE " MONPUSHEVENT " ("
+    "  uuid      varchar(37) PRIMARY KEY,"
+	"  id        int,"
+	"  event     varchar(128),"
+	"  user_     varchar(128),"
+	"  pushed_at timestamp with time zone,"
+	"  data	     varchar(2048)"
+	");";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+	sql = "CREATE INDEX " MONPUSHEVENT "_uuid ON " MONPUSHEVENT " (uuid);";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+	sql = "CREATE INDEX " MONPUSHEVENT "_event ON " MONPUSHEVENT " (event);";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+	sql = "CREATE INDEX " MONPUSHEVENT "_user ON " MONPUSHEVENT " (user_);";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+	sql = "CREATE INDEX " MONPUSHEVENT "_pushed_at ON " MONPUSHEVENT " (pushed_at);";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+
+	sql = "CREATE SEQUENCE " SEQMONPUSHEVENT " ;";
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc != MCP_OK) {
+		Warning("SQL Error:%s",sql);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+extern Bool
+monpushevent_setup(
+	DBG_Struct	*dbg)
+{
+	int	rc;
+
+	TransactionStart(dbg);
+	if ( table_exist(dbg, MONPUSHEVENT) != TRUE) {
+		create_monpushevent(dbg);
+	}
+	rc = TransactionEnd(dbg);
+	return (rc == MCP_OK);
+}
+
+static	Bool
+monpushevent_expire(
+	DBG_Struct *dbg)
+{
+	Bool rc;
+	char *sql;
+
+	sql = "DELETE FROM " MONPUSHEVENT " WHERE (now() > pushed_at + CAST('" MONPUSHEVENT_EXPIRE " days' AS INTERVAL));";
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	return (rc == MCP_OK);
+}
+
+static Bool
+monpushevent_insert(
+	DBG_Struct *dbg,
+	const char *uuid,
+	int id,
+	const char *user,
+	const char *event,
+	const char *pushed_at,
+	const char *data)
+{
+	char *sql,*e_user,*e_event,*e_pushed_at,*e_data;
+	int rc;
+
+	monpushevent_expire(dbg);
+
+	e_user 		= Escape_monsys(dbg,user);
+	e_event 	= Escape_monsys(dbg,event);
+	e_pushed_at	= Escape_monsys(dbg,pushed_at);
+	e_data		= Escape_monsys(dbg,data);
+
+	sql = g_strdup_printf("INSERT INTO %s (uuid,id,event,user_,pushed_at,data) VALUES ('%s','%d','%s','%s','%s','%s');",MONPUSHEVENT,uuid,id,e_user,e_event,e_pushed_at,e_data);
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+
+	xfree(e_user);
+	xfree(e_event);
+	xfree(e_pushed_at);
+	xfree(e_data);
+	g_free(sql);
+
+	return (rc == MCP_OK);
+}
 
 static	json_object*
 MakeBodyJSON(
@@ -200,8 +337,9 @@ AMQPSend(
 }
 
 gboolean
-PushEvent_via_ValueStruct(
-	ValueStruct		*val)
+push_event_via_value(
+	DBG_Struct *dbg,
+	ValueStruct *val)
 {
 	ValueStruct *v,*body;
 	json_object *obj;
@@ -217,27 +355,41 @@ PushEvent_via_ValueStruct(
 		return FALSE;
 	}
 	obj = MakeBodyJSON(body);
-	return PushEvent_via_json(event,obj);
+	return push_event_via_json(dbg,event,obj);
 }
 
 gboolean
-PushEvent_via_json(
+push_event_via_json(
+	DBG_Struct *dbg,
 	const char *event,
 	json_object *body)
 {
 	json_object *obj;
-	gboolean    ret;
+	gboolean ret;
 	time_t now;
 	struct tm tm_now;
-	char str_now[128],*user;
+	char uuid[64],str_now[128],*user;
+	const char *data;
+	int id;
+	uuid_t u;
+
+	if (dbg == NULL) {
+		Warning("dbg null");
+		return FALSE;
+	}
 
 	user = getenv("MCP_USER");
 	if (user == NULL) {
 		Warning("MCP_USER set __nobody");
 		user = "__nobody";
 	}
+	uuid_generate(u);
+	uuid_unparse(u,uuid);
+	id = new_monpushevent_id(dbg);
 
 	obj = json_object_new_object();
+	json_object_object_add(obj,"uuid",json_object_new_string(uuid));
+	json_object_object_add(obj,"id",json_object_new_int(id));
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	json_object_object_add(obj,"user",json_object_new_string(user));
 	json_object_object_add(obj,"body",body);
@@ -245,8 +397,11 @@ PushEvent_via_json(
 	localtime_r(&now, &tm_now);
 	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
 	json_object_object_add(obj,"time",json_object_new_string(str_now));
+	data = (const char*)json_object_to_json_string(obj);
 
-	ret = AMQPSend(event,(const char*)json_object_to_json_string(obj));
+	monpushevent_insert(dbg,uuid,id,event,user,str_now,data);
+	ret = AMQPSend(event,data);
 	json_object_put(obj);
+	
 	return ret;
 }

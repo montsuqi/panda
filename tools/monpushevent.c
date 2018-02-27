@@ -38,23 +38,48 @@
 #include	<pthread.h>
 #include	<sys/file.h>
 #include	<locale.h>
+#include	<json.h>
 #include	<libmondai.h>
 #include	<RecParser.h>
 
 #include	"enum.h"
-#include	"net.h"
-#include	"comm.h"
-#include	"comms.h"
 #include	"const.h"
 #include	"wfcdata.h"
+#include	"directory.h"
 #include	"dbgroup.h"
-#include	"sysdatacom.h"
-#include	"pushevent.h"
+#include	"dbutils.h"
+#include	"monsys.h"
+#include	"monpushevent.h"
+#include	"option.h"
+#include	"gettext.h"
 #include	"message.h"
 #include	"debug.h"
 
+static char *Directory;
+static char *DBConfig;
+static char *JSONFile;
+
+static	ARG_TABLE	option[] = {
+	{	"dir",		STRING,		TRUE,	(void*)&Directory,
+		N_("directory file name")						},
+	{	"dbconfig",	STRING,		TRUE,	(void*)&DBConfig,
+		"database connection config file" 				},
+	{	"json",		STRING,		TRUE,	(void*)&JSONFile,
+		"json input file" 								},
+	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+};
+
 static	void
+SetDefault(void)
+{
+	Directory	= "/usr/lib/jma-receipt/lddef/directory";
+	DBConfig	= NULL;
+	JSONFile	= NULL;
+}
+
+static	int
 MonPushEvent(
+	DBG_Struct *dbg,
 	const char *recfile,
 	const char *datafile)
 {
@@ -71,8 +96,9 @@ MonPushEvent(
 	if (!g_file_get_contents(recfile,&_buf,&size,NULL)) {
 		g_error("read rec file failure:%s\n",recfile);
 	}
-	buf = g_realloc(_buf,size+1);
-    buf[size] = 0;
+	buf = g_malloc0(size+1);
+	memcpy(buf,_buf,size);
+	g_free(_buf);
 	val = RecParseValueMem(buf,NULL);
 	if (val == NULL) {
 		g_error("Error: unable to read rec %s\n",recfile);
@@ -85,9 +111,56 @@ MonPushEvent(
     OpenCOBOL_UnPackValue(conv,(unsigned char*)buf,val);
 	g_free(buf);
 
-	if (!PushEvent_via_ValueStruct(val)) {
-		exit(1);
+	return push_event_via_value(dbg,val);
+}
+
+static	int
+MonPushEventJSON(
+	DBG_Struct *dbg)
+{
+	json_object *obj,*event,*body;
+	gchar *buf,*_buf;
+	gsize size;
+	int ret;
+
+	if (!g_file_get_contents(JSONFile,&_buf,&size,NULL)) {
+		g_error("read json file failure:%s\n",JSONFile);
 	}
+	buf = g_malloc0(size+1);
+	memcpy(buf,_buf,size);
+	g_free(_buf);
+
+	obj = json_tokener_parse(buf);
+	g_free(buf);
+	if (obj == NULL || is_error(obj)) {
+		g_error("invalid json file:%s",JSONFile);
+	}
+	if (!json_object_object_get_ex(obj,"event",&event)) {
+		g_error("invalid json: need \"event\" object");
+	}
+	if (!json_object_object_get_ex(obj,"body",&body)) {
+		g_error("invalid json: need \"body\" object");
+	}
+
+	ret = push_event_via_json(dbg,(const char*)json_object_get_string(event),body);
+	json_object_put(obj);
+	return ret;
+}
+
+static	void
+InitSystem(void)
+{
+	char *dir;
+	InitMessage("monpusheventp",NULL);
+	if ( (dir = getenv("MON_DIRECTORY_PATH")) != NULL ) {
+		Directory = dir;
+	}
+	InitDirectory();
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
+	}
+	SetDBConfig(DBConfig);
 }
 
 extern	int
@@ -95,13 +168,38 @@ main(
 	int		argc,
 	char	*argv[])
 {
-	setlocale(LC_CTYPE,"ja_JP.UTF-8");
-	if (argc < 3) {
-		g_print("%% monpushevent <recfile> <COBOL data file>\n");
-		exit(1);
-	}
-	InitMessage("monpushevent",NULL);
-	MonPushEvent(argv[1],argv[2]);
+	DBG_Struct *dbg;
+	int ret;
 
-	return 0;
+	setlocale(LC_CTYPE,"ja_JP.UTF-8");
+	SetDefault();
+	GetOption(option,argc,argv,NULL);
+	InitSystem();
+
+	dbg = GetDBG_monsys();
+	dbg->dbt = NewNameHash();
+
+	if (OpenDB(dbg) != MCP_OK ) {
+		g_error("OpenDB failure");
+	}
+	monpushevent_setup(dbg);
+
+	TransactionStart(dbg);
+	if (JSONFile != NULL) {
+		ret = MonPushEventJSON(dbg);
+	} else {
+		if (argc < 3) {
+			g_print("%% monpushevent <recfile> <COBOL data file>\n");
+			exit(1);
+		}
+		ret = MonPushEvent(dbg,argv[1],argv[2]);
+	}
+	TransactionEnd(dbg);
+	CloseDB(dbg);
+
+	if (ret) {
+		return 0;
+	} else {
+		Error("monpushevent failure");
+	}
 }
