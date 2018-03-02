@@ -479,12 +479,11 @@ JSONRPC(
 	case 200:
 		break;
 	case 401:
-		Error(_("authentication error:incorrect user or password"));
-		break;
 	case 403:
 		if (!strcmp("NOT PERMITTED CERTIFICATE",LBS_Body(writebuf))) {
-		} else {
 			Error(_("NOT PERMITTED CERTIFICATE"));
+		} else {
+			Error(_("authentication error:incorrect user or password"));
 		}
 		break;
 	case 503:

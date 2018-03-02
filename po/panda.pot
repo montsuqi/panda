@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 2.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-02-27 14:46+0900\n"
+"POT-Creation-Date: 2018-03-02 16:09+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -293,11 +293,11 @@ msgstr ""
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:233 glclient/protocol.c:292 glclient/protocol.c:477
+#: glclient/protocol.c:233 glclient/protocol.c:292 glclient/protocol.c:486
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:236 glclient/protocol.c:295 glclient/protocol.c:486
+#: glclient/protocol.c:236 glclient/protocol.c:295 glclient/protocol.c:490
 msgid "server maintenance error"
 msgstr ""
 
@@ -327,61 +327,61 @@ msgstr ""
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:468
+#: glclient/protocol.c:468 glclient/protocol.c:473
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:482
+#: glclient/protocol.c:484
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 
-#: glclient/protocol.c:489
+#: glclient/protocol.c:493
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:495
+#: glclient/protocol.c:499
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:518
+#: glclient/protocol.c:522
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:523
+#: glclient/protocol.c:527
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:528
+#: glclient/protocol.c:532
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:554
+#: glclient/protocol.c:558
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:565
+#: glclient/protocol.c:569
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:574
+#: glclient/protocol.c:578
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:579
+#: glclient/protocol.c:583
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:696
+#: glclient/protocol.c:700
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:701
+#: glclient/protocol.c:705
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:706
+#: glclient/protocol.c:710
 msgid "invalid message data:abort"
 msgstr ""
 
