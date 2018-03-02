@@ -460,12 +460,31 @@ JSONRPC(
 	if (res != CURLE_OK) {
 		Error(_("comm error:%s"),curl_easy_strerror(res));
 	}
+	res = curl_easy_getinfo(ctx->Curl,CURLINFO_CONTENT_TYPE,&ctype);
+	if (res != CURLE_OK) {
+		Error(_("comm error:%s"),curl_easy_strerror(res));
+	}
+	if (ctype == NULL) {
+		Error(_("invalid content type:%s"),ctype);
+	}
+	if (g_regex_match_simple("json",ctype,G_REGEX_CASELESS,0) || g_regex_match_simple("text",ctype,G_REGEX_CASELESS,0)) {
+		// do nothing
+	} else {
+		Error(_("invalid content type:%s"),ctype);
+	}
+	curl_slist_free_all(headers);
+	LBS_EmitEnd(writebuf);
+
 	switch (http_code) {
 	case 200:
 		break;
 	case 401:
 	case 403:
-		Error(_("authentication error:incorrect user or password"));
+		if (!strcmp("NOT PERMITTED CERTIFICATE",LBS_Body(writebuf))) {
+			Error(_("NOT PERMITTED CERTIFICATE"));
+		} else {
+			Error(_("authentication error:incorrect user or password"));
+		}
 		break;
 	case 503:
 		Error(_("server maintenance error"));
@@ -474,16 +493,7 @@ JSONRPC(
 		Error(_("http status code[%d]"),http_code);
 		break;
 	}
-	res = curl_easy_getinfo(ctx->Curl,CURLINFO_CONTENT_TYPE,&ctype);
-	if (res != CURLE_OK) {
-		Error(_("comm error:%s"),curl_easy_strerror(res));
-	}
-	if (ctype == NULL || !g_regex_match_simple("json",ctype,G_REGEX_CASELESS,0)) {
-		Error(_("invalid content type:%s"),ctype);
-	}
-	curl_slist_free_all(headers);
 
-	LBS_EmitEnd(writebuf);
 	ret = json_tokener_parse(LBS_Body(writebuf));
 	if (is_error(ret)) {
 		Error(_("invalid json"));
