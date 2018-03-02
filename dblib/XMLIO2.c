@@ -177,7 +177,7 @@ ENTER_FUNC;
 				ctrl->rc = _ReadJSON(ret,buff,size);
 				break;
 			default:
-				Warning("not reach");
+				Warning("Invalid fomat(not XML or JSON)");
 				break;
 			}
 		}

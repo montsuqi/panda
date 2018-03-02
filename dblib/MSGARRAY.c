@@ -407,7 +407,7 @@ _Open(
 					ctrl->rc = _OpenJSON(buf,size);
 					break;
 				default:
-					Warning("not reach");
+					Warning("Invalid format(not XML or JSON)");
 					break;
 				}
 			}
