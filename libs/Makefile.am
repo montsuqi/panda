@@ -60,8 +60,7 @@ libpanda_la_LIBADD		=	\
 	-lm									\
 	$(SSL_LIBS)							\
 	$(P11_LIBS)							\
-	$(COMMON_LIBS)						\
-	$(AMQP_LIBS)
+	$(COMMON_LIBS)
 
 
 libpandaincludedir = $(pkgincludedir)
