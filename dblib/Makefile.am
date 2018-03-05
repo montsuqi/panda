@@ -20,8 +20,9 @@ noinst_LIBRARIES = libpostgresqlutils.a libdblog.a
 pkglib_LTLIBRARIES = $(DB_OBJECTS)
 lib_LTLIBRARIES = libpandadb.la
 
-libpandadb_la_LIBADD = \
-	-luuid
+libpandadb_la_LIBADD = 	\
+	-luuid				\
+	$(AMQP_LIBS)
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
@@ -41,6 +42,7 @@ AM_CPPFLAGS 			=	\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
+	$(AMQP_CFLAGS)			\
 	$(COMMON_CFLAGS)		\
 	-DBIN_DIR=\"$(bindir)\"
 
