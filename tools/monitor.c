@@ -896,20 +896,6 @@ LEAVE_FUNC;
 }
 
 static	void
-KillAll()
-{
-	int		i;
-	Process	*proc;
-
-ENTER_FUNC;
-	for(i = 0; i < g_list_length(ProcessList); i++) {
-		proc = g_list_nth_data(ProcessList,i);
-		kill(proc->pid,SIGKILL);
-	}
-LEAVE_FUNC;
-}
-
-static	void
 StartSetup()
 {
 	pid_t	pid;
@@ -965,15 +951,10 @@ static	void
 StopServers(void)
 {
 ENTER_FUNC;
-#if 0
 	KillProcess(PTYPE_GLS,SIGHUP);
-#else 
-	system("/usr/bin/killall -HUP glserver");
-#endif
 	KillProcess(PTYPE_APS,SIGHUP);
 	KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST),SIGHUP);
 	sleep(1);
-	KillAll();
 LEAVE_FUNC;
 }
 
