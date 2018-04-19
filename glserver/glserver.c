@@ -35,6 +35,7 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<sys/stat.h>
+#include	<sys/prctl.h>
 #include	<unistd.h>
 #include	<glib.h>
 #include	<signal.h>
@@ -207,6 +208,8 @@ main(
 	if (sigaction(SIGPIPE, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
+
+	prctl(PR_SET_PDEATHSIG, SIGHUP);
 
 	SetDefault();
 	(void)GetOption(option,argc,argv,NULL);

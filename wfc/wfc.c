@@ -41,6 +41,7 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<sys/stat.h>		/*	for	mknod	*/
+#include	<sys/prctl.h>
 #include	<unistd.h>
 #include	<glib.h>
 #include	<pthread.h>
@@ -386,6 +387,8 @@ main(
 	if (stderr_path != NULL) {
 		freopen(stderr_path,"w",stderr);
 	}
+
+	prctl(PR_SET_PDEATHSIG, SIGHUP);
 
 	InitMessage("wfc",NULL);
 ENTER_FUNC;
