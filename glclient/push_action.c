@@ -159,6 +159,10 @@ event_handler(json_object *obj)
 		}
 		message = (char*)json_object_get_string(child);
 		Notify(_("orca cloud announce"),message,"gtk-dialog-info",30);
+	} else if (!strcmp(ev,"websocket_reconnect")) {
+		Notify(_("websocket_reconnect"),_("websocket_reconnect_message"),"gtk-dialog-warning",30);
+	} else if (!strcmp(ev,"websocket_disconnect")) {
+		Notify(_("websocket_disconnect"),_("websocket_disconnect_message"),"gtk-dialog-warning",30);
 	} else {
 		Warning("unknown event:%s",ev);
 	}
@@ -250,7 +254,7 @@ main(
 
 	execute();
 
-	gtk_timeout_add(10*1000,push_action_exit,NULL);
+	gtk_timeout_add(30*1000,push_action_exit,NULL);
 	gtk_main();
 
 	sleep(3);

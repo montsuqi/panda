@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 2.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-03-02 16:09+0900\n"
+"POT-Creation-Date: 2018-04-19 10:49+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -265,7 +265,7 @@ msgstr ""
 msgid "glclient print notify"
 msgstr ""
 
-#: glclient/client.c:140
+#: glclient/client.c:140 glclient/push_action.c:161
 msgid "orca cloud announce"
 msgstr ""
 
@@ -383,6 +383,22 @@ msgstr ""
 
 #: glclient/protocol.c:710
 msgid "invalid message data:abort"
+msgstr ""
+
+#: glclient/push_action.c:163
+msgid "websocket_reconnect"
+msgstr ""
+
+#: glclient/push_action.c:163
+msgid "websocket_reconnect_message"
+msgstr ""
+
+#: glclient/push_action.c:165
+msgid "websocket_disconnect"
+msgstr ""
+
+#: glclient/push_action.c:165
+msgid "websocket_disconnect_message"
 msgstr ""
 
 #: libs/net.c:287
