@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-03-02 16:09+0900\n"
+"POT-Creation-Date: 2018-04-19 10:49+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -277,7 +277,7 @@ msgstr ""
 msgid "glclient print notify"
 msgstr "glclient印刷通知"
 
-#: glclient/client.c:140
+#: glclient/client.c:140 glclient/push_action.c:161
 msgid "orca cloud announce"
 msgstr "日レセクラウドからのお知らせ"
 
@@ -398,6 +398,27 @@ msgstr ""
 #: glclient/protocol.c:710
 msgid "invalid message data:abort"
 msgstr ""
+
+#: glclient/push_action.c:163
+msgid "websocket_reconnect"
+msgstr "PUSH通知再接続"
+
+#: glclient/push_action.c:163
+msgid "websocket_reconnect_message"
+msgstr ""
+"PUSH通知が受信可能になりました。\n"
+"クライアント印刷できます。"
+
+#: glclient/push_action.c:165
+msgid "websocket_disconnect"
+msgstr "PUSH通知切断"
+
+#: glclient/push_action.c:165
+msgid "websocket_disconnect_message"
+msgstr ""
+"PUSH通知接続が切断されました。\n"
+"切断中はクライアント印刷ができません。\n"
+"接続回復後に再印刷等による印刷処理を行ってください。"
 
 #: libs/net.c:287
 #, c-format

@@ -28,10 +28,9 @@
 #define PING_PERIOD		(10L)
 #define PING_TIMEOUT	(30L)
 
-static unsigned int conn_wait = CONN_WAIT_INIT;
-
-static volatile int force_exit;
-static struct lws *wsi;
+static unsigned int ConnWait = CONN_WAIT_INIT;
+static unsigned int fConnWarned = 0;
+static struct lws *WSI;
 
 /* option*/
 static char     *GLPushAction;
@@ -172,11 +171,55 @@ message_handler(
 	} else if (!strcmp(command,"event")) {
 		event_handler(obj);
 	} else if (!strcmp(command,"error")) {
-		wsi = NULL;
+		WSI = NULL;
 	}
 message_handler_error:
 	json_object_put(obj);
 	return;
+}
+
+static void
+warn_reconnect()
+{
+	json_object *obj,*data;
+
+	if (!fConnWarned) {
+		return;
+	}
+	fConnWarned = 0;
+
+	obj = json_object_new_object();
+	json_object_object_add(obj,"command",json_object_new_string("event"));
+	data = json_object_new_object();
+	json_object_object_add(obj,"command",json_object_new_string("event"));
+	json_object_object_add(obj,"data",data);
+	json_object_object_add(data,"body",json_object_new_object());
+	json_object_object_add(data,"event",json_object_new_string("websocket_reconnect"));
+
+	event_handler(obj);
+	json_object_put(obj);
+}
+
+static void
+warn_disconnect()
+{
+	json_object *obj,*data;
+
+	if (fConnWarned) {
+		return;
+	}
+	fConnWarned = 1;
+
+	obj = json_object_new_object();
+	json_object_object_add(obj,"command",json_object_new_string("event"));
+	data = json_object_new_object();
+	json_object_object_add(obj,"command",json_object_new_string("event"));
+	json_object_object_add(obj,"data",data);
+	json_object_object_add(data,"body",json_object_new_object());
+	json_object_object_add(data,"event",json_object_new_string("websocket_disconnect"));
+
+	event_handler(obj);
+	json_object_put(obj);
 }
 
 static int
@@ -189,7 +232,6 @@ callback_push_receive(
 {
 	char buf[BUF_SIZE],reqid[64];
 	uuid_t u;
-
 
 	switch (reason) {
 
@@ -217,12 +259,14 @@ callback_push_receive(
 			websocket_write_back(wsi,buf,-1,LWS_WRITE_TEXT);
 		}
 
-		conn_wait = CONN_WAIT_INIT;
+		ConnWait = CONN_WAIT_INIT;
 		PongLast = time(NULL);
+		warn_reconnect();
 		break;
 
 	case LWS_CALLBACK_CLOSED:
-		wsi = NULL;
+		WSI = NULL;
+		warn_disconnect();
 		break;
 
 	case LWS_CALLBACK_CLIENT_RECEIVE:
@@ -233,10 +277,11 @@ callback_push_receive(
 		break;
 
 	case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-		if (wsi == wsi) {
+		if (wsi == WSI) {
 			Info("LWS_CALLBACK_CLIENT_CONNECTION_ERROR:%s",(char*)in);
-			wsi = NULL;
+			WSI = NULL;
 		}
+		warn_disconnect();
 		break;
 
 	case LWS_CALLBACK_CLIENT_RECEIVE_PONG:
@@ -353,14 +398,14 @@ Execute()
 
 	ping_last = PongLast = time(NULL);
 
-	while (!force_exit) {
+	while (1) {
 
-		if (!wsi && ratelimit_connects(&conn_last, conn_wait)) {
+		if (!WSI && ratelimit_connects(&conn_last, ConnWait)) {
 			i.protocol = protocols[0].name;
-			wsi = lws_client_connect_via_info(&i);
-			conn_wait *= 2;
-			if (conn_wait > CONN_WAIT_MAX) {
-				conn_wait = CONN_WAIT_MAX;
+			WSI = lws_client_connect_via_info(&i);
+			ConnWait *= 2;
+			if (ConnWait > CONN_WAIT_MAX) {
+				ConnWait = CONN_WAIT_MAX;
 			}
 		}
 		lws_service(context, 500);
@@ -368,13 +413,13 @@ Execute()
 		usleep(100);
 		ping_now = time(NULL);
 		if ((ping_now - ping_last) >= PING_PERIOD) {
-			if (wsi != NULL) {
+			if (WSI != NULL) {
 				ping_last = ping_now;
 				if ((ping_now - PongLast) >= PING_TIMEOUT) {
 					Warning("websocket ping timeout");
-					wsi = NULL;
+					WSI = NULL;
 				} else {
-					websocket_write_back(wsi,"ping",-1,LWS_WRITE_PING);
+					websocket_write_back(WSI,"ping",-1,LWS_WRITE_PING);
 				}
 			}
 		}
