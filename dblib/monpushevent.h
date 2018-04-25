@@ -21,6 +21,7 @@
 #define	_MONPUSHEVENT_H
 
 #include	"dblib.h"
+
 #define 	MONPUSHEVENT		"monpushevent"
 #define 	MONPUSHEVENT_EXPIRE "7"
 #define 	SEQMONPUSHEVENT 	"seqmonpushevent"
@@ -28,6 +29,8 @@
 extern int new_monpushevent_id(DBG_Struct *dbg);
 extern Bool	monpushevent_setup(DBG_Struct *dbg);
 
+
+json_object* push_event_conv_value(ValueStruct *v);
 gboolean push_event_via_value(DBG_Struct *dbg,ValueStruct *val);
 gboolean push_event_via_json(DBG_Struct *dbg,const char *event,json_object*);
 #endif
