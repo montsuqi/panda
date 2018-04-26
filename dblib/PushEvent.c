@@ -115,7 +115,7 @@ ENTER_FUNC;
 		if (!json_object_object_get_ex(obj,"body",&body)) {
 			continue;
 		}
-		if (!json_object_object_get_ex(obj,"evnet",&event)) {
+		if (!json_object_object_get_ex(obj,"event",&event)) {
 			continue;
 		}
 		if (!push_event_via_json(mondbg,(const char*)json_object_get_string(event),body)) {
