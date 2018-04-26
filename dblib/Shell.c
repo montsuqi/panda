@@ -648,9 +648,11 @@ _DBDELETE(
 	ValueStruct	*ret = NULL;
 	int pgid;
 	char *mw;
+	char *sbt;
 
+	sbt = getenv("MCP_SUPPORT_BATCHSERVER");
 	mw = getenv("MCP_MIDDLEWARE_NAME");
-	if ((mw != NULL) && (!strcmp("panda",mw))) {
+	if ((sbt != NULL) || ((mw != NULL) && (!strcmp("panda",mw)))) {
 		CheckBatchPg();
 		pgid = ValueToInteger(GetItemLongName(args,"pgid"));
 		ctrl->rc = killpg(pgid, SIGHUP);
