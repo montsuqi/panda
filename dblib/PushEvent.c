@@ -35,6 +35,7 @@
 #include	<signal.h>
 #include	<time.h>
 #include	<sys/time.h>
+#include	<json.h>
 
 #include	"const.h"
 #include	"enum.h"
@@ -48,6 +49,8 @@
 #include	"message.h"
 #include	"debug.h"
 
+static json_object *PushData = NULL;
+
 static	ValueStruct	*
 _PushEvent(
 	DBG_Struct		*dbg,
@@ -55,26 +58,83 @@ _PushEvent(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	DBG_Struct *mondbg;
+	json_object *obj;
 
-	mondbg = GetDBG_monsys();
+	ctrl->rc = MCP_BAD_OTHER;
+	if (!CheckJSONObject(PushData,json_type_array)) {
+		Warning("PushData is wrong");
+		return NULL;
+	}
+
+	obj = push_event_conv_value(args);
+	if (CheckJSONObject(obj,json_type_object)) {
+		json_object_array_add(PushData,obj);
+	}
+
+	ctrl->rc = MCP_OK;
+	return	NULL;
+}
+
+extern	ValueStruct	*
+_PushEventStart(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+ENTER_FUNC;
+	if (PushData != NULL) {
+		json_object_put(PushData);
+		PushData = NULL;
+	}
+	PushData = json_object_new_array();
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+extern	ValueStruct	*
+_PushEventCommit(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
+{
+ENTER_FUNC;
+	DBG_Struct *mondbg;
+	json_object *obj,*body,*event;
+	int i,len;
+
 	if (ctrl == NULL) {
 		return NULL;
 	}
-	if (push_event_via_value(mondbg,args)) {
-		ctrl->rc = MCP_OK;
-	} else {
-		ctrl->rc = MCP_BAD_OTHER;
+	if (PushData == NULL) {
+		Warning("invalid COMMIT.BEGIN forget?");
+		return NULL;
 	}
-	return	NULL;
+	ctrl->rc = MCP_OK;
+	mondbg = GetDBG_monsys();
+	len = json_object_array_length(PushData);
+	for (i=0;i<len;i++) {
+		obj = json_object_array_get_idx(PushData,i);
+		if (!json_object_object_get_ex(obj,"body",&body)) {
+			continue;
+		}
+		if (!json_object_object_get_ex(obj,"event",&event)) {
+			continue;
+		}
+		if (!push_event_via_json(mondbg,(const char*)json_object_get_string(event),body)) {
+			ctrl->rc = MCP_BAD_OTHER;
+		}
+	}
+
+	json_object_put(PushData);
+	PushData = NULL;
+LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
 	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
+	{	"DBSTART",		(DB_FUNC)_PushEventStart },
+	{	"DBCOMMIT",		(DB_FUNC)_PushEventCommit },
 	/*	table operations	*/
 	{	"PUSHEVENT",	_PushEvent		},
 

@@ -18,6 +18,7 @@
 #include	<libmondai.h>
 #include	<glib.h>
 #include	<uuid.h>
+#include	<json.h>
 
 #include	<amqp_tcp_socket.h>
 #include	<amqp.h>
@@ -183,8 +184,8 @@ monpushevent_insert(
 	return (rc == MCP_OK);
 }
 
-static	json_object*
-MakeBodyJSON(
+json_object*
+push_event_conv_value(
 	ValueStruct *v)
 {
 	json_object *obj,*child;
@@ -217,7 +218,7 @@ MakeBodyJSON(
 	case GL_TYPE_ARRAY:
 		obj = json_object_new_array();
 		for (i = 0; i < ValueArraySize(v); i++) {
-			child = MakeBodyJSON(ValueArrayItem(v,i));
+			child = push_event_conv_value(ValueArrayItem(v,i));
 			if (child != NULL) {
 				json_object_array_add(obj,child);
 			}
@@ -226,7 +227,7 @@ MakeBodyJSON(
 	case GL_TYPE_RECORD:
 		obj = json_object_new_object();
 		for	(i = 0; i < ValueRecordSize(v); i++) {
-			child = MakeBodyJSON(ValueRecordItem(v,i));
+			child = push_event_conv_value(ValueRecordItem(v,i));
 			if (child != NULL) {
 				json_object_object_add(obj,ValueRecordName(v,i),child);
 			}
@@ -273,24 +274,24 @@ AMQPSend(
 	conn = amqp_new_connection();
 	socket = amqp_tcp_socket_new(conn);
 	if (!socket) {
-		fprintf(stderr,"creating TCP socket");
+		fprintf(stderr,"creating TCP socket\n");
 		return FALSE;
 	}
 	status = amqp_socket_open(socket, hostname, port);
 	if (status) {
-		fprintf(stderr,"opening TCP socket");
+		fprintf(stderr,"opening TCP socket\n");
 		return FALSE;
 	}
 
 	reply = amqp_login(conn,"/",0,131072,0,AMQP_SASL_METHOD_PLAIN,user,pass);
 	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		fprintf(stderr,"amqp_login");
+		fprintf(stderr,"amqp_login\n");
 		return FALSE;
 	}
 	amqp_channel_open(conn, 1);
 	reply = amqp_get_rpc_reply(conn);
 	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		fprintf(stderr,"amqp_get_rpc_reply");
+		fprintf(stderr,"amqp_get_rpc_reply\n");
 		return FALSE;
 	}
 	{
@@ -310,7 +311,7 @@ AMQPSend(
 				&props,
 				amqp_cstring_bytes(msg));
 		if (x < 0) {
-			fprintf(stderr,"amqp_basic_publish");
+			fprintf(stderr,"amqp_basic_publish\n");
 			return FALSE;
 		}
 	}
@@ -318,19 +319,19 @@ AMQPSend(
 	
 	reply = amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
 	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		fprintf(stderr,"amqp_channel_close");
+		fprintf(stderr,"amqp_channel_close\n");
 		return FALSE;
 	}
 
 	reply = amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
 	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		fprintf(stderr,"amqp_connection_close");
+		fprintf(stderr,"amqp_connection_close\n");
 		return FALSE;
 	}
 
 	x = amqp_destroy_connection(conn);
 	if (x < 0) {
-		fprintf(stderr,"amqp_destroy_connection");
+		fprintf(stderr,"amqp_destroy_connection\n");
 		return FALSE;
 	}
 	return TRUE;
@@ -341,21 +342,19 @@ push_event_via_value(
 	DBG_Struct *dbg,
 	ValueStruct *val)
 {
-	ValueStruct *v,*body;
-	json_object *obj;
-	char        *event;
+	json_object *obj,*body,*event;
 
-	if ((v = GetItemLongName(val,"event"))  ==  NULL) {
-		Warning("invalid argument value: need 'event'");
+	obj = push_event_conv_value(val);
+	if (!json_object_object_get_ex(obj,"body",&body)) {
+		fprintf(stderr,"invalid value\n");
 		return FALSE;
 	}
-	event = ValueToString(v,NULL);
-	if ((body = GetItemLongName(val,"body"))  ==  NULL) {
-		Warning("invalid argument value: need 'body'");
+	if (!json_object_object_get_ex(obj,"event",&event)) {
+		fprintf(stderr,"invalid value\n");
 		return FALSE;
 	}
-	obj = MakeBodyJSON(body);
-	return push_event_via_json(dbg,event,obj);
+	
+	return push_event_via_json(dbg,(const char*)json_object_get_string(event),body);
 }
 
 gboolean
