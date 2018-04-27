@@ -248,7 +248,7 @@ gl_config_save(void)
 	json_object_object_add(config_obj,"list",nlist);
 	json_object_object_add(config_obj,"index",json_object_new_int(nindex));
 
-	jsonstr = json_object_to_json_string(config_obj);
+	jsonstr = json_object_to_json_string_ext(config_obj,JSON_C_TO_STRING_PLAIN);
 
 	gl_lock();
 	conf_file = gl_config_get_config_file();

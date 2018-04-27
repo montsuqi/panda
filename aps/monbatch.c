@@ -363,7 +363,7 @@ unregistdb(
 	OpenDB(dbg);
 	TransactionStart(dbg);
 
-	exec_record = Escape_monsys(dbg, json_object_to_json_string(cmd_results));
+	exec_record = Escape_monsys(dbg, json_object_to_json_string_ext(cmd_results,JSON_C_TO_STRING_PLAIN));
 	sql_len = sql_len + strlen(exec_record);
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,

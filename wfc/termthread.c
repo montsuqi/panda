@@ -358,7 +358,7 @@ JSONRPC_Error(
 	json_object_object_add(error,"message",json_object_new_string(msg));
 	json_object_object_add(res,"error",error);
 
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	}
@@ -468,7 +468,7 @@ ENTER_FUNC;
 	json_object_object_add(res,"result",result);
 
 
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	} else {
@@ -531,7 +531,7 @@ ENTER_FUNC;
 	result = json_object_new_object();
 	json_object_object_add(res,"result",result);
 
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	json_object_put(res);
 
 	CloseNet(term->fp);
@@ -725,7 +725,7 @@ ENTER_FUNC;
 	}
 
 	res = MakeEventResponse(obj,data,0,0);
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	} else {
@@ -839,7 +839,7 @@ ENTER_FUNC;
 		scrdata = GetScreenData(data,data->hdr->window);
 		val = DuplicateValue(rec->value,FALSE);
 		NativeUnPackValue(NULL,LBS_Body(scrdata),val);
-		JSON_UnPackValue(NULL,(char*)json_object_to_json_string(child),val);
+		JSON_UnPackValue(NULL,(char*)json_object_to_json_string_ext(child,JSON_C_TO_STRING_PLAIN),val);
 		size = NativeSizeValue(NULL,val);
 		LBS_ReserveSize(scrdata,size,FALSE);
 		NativePackValue(NULL,LBS_Body(scrdata),val);
@@ -875,7 +875,7 @@ ENTER_FUNC;
 		}
 	}
 
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	} else {
@@ -950,7 +950,7 @@ ENTER_FUNC;
 	{
 		rec = GetWindow((char*)window);
 		val = DuplicateValue(rec->value,FALSE);
-		JSON_UnPackValue(NULL,(char*)json_object_to_json_string(params),val);
+		JSON_UnPackValue(NULL,(char*)json_object_to_json_string_ext(params,JSON_C_TO_STRING_PLAIN),val);
 		size = NativeSizeValue(NULL,val);
 		LBS_ReserveSize(api->rec,size,FALSE);
 		NativePackValue(NULL,LBS_Body(api->rec),val);
@@ -971,7 +971,7 @@ ENTER_FUNC;
 	json_object_object_add(res,"result",child);
 	json_object_object_add(res,"api_status",json_object_new_int(api->status));
 
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	}
@@ -1088,7 +1088,7 @@ ENTER_FUNC;
 		return;
 	}
 	res = CheckDownloadList(obj,data);
-	SendString(term->fp,(char*)json_object_to_json_string(res));
+	SendString(term->fp,(char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	}

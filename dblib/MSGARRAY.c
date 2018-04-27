@@ -163,8 +163,7 @@ _ReadJSON(
 		Warning("invalid json object");
 		return MCP_BAD_OTHER;
 	}
-	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(obj),data);
-DumpValueStruct(data);
+	JSON_UnPackValue(NULL,(char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN),data);
 	return MCP_OK;
 }
 
