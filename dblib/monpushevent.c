@@ -396,7 +396,7 @@ push_event_via_json(
 	localtime_r(&now, &tm_now);
 	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
 	json_object_object_add(obj,"time",json_object_new_string(str_now));
-	data = (const char*)json_object_to_json_string(obj);
+	data = (const char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 
 	monpushevent_insert(dbg,uuid,id,event,user,str_now,data);
 	ret = AMQPSend(event,data);

@@ -372,7 +372,7 @@ CheckJSONRPCResponse(
 	}
 
 	if (Logging) {
-		jsonstr = (char*)json_object_to_json_string(obj);
+		jsonstr = (char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 		path = g_strdup_printf("%s/res_%05d.json",LogDir,ctx->RPCID-1);
 		if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
 			Error("could not create %s",path);
@@ -407,7 +407,7 @@ JSONRPC(
 	if (readbuf == NULL) {
 		readbuf = NewLBS();
 	}
-	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonstr = (char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 	ctx->ReqSize = strlen(jsonstr);
 
 	if (Logging) {

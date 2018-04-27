@@ -82,7 +82,7 @@ ENTER_FUNC;
 		Error("could not connect wfc");
 	}
 	fp = SocketToNet(fd);
-	SendString(fp,(char*)json_object_to_json_string(req));ON_IO_ERROR(fp,badio);
+	SendString(fp,(char*)json_object_to_json_string_ext(req,JSON_C_TO_STRING_PLAIN));ON_IO_ERROR(fp,badio);
 	str = RecvStringNew(fp);	ON_IO_ERROR(fp,badio2);
 	CloseNet(fp);
 	res = json_tokener_parse(str);

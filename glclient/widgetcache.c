@@ -79,7 +79,7 @@ SaveWidgetCache(void)
 	gchar *path;
 	const char *jsonstr;
 
-	jsonstr = json_object_to_json_string(obj);
+	jsonstr = json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 	path = get_path();
 	gl_lock();
 	if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {

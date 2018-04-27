@@ -153,7 +153,7 @@ file_export(
 		}
 		json_object_object_add(obj,"status",json_object_new_int(200));
 	}
-	str = (char*)json_object_to_json_string(obj);
+	str = (char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 	fp = ConnectBlobAPI(socket);
 	SendString(fp, str);
 	SendValue(fp, retval);

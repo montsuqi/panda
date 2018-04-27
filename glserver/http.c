@@ -998,17 +998,17 @@ JSONRPCHandler(
 	}
 	if (!strcmp(method,"get_server_info")) {
 		res = GetServerInfo(obj);
-		resjson = (char*)json_object_to_json_string(res);
+		resjson = (char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN);
 		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
 		json_object_put(res);
 	} else if (!strcmp(method,"get_screen_define")) {
 		res = GetScreenDefine(obj);
-		resjson = (char*)json_object_to_json_string(res);
+		resjson = (char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN);
 		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
 		json_object_put(res);
 	} else if (!strcmp(method,"get_message")) {
 		res = GetMessage(obj);
-		resjson = (char*)json_object_to_json_string(res);
+		resjson = (char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN);
 		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
 		json_object_put(res);
 	} else {
@@ -1035,7 +1035,7 @@ JSONRPCHandler(
 		g_free(prefix);
 
 		if ((res = WFCIO_JSONRPC(obj)) != NULL) {
-			resjson = (char*)json_object_to_json_string(res);
+			resjson = (char*)json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN);
 			SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
 			json_object_put(res);
 		} else {

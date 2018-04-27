@@ -94,7 +94,7 @@ WriteMetaFile(
 {
 	char *jsonstr;
 
-	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonstr = (char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 	if (!g_file_set_contents(metafile,jsonstr,strlen(jsonstr),NULL)) {
 		g_warning("g_file_set_contents failure:%s",metafile);
 	}

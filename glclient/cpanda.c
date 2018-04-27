@@ -74,7 +74,7 @@ StartSession(
 	json_object_object_add(obj,"session_id",json_object_new_string(GLP_GetSessionID(ctx)));
 	json_object_object_add(obj,"app_rpc_endpoint_uri",json_object_new_string(GLP_GetRPCURI(ctx)));
 	json_object_object_add(obj,"app_rest_api_uri_root",json_object_new_string(GLP_GetRESTURI(ctx)));
-	printf("%s",json_object_to_json_string(obj));
+	printf("%s",json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN));
 	json_object_put(obj);
 }
 
@@ -85,7 +85,7 @@ GetWindow(
 	json_object *obj;
 
 	obj = RPC_GetWindow(ctx);
-	printf("%s",json_object_to_json_string(obj));
+	printf("%s",json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN));
 	json_object_put(obj);
 }
 
@@ -96,7 +96,7 @@ ListDownloads(
 	json_object *obj;
 
 	obj = RPC_ListDownloads(ctx);
-	printf("%s",json_object_to_json_string(obj));
+	printf("%s",json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN));
 	json_object_put(obj);
 }
 
@@ -138,7 +138,7 @@ SendEvent(
 	}
 
 	res = RPC_SendEvent(ctx,obj);
-	printf("%s",json_object_to_json_string(res));
+	printf("%s",json_object_to_json_string_ext(res,JSON_C_TO_STRING_PLAIN));
 	json_object_put(obj);
 	json_object_put(res);
 }

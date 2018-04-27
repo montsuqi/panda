@@ -130,7 +130,7 @@ event_handler(
 	}
 	json_object_array_add(obj,ent);
 	json_object_get(ent);
-	buf = (char*)json_object_to_json_string(obj);
+	buf = (char*)json_object_to_json_string_ext(obj,JSON_C_TO_STRING_PLAIN);
 	g_file_set_contents(datafile,buf,strlen(buf),NULL);
 	json_object_put(obj);
 	_funlock(fd);
