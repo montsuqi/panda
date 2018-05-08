@@ -53,7 +53,7 @@ InitTempDir()
 	gchar *dir,buf[64];
 
 	RootDir = g_build_filename(g_get_home_dir(),GL_ROOT_DIR,NULL);
-	dir = g_strconcat(RootDir,"tmp",NULL);
+	dir = g_build_filename(RootDir,"tmp",NULL);
 	MakeDir(dir,0700);
 	rm_r_old(dir,ELAPSED);
 	uuid_generate(u);
@@ -94,7 +94,7 @@ MakeTempSubDir(
 	if (TempDir == NULL) {
 		return NULL;
 	}
-	subdir = g_strconcat(TempDir,name,NULL);
+	subdir = g_build_filename(TempDir,name,NULL);
 	mkdir_p(subdir,0700);
 	return subdir;
 }
