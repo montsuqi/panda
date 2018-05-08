@@ -66,6 +66,11 @@
 #define TYPE_AUTH 0
 #define TYPE_APP  1
 
+#define JSONRPC_CLIENT_VERSION "2.0.1"
+
+#define JSONRPC_AUTH(ctx,obj) JSONRPC(ctx,TYPE_AUTH,obj)
+#define JSONRPC_APP(ctx,obj ) JSONRPC(ctx,TYPE_APP ,obj)
+
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
 static gboolean Logging = FALSE;
@@ -383,7 +388,6 @@ CheckJSONRPCResponse(
 	}
 }
 
-
 static	json_object*
 JSONRPC(
 	GLProtocol *ctx,
@@ -411,6 +415,8 @@ JSONRPC(
 	ctx->ReqSize = strlen(jsonstr);
 
 	if (Logging) {
+		fprintf(stderr,"----\n");
+		fprintf(stderr,"%s\n",jsonstr);
 		path = g_strdup_printf("%s/req_%05d.json",LogDir,ctx->RPCID);
 		if (!g_file_set_contents(path,jsonstr,ctx->ReqSize,NULL)) {
 			Error("could not create %s",path);
@@ -504,8 +510,6 @@ JSONRPC(
 	return ret;
 }
 
-#define JSONRPC_AUTH(ctx,obj) JSONRPC(ctx,TYPE_AUTH,obj)
-#define JSONRPC_APP(ctx,obj ) JSONRPC(ctx,TYPE_APP ,obj)
 
 void
 RPC_GetServerInfo(
@@ -549,7 +553,7 @@ RPC_StartSession(
 	Info("start_session %s",ctx->AuthURI);
 	params = json_object_new_object();
 	child = json_object_new_object();
-	json_object_object_add(child,"client_version",json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"client_version",json_object_new_string(JSONRPC_CLIENT_VERSION));
 	json_object_object_add(params,"meta",child);
 	obj = MakeJSONRPCRequest(ctx,"start_session",params);
 	obj = JSONRPC_AUTH(ctx,obj);
