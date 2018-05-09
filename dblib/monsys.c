@@ -45,7 +45,7 @@ CheckBatchExist(
 		sql = (char *)xmalloc(sql_len);
 		snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid='%d';",
 				 BATCH_TABLE, pgid);
-		ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+		ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 		xfree(sql);
 	}
 }

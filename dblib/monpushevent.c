@@ -148,7 +148,7 @@ monpushevent_expire(
 	char *sql;
 
 	sql = "DELETE FROM " MONPUSHEVENT " WHERE (now() > pushed_at + CAST('" MONPUSHEVENT_EXPIRE " days' AS INTERVAL));";
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	return (rc == MCP_OK);
 }
 
@@ -173,7 +173,7 @@ monpushevent_insert(
 	e_data		= Escape_monsys(dbg,data);
 
 	sql = g_strdup_printf("INSERT INTO %s (uuid,id,event,user_,pushed_at,data) VALUES ('%s','%d','%s','%s','%s','%s');",MONPUSHEVENT,uuid,id,e_user,e_event,e_pushed_at,e_data);
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 
 	xfree(e_user);
 	xfree(e_event);
