@@ -220,7 +220,7 @@ InsertValue(
 
 	if		(  val  ==  NULL  ) {
 	} else
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:

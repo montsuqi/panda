@@ -984,7 +984,7 @@ UpdateValue(
 		fComm = FALSE;
 		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
 			tmp = ValueArrayItem(val,i);
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+			if		(  !IS_VALUE_VIRTUAL(tmp)  ) {
 				if		(  fComm  ) {
 					LBS_EmitChar(lbs,',');
 				}
@@ -1001,7 +1001,7 @@ UpdateValue(
 		fComm = FALSE;
 		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
 			tmp = ValueRecordItem(val,i);
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+			if		(  !IS_VALUE_VIRTUAL(tmp) ) {
 				if		(  fComm  ) {
 					LBS_EmitChar(lbs,',');
 				}
@@ -1051,7 +1051,7 @@ InsertNames(
 		fComm = FALSE;
 		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
 			tmp = ValueRecordItem(val,i);
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+			if		(  !IS_VALUE_VIRTUAL(tmp)  ) {
 				if		(  fComm  ) {
 					LBS_EmitChar(lbs,',');
 				}
