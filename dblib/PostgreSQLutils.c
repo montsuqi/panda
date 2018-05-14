@@ -37,6 +37,15 @@
 #include	"PostgreSQLutils.h"
 #include	"debug.h"
 
+static char *ignore_count_tables[] = {
+	"monbatch",
+	"monbatch_clog",
+	"monbatch_log",
+	"monblob",
+	"monpushevent",
+	NULL
+};
+
 static char *ignore_message[] = {
 	"ERROR:  must be owner of schema public",
 	"ERROR:  must be owner of extension plpgsql",
@@ -779,7 +788,25 @@ queryTableList( table_TYPE types )
 	return (sql);
 }
 
-void TableCount(
+
+static	Bool
+IgnoreCountTables(
+	char *TableName)
+{
+	int i;
+	char *ignore;
+
+	for ( i = 0; ignore_count_tables[i] != NULL; i++) {
+		ignore = ignore_count_tables[i];
+		if (strncmp(ignore, TableName, strlen(ignore)) != 0 ){
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static void
+TableCount(
 	PGconn	*conn,
 	TableList *table_list )
 {
@@ -789,6 +816,10 @@ void TableCount(
 
 	for (i = 0; i < table_list->count; i++) {
 		if (table_list->tables[i]->relkind == 'i') {
+			table_list->tables[i]->count = StrDup("0");
+			continue;
+		}
+		if (IgnoreCountTables(table_list->tables[i]->name) == TRUE){
 			table_list->tables[i]->count = StrDup("0");
 			continue;
 		}
