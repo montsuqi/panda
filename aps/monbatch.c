@@ -317,7 +317,7 @@ registdb(
 	snprintf(sql, sql_len, "INSERT INTO %s (%s) VALUES (%s);",
 			 BATCH_TABLE,
 			 (char *)LBS_Body(kv.name),(char *)LBS_Body(kv.value));
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 
 	snprintf(sql, sql_len, "INSERT INTO %s (%s) VALUES (%s);",
 			 BATCH_LOG_TABLE,
@@ -373,7 +373,7 @@ unregistdb(
 
 	snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s';",
 			 BATCH_TABLE, batch_id);
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(exec_record);
 	xfree(sql);
 

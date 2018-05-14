@@ -476,7 +476,7 @@ monblob_expire(
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
 			 "DELETE FROM %s WHERE (lifetype = 0 AND (now() > importtime + CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > importtime + CAST('%d days' AS INTERVAL)));", MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
 	return (rc == MCP_OK);
 }
@@ -825,7 +825,7 @@ monblob_update(
 	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", id);
 	xfree(id);
 	snprintf(sql_p, sql_len, ";");
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
 	return (rc == MCP_OK);
 }
@@ -898,7 +898,7 @@ monblob_delete(
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
 			 "DELETE FROM %s WHERE id = '%s'", MONBLOB, id);
-	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
 	return (rc == MCP_OK);
 }
