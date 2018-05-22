@@ -262,7 +262,7 @@ ExSystem(
 	char	*command)
 {
 	int		pid;
-	int		rc;
+	int		rc = MCP_BAD_OTHER;;
 	char	*sh;
 	char	*argv[3];
 	extern	char	**environ;

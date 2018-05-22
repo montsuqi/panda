@@ -638,7 +638,7 @@ value_to_file(
 	size_t size;
 
 	if ((fp = fopen(filename,"wb")) == NULL ) {
-		Warning("%s: %s\n", strerror(errno), filename);
+		Warning("fopen: %s: %s\n", strerror(errno), filename);
 		return NULL;
 	}
 	size = fwrite(ValueByte(value),ValueByteLength(value),1,fp);
@@ -647,7 +647,7 @@ value_to_file(
 		return NULL;
 	}
 	if (fclose(fp) != 0) {
-		Warning("%s: %s\n", strerror(errno), filename);
+		Warning("fclose: %s: %s\n", strerror(errno), filename);
 		return NULL;
 	}
 	return filename;
@@ -684,13 +684,14 @@ monblob_export_file(
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*value, *ret, *retval;
 	uuid_t u;
+	Bool rc;
 
 	if (filename == NULL) {
-		Warning("filename null\n");
+		Warning("filename is null\n");
 		return FALSE;
 	}
 	if (id == NULL) {
-		Warning("id null\n");
+		Warning("id is null\n");
 		return FALSE;
 	}
 	if (uuid_parse(id, u) < 0) {
@@ -709,13 +710,17 @@ monblob_export_file(
 		Warning("[%s] is not registered\n", id);
 		return FALSE;
 	}
+
 	value = GetItemLongName(ret, "file_data");
 	retval = unescape_bytea(dbg, value);
-	filename = value_to_file(filename, retval);
+	rc = FALSE;
+	if (value_to_file(filename, retval) != NULL) {
+		rc = TRUE;
+	}
 	FreeValueStruct(retval);
 	FreeValueStruct(ret);
 
-	return TRUE;
+	return rc;
 }
 
 extern Bool
@@ -1076,7 +1081,7 @@ monblob_info(
 	ValueStruct *ret;
 
 	if (!check_id(id)) {
-		return FALSE;
+		return NULL;
 	}
 	sql = (char *)xmalloc(sql_len);
 	eid = Escape_monsys(dbg, id);
