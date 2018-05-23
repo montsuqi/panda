@@ -55,10 +55,12 @@ get_columns(
 	sql = (char *)xmalloc(SIZE_BUFF);
 	sprintf(sql, "SELECT array_to_string(array_agg(column_name::text),',') AS columns FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name  WHERE table_name = '%s';", table_name);
 	retval = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	if (ValueType(retval) == GL_TYPE_RECORD) {
-		columns = StrDup(ValueToString(ValueRecordItem(retval,0), dbg->coding));
+	if (retval) {
+		if (ValueType(retval) == GL_TYPE_RECORD) {
+			columns = StrDup(ValueToString(ValueRecordItem(retval,0), dbg->coding));
+		}
+		FreeValueStruct(retval);
 	}
-	FreeValueStruct(retval);
 	xfree(sql);
 	return columns;
 }
