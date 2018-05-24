@@ -71,6 +71,33 @@ static	Bool		LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, cons
 #endif	//	USE_PKCS11
 #endif	//	USE_SSL
 
+#ifdef SSL_1_0_0
+int ASN1_STRING_length(const ASN1_STRING *x)
+{
+    return x->length;
+}
+
+const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+    return x->data;
+}
+
+int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx)
+{
+    return ctx->error;
+}
+
+X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
+{
+    return ctx->current_cert;
+}
+
+X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
+{
+    return ctx->cert_store;
+}
+#endif  //  SSL_1_0_0
+
 static	Bool
 _Flush(
 	NETFILE	*fp)
