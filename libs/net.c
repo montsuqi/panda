@@ -598,10 +598,10 @@ GetCommonNameFromCertificate__(X509 *cert, char *name, size_t len)
 	count = X509_NAME_entry_count(subject);
 	for (i = 0; i < count; i++){
 		if ((entry = X509_NAME_get_entry(subject, i)) == NULL) break;
-		if (OBJ_obj2nid(entry->object) != NID_commonName) continue;
+		if (OBJ_obj2nid(X509_NAME_ENTRY_get_object(entry)) != NID_commonName) continue;
 		if (name != NULL && len > 0)
-			snprintf(name, len, "%s", entry->value->data);
-		return entry->value->length;
+			snprintf(name, len, "%s", ASN1_STRING_get0_data(X509_NAME_ENTRY_get_data(entry)));
+		return ASN1_STRING_length(X509_NAME_ENTRY_get_data(entry));
 	}
 
 	return -1;
@@ -633,15 +633,15 @@ CheckSubjectAltName(X509_EXTENSION *ext, const char *hostname)
 	STACK_OF(CONF_VALUE) *values;
 	CONF_VALUE *value;
 	const X509V3_EXT_METHOD *meth;
-	unsigned char *data;
+	const unsigned char *data;
 	int len;
 	int ok = FALSE;
 	int i;
 
-	data = ext->value->data;
+	data = ASN1_STRING_get0_data(X509_EXTENSION_get_data(ext));
 	if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
-	data = ext->value->data;
-	len = ext->value->length;
+	data = ASN1_STRING_get0_data(X509_EXTENSION_get_data(ext));
+	len = ASN1_STRING_length(X509_EXTENSION_get_data(ext));
 	values = meth->i2v(meth, meth->d2i(NULL, (const unsigned char **)&data, len), NULL);
 	if (values == NULL) return FALSE;
 	for (i = 0; i < sk_CONF_VALUE_num(values); i++){
@@ -828,16 +828,16 @@ _VerifyCallBack(
 	X509_STORE_CTX_get_error(ctx);
 
 	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
-	switch (ctx->error) {
+	switch (X509_STORE_CTX_get_error(ctx)) {
 	  case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 	  case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
-		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,sizeof buf);
+		X509_NAME_oneline(X509_get_issuer_name(X509_STORE_CTX_get_current_cert(ctx)),buf,sizeof buf);
 		SSL_Error(_d(" Unable to get issuer cert.\n issuer= %s\n"), buf);
 		break;
 	  case X509_V_ERR_CERT_NOT_YET_VALID:
 	  case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 		SSL_Error(_d(" Error in cert not_before field.\n notBefore="));
-		ASN1_TIME_print(bio_err,X509_get_notBefore(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notBefore(X509_STORE_CTX_get_current_cert(ctx)));
 				length = BIO_get_mem_data(bio_err, &ptr);
 				memcpy(printable, ptr, length - 1);
 		SSL_Error("%s\n", printable);
@@ -845,7 +845,7 @@ _VerifyCallBack(
 	  case X509_V_ERR_CERT_HAS_EXPIRED:
 	  case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 		SSL_Error(_d(" Error in cert not_after field.\n notAfter="));
-		ASN1_TIME_print(bio_err,X509_get_notAfter(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notAfter(X509_STORE_CTX_get_current_cert(ctx)));
 				length = BIO_get_mem_data(bio_err, &ptr);
 				memcpy(printable, ptr, length - 1);
 		SSL_Error("%s\n", printable);
@@ -909,9 +909,9 @@ SSL_CTX_use_certificate_with_check(
 	X509_STORE_CTX *sctx;
 	ret = SSL_CTX_use_certificate(ctx, x509);
 	if(!ret)return ret;
-	X509_STORE_add_cert(ctx->cert_store, x509);
+	X509_STORE_add_cert(SSL_CTX_get_cert_store(ctx), x509);
 	sctx = X509_STORE_CTX_new();
-	X509_STORE_CTX_init(sctx, ctx->cert_store, x509, NULL);
+	X509_STORE_CTX_init(sctx, SSL_CTX_get_cert_store(ctx), x509, NULL);
 	X509_STORE_CTX_set_verify_cb(sctx, LocalVerifyCallBack);
 	X509_verify_cert(sctx);
 	X509_STORE_CTX_free(sctx);
@@ -941,9 +941,9 @@ SSL_CTX_use_certificate_file_with_check(
 	}
 	fclose(fp);
 	if(!x509) return -1;
-	X509_STORE_add_cert(ctx->cert_store, x509);
+	X509_STORE_add_cert(SSL_CTX_get_cert_store(ctx), x509);
 	sctx = X509_STORE_CTX_new();
-	X509_STORE_CTX_init(sctx, ctx->cert_store, x509, NULL);
+	X509_STORE_CTX_init(sctx, SSL_CTX_get_cert_store(ctx), x509, NULL);
 	X509_STORE_CTX_set_verify_cb(sctx, LocalVerifyCallBack);
 	X509_verify_cert(sctx);
 	X509_STORE_CTX_free(sctx);
