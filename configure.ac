@@ -289,6 +289,14 @@ AC_ARG_WITH(ssl,
 		AC_SUBST(SSL_LIBS) 
 		AC_SUBST(SSL_CFLAGS) 
 		AC_DEFINE(USE_SSL,1,"")
+		PKG_CHECK_MODULES(SSL, libssl >= 1.1.0,
+			[],
+			[
+				PKG_CHECK_MODULES(SSL, libssl < 1.1.0,
+					[AC_DEFINE(SSL_1_0_0,1,"")]
+				)
+			]
+		)
 		enable_ssl="yes"
 	fi
 ])		
