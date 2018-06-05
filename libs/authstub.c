@@ -55,7 +55,6 @@ extern Bool AuthUser(URL *auth, char *user, char *pass, char *other, char *id) {
   char buff[SIZE_OTHER + 1];
 
   ENTER_FUNC;
-  rc = FALSE;
   if (strcmp(auth->protocol, "trust") == 0) {
     rc = TRUE;
   } else {
