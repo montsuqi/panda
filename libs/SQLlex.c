@@ -374,7 +374,6 @@ retry:
   }
   while (((c = GetChar(in)) != 0) && (isspace(c))) {
     if (c == '\n') {
-      c = ' ';
       in->cLine++;
     }
   }
