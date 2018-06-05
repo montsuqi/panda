@@ -118,7 +118,6 @@ size_t read_binary_data(void *buf, size_t size, size_t nmemb, void *userp) {
 
   p = (char *)buf;
   lbs = (LargeByteString *)userp;
-  read_size = 0;
 
   buf_size = size * nmemb;
   rest_size = LBS_Size(lbs) - LBS_GetPos(lbs);

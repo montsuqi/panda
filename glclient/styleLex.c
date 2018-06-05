@@ -100,7 +100,6 @@ extern int StyleLex(Bool fSymbol) {
 retry:
   while (isspace(c = GetChar(StyleFile))) {
     if (c == '\n') {
-      c = ' ';
       StylecLine++;
     }
   }

@@ -613,7 +613,7 @@ BDComponent *bd_component_new() {
   gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
   button = gtk_font_button_new();
   self->fontbutton = button;
-  hbox = gtk_hbox_new(FALSE, 5);
+  gtk_hbox_new(FALSE, 5);
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, ypos, ypos + 1,
                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach(GTK_TABLE(table), button, 1, 2, ypos, ypos + 1,

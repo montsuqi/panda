@@ -355,8 +355,8 @@ end_tran:
     }
   } else {
     dbgmsg("rollback");
-    rc = TransactionRedirectRollback(ctx->dbg);
-    rc = TransactionRedirectRollback(log->dbg);
+    TransactionRedirectRollback(ctx->dbg);
+    TransactionRedirectRollback(log->dbg);
   }
   Close_DBLog(&log);
   LEAVE_FUNC;
@@ -404,8 +404,8 @@ _end_tran:
     }
   } else {
     dbgmsg("rollback");
-    rc = TransactionRedirectRollback(ctx->dbg);
-    rc = TransactionRedirectRollback(log->dbg);
+    TransactionRedirectRollback(ctx->dbg);
+    TransactionRedirectRollback(log->dbg);
   }
   Close_DBLog(&log);
 

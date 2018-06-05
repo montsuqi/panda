@@ -107,7 +107,7 @@ extern void CheckAuditTable(DBG_Struct *dbg) {
   xfree(buff);
   if (rc) {
     buff = QueryAuditSequence();
-    rc = CreateCommand(dbg, buff);
+    CreateCommand(dbg, buff);
     xfree(buff);
   }
 }
