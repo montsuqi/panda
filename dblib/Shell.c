@@ -22,6 +22,8 @@
 #define	TRACE
 */
 
+const char *KILLBATCH = "/usr/local/bin/push_kill_batch_queue";
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -140,7 +142,7 @@ DoShell(
 	char	*argv[256];
 	char	*sh;
 	pid_t	pid;
-	int		rc;
+	int		rc = MCP_BAD_OTHER;
 	int 	i;
 	extern	char	**environ;
 
@@ -164,8 +166,10 @@ ENTER_FUNC;
 				argv[i++] = *cmd;
 			}
 			argv[i] = NULL;
-			execve(sh, argv, environ);
-			rc = MCP_BAD_OTHER;
+			if (execve(sh, argv, environ) == -1) {
+				Warning("command could not be executed %s:%s",sh,strerror(errno));
+				rc = MCP_BAD_OTHER;
+			}
 		} else
 		if		(  pid  <  0  ) {
 			Warning("DoShell fork error:%s",strerror(errno));
@@ -276,8 +280,10 @@ ExSystem(
 			argv[0] = sh;
 			argv[1] = command;
 			argv[2] = NULL;
-			execve(sh, argv, environ);
-			rc = MCP_BAD_OTHER;
+			if (execve(sh, argv, environ) == -1) {
+				Warning("command could not be executed %s:%s",sh,strerror(errno));
+				rc = MCP_BAD_OTHER;
+			}
 		} else
 		if		(  pid   >  0  )	{	/*	parent	*/
 			while(waitpid(pid, &rc, 0) <0){
@@ -638,6 +644,41 @@ _DBFETCH(
 	return ret;
 }
 
+static	int
+CancelBatchServer(
+	ValueStruct		*args)
+{
+	char	*id;
+	char	*argv[256];
+	int		rc = MCP_BAD_OTHER;;
+	pid_t	pid;
+	extern	char	**environ;
+
+	id = ValueToString(GetItemLongName(args,"id"),NULL);
+	setenv("MON_BATCH_ID", id, 1);
+	if	(( pid = fork() ) <  0  ) {
+		Warning("Barch Cancel fork error:%s",strerror(errno));
+		rc = MCP_BAD_OTHER;
+    } else
+	if	( pid == 0 )	{ /* child */
+		argv[0] = (char *)KILLBATCH;
+		argv[1] = NULL;
+		if (execve(KILLBATCH, argv, environ) == -1) {
+			Warning("command could not be executed %s:%s",KILLBATCH,strerror(errno));
+			rc = MCP_BAD_OTHER;
+		}
+	} else
+	if	(  pid > 0 )	{	/*	parent	*/
+		while(waitpid(pid, &rc, 0) <0){
+			if (errno != EINTR){
+				rc = -1;
+				break;
+			}
+		}
+	}
+	return (rc);
+}
+
 static	ValueStruct	*
 _DBDELETE(
 	DBG_Struct		*dbg,
@@ -652,11 +693,15 @@ _DBDELETE(
 
 	sbt = getenv("MCP_SUPPORT_BATCHSERVER");
 	mw = getenv("MCP_MIDDLEWARE_NAME");
-	if ((sbt != NULL) || ((mw != NULL) && (!strcmp("panda",mw)))) {
+	if (sbt != NULL) {
+		ctrl->rc = CancelBatchServer(args);
+	} else
+	if ((mw != NULL) && (!strcmp("panda",mw))) {
 		CheckBatchPg();
 		pgid = ValueToInteger(GetItemLongName(args,"pgid"));
 		ctrl->rc = killpg(pgid, SIGHUP);
 	}
+
 	return ret;
 }
 
