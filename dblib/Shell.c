@@ -691,15 +691,15 @@ _DBDELETE(
 	char *mw;
 	char *sbt;
 
-	mw = getenv("MCP_MIDDLEWARE_NAME");
 	sbt = getenv("MCP_SUPPORT_BATCHSERVER");
+	mw = getenv("MCP_MIDDLEWARE_NAME");
+	if (sbt != NULL) {
+		ctrl->rc = CancelBatchServer(args);
+	} else
 	if ((mw != NULL) && (!strcmp("panda",mw))) {
 		CheckBatchPg();
 		pgid = ValueToInteger(GetItemLongName(args,"pgid"));
 		ctrl->rc = killpg(pgid, SIGHUP);
-	} else
-	if (sbt != NULL) {
-		ctrl->rc = CancelBatchServer(args);
 	}
 
 	return ret;
