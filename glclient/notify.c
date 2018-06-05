@@ -1,17 +1,17 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2011 JMA (Japan Medical Association).
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -23,79 +23,71 @@
 */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<unistd.h>
-#include	<ctype.h>
-#include	<sys/types.h>
-#include	<sys/stat.h>
-#include	<glib.h>
-#include	<gtk/gtk.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <glib.h>
+#include <gtk/gtk.h>
 
-#include	"notify.h"
+#include "notify.h"
 
 static int yy = 0;
 static int n = 0;
 
-static gboolean
-DestroyDialog(gpointer data)
-{
-	gtk_widget_destroy(GTK_WIDGET(data));
-	if (n > 0) {
-		n -= 1;
-	}
-	return FALSE;
+static gboolean DestroyDialog(gpointer data) {
+  gtk_widget_destroy(GTK_WIDGET(data));
+  if (n > 0) {
+    n -= 1;
+  }
+  return FALSE;
 }
 
-static gboolean
-cb_enter(GtkWidget *widget,
-	GdkEvent *e,
-	gpointer data)
-{
-	gtk_widget_hide(widget);
-	return FALSE;
+static gboolean cb_enter(GtkWidget *widget, GdkEvent *e, gpointer data) {
+  gtk_widget_hide(widget);
+  return FALSE;
 }
 
-void
-Notify(gchar *summary,
-	gchar *body,
-	gchar *icon,
-	gint timeout)
-{
-	GtkWidget *widget;
-	GdkScreen *scr;
-	int w,h;
+void Notify(gchar *summary, gchar *body, gchar *icon, gint timeout) {
+  GtkWidget *widget;
+  GdkScreen *scr;
+  int w, h;
 
 #if 0
 	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,"%s\n\n%s",summary,body);
 #else
-	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,"%s",summary);
-	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(widget),"%s",body);
+  widget = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO,
+                                  GTK_BUTTONS_NONE, "%s", summary);
+  gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(widget), "%s",
+                                           body);
 #endif
-	gtk_window_set_decorated(GTK_WINDOW(widget),FALSE);
-	gtk_window_set_modal(GTK_WINDOW(widget),FALSE);
-	gtk_window_set_focus_on_map(GTK_WINDOW(widget),FALSE);
-	gtk_window_set_accept_focus(GTK_WINDOW(widget),FALSE);
+  gtk_window_set_decorated(GTK_WINDOW(widget), FALSE);
+  gtk_window_set_modal(GTK_WINDOW(widget), FALSE);
+  gtk_window_set_focus_on_map(GTK_WINDOW(widget), FALSE);
+  gtk_window_set_accept_focus(GTK_WINDOW(widget), FALSE);
 
-	if (n == 0) {
-		yy = 0;
-	}
+  if (n == 0) {
+    yy = 0;
+  }
 
-	g_signal_connect(G_OBJECT(widget),"enter-notify-event",G_CALLBACK(cb_enter),NULL);
+  g_signal_connect(G_OBJECT(widget), "enter-notify-event", G_CALLBACK(cb_enter),
+                   NULL);
 
-	scr = gtk_window_get_screen(GTK_WINDOW(widget));
+  scr = gtk_window_get_screen(GTK_WINDOW(widget));
 
-	gtk_window_get_size(GTK_WINDOW(widget),&w,&h);
-	gtk_window_move(GTK_WINDOW(widget),gdk_screen_get_width(scr) - w,yy);
-	gtk_widget_show_all(widget);
-	if (timeout < 1) {
-		timeout = 5;
-	}
-	gtk_timeout_add(timeout*1000,DestroyDialog,widget);
-	n += 1;
-	yy = yy + h;
+  gtk_window_get_size(GTK_WINDOW(widget), &w, &h);
+  gtk_window_move(GTK_WINDOW(widget), gdk_screen_get_width(scr) - w, yy);
+  gtk_widget_show_all(widget);
+  if (timeout < 1) {
+    timeout = 5;
+  }
+  gtk_timeout_add(timeout * 1000, DestroyDialog, widget);
+  n += 1;
+  yy = yy + h;
 }

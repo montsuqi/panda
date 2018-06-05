@@ -6,7 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -23,95 +23,75 @@
 */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
-#include	"libmondai.h"
-#include	"dblib.h"
-#include	"dbgroup.h"
+#include "libmondai.h"
+#include "dblib.h"
+#include "dbgroup.h"
 
-static Bool
-rel_exist(
-	DBG_Struct	*dbg,
-	char *name,
-	char *relkind)
-{
-	ValueStruct *ret;
-	char *sql;
-	sql = (char *)xmalloc(SIZE_SQL);
-	Bool 	rc;
+static Bool rel_exist(DBG_Struct *dbg, char *name, char *relkind) {
+  ValueStruct *ret;
+  char *sql;
+  sql = (char *)xmalloc(SIZE_SQL);
+  Bool rc;
 
-	snprintf(sql, SIZE_SQL, "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = '%s';", name, relkind);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	xfree(sql);
-	if (ret) {
-		rc = TRUE;
-		FreeValueStruct(ret);
-	} else {
-		rc = FALSE;
-	}
-	return rc;
+  snprintf(
+      sql, SIZE_SQL,
+      "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON "
+      "n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = '%s';",
+      name, relkind);
+  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+  xfree(sql);
+  if (ret) {
+    rc = TRUE;
+    FreeValueStruct(ret);
+  } else {
+    rc = FALSE;
+  }
+  return rc;
 }
 
-extern Bool
-table_exist(
-	DBG_Struct	*dbg,
-	char *table_name)
-{
-	return rel_exist(dbg, table_name, "r");
+extern Bool table_exist(DBG_Struct *dbg, char *table_name) {
+  return rel_exist(dbg, table_name, "r");
 }
 
-extern Bool
-index_exist(
-	DBG_Struct	*dbg,
-	char *index_name)
-{
-	return rel_exist(dbg, index_name, "i");
+extern Bool index_exist(DBG_Struct *dbg, char *index_name) {
+  return rel_exist(dbg, index_name, "i");
 }
 
-extern Bool
-sequence_exist(
-	DBG_Struct	*dbg,
-	char *sequence_name)
-{
-	return rel_exist(dbg, sequence_name, "S");
+extern Bool sequence_exist(DBG_Struct *dbg, char *sequence_name) {
+  return rel_exist(dbg, sequence_name, "S");
 }
 
-extern Bool
-column_exist(
-	DBG_Struct	*dbg,
-	char *table_name,
-	char *column_name)
-{
-	Bool rc;
-	char *sql, *p;
-	ValueStruct *ret;
+extern Bool column_exist(DBG_Struct *dbg, char *table_name, char *column_name) {
+  Bool rc;
+  char *sql, *p;
+  ValueStruct *ret;
 
-	sql = (char *)xmalloc(SIZE_SQL);
-	p = sql;
-	p += sprintf(p, "SELECT 1");
-	p += sprintf(p, " FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name ");
-	p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s'", table_name, column_name);
-	sprintf(p, ";");
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	xfree(sql);
-	if (ret) {
-		rc = TRUE;
-		FreeValueStruct(ret);
-	} else {
-		rc = FALSE;
-	}
-	return rc;
+  sql = (char *)xmalloc(SIZE_SQL);
+  p = sql;
+  p += sprintf(p, "SELECT 1");
+  p += sprintf(p, " FROM pg_tables JOIN information_schema.columns on "
+                  "pg_tables.tablename = columns.table_name ");
+  p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s'", table_name,
+               column_name);
+  sprintf(p, ";");
+  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+  xfree(sql);
+  if (ret) {
+    rc = TRUE;
+    FreeValueStruct(ret);
+  } else {
+    rc = FALSE;
+  }
+  return rc;
 }
 
-extern void
-timestamp(
-	char *daytime,
-	size_t size)
-{
-	time_t now;
-	struct	tm	tm_now;
+extern void timestamp(char *daytime, size_t size) {
+  time_t now;
+  struct tm tm_now;
 
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(daytime, size, "%F %T %z", &tm_now);
+  now = time(NULL);
+  localtime_r(&now, &tm_now);
+  strftime(daytime, size, "%F %T %z", &tm_now);
 }
