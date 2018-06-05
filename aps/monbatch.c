@@ -394,7 +394,6 @@ static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
   for (i = 1; i < argc; i++) {
     if (pipe(std_io) == -1) {
       error = strerror(errno);
-      rc = -1;
       break;
     }
     if (repos_name == NULL) {
