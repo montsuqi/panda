@@ -1051,7 +1051,7 @@ static RecordStruct *BuildAuditLog(void) {
   p += sprintf(p, "result	integer;");
   p += sprintf(p, "ticket_id	integer;");
   p += sprintf(p, "exec_query	text;");
-  p += sprintf(p, "};");
+  sprintf(p, "};");
   rec = ParseRecordMem(buff);
   xfree(buff);
   return (rec);
@@ -1097,7 +1097,7 @@ static RecordStruct *BuildMcpArea(size_t stacksize) {
   p += sprintf(p, "logflag	int;");
   p += sprintf(p, "logcomment	varchar(%d);", SIZE_COMMENT);
   p += sprintf(p, "};");
-  p += sprintf(p, "};");
+  sprintf(p, "};");
   rec = ParseRecordMem(buff);
   xfree(buff);
   return (rec);
