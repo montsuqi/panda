@@ -737,7 +737,7 @@ extern RecordStruct *BuildDBCTRL(void) {
   p += sprintf(p, "func	varchar(%d);", SIZE_FUNC);
   p += sprintf(p, "rname	varchar(%d);", SIZE_NAME);
   p += sprintf(p, "pname	varchar(%d);", SIZE_NAME);
-  p += sprintf(p, "};");
+  sprintf(p, "};");
   rec = ParseRecordMem(buff);
 
   return (rec);
