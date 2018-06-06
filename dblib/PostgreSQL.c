@@ -307,7 +307,7 @@ static char *ItemName(void) {
       p += sprintf(p, "%s_", rname[i]);
     }
   }
-  p += sprintf(p, "%s", rname[level - 1]);
+  sprintf(p, "%s", rname[level - 1]);
   dbgprintf("item = [%s]", buff);
   return (buff);
 }
@@ -1583,7 +1583,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
     } else {
       p = sql;
-      p += sprintf(p, "CLOSE %s_%s_csr", ctrl->rname, ctrl->pname);
+      sprintf(p, "CLOSE %s_%s_csr", ctrl->rname, ctrl->pname);
       res = _PQexec(dbg, sql, ctrl->redirect, ctrl->usage);
       ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
       _PQclear(res);
