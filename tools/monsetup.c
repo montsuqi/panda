@@ -100,7 +100,7 @@ static Bool create_clog(DBG_Struct *dbg) {
   p += sprintf(p, "       num   int,");
   p += sprintf(p, "       clog text,");
   p += sprintf(p, "PRIMARY KEY(id, num)");
-  p += sprintf(p, ");");
+  sprintf(p, ");");
   rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
   xfree(sql);
   return rc;
@@ -134,7 +134,7 @@ static Bool check_monbatch_log(DBG_Struct *dbg) {
   sql = (char *)xmalloc(SIZE_BUFF);
   p = sql;
   p += sprintf(p, "ALTER TABLE %s ADD", BATCH_LOG_TABLE);
-  p += sprintf(p, "       groupname    varchar(64);");
+  sprintf(p, "       groupname    varchar(64);");
   rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
   xfree(sql);
   return rc;
@@ -167,8 +167,8 @@ static Bool create_monbatch_log(DBG_Struct *dbg) {
   p += sprintf(p, ");");
   p += sprintf(p, "CREATE INDEX %s_pgid ON %s (pgid);", BATCH_LOG_TABLE,
                BATCH_LOG_TABLE);
-  p += sprintf(p, "CREATE INDEX %s_start ON %s (starttime);", BATCH_LOG_TABLE,
-               BATCH_LOG_TABLE);
+  sprintf(p, "CREATE INDEX %s_start ON %s (starttime);", BATCH_LOG_TABLE,
+          BATCH_LOG_TABLE);
   rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
   xfree(sql);
   return rc;
@@ -237,8 +237,8 @@ static Bool create_monbatch(DBG_Struct *dbg) {
   p += sprintf(p, ");");
   p += sprintf(p, "CREATE INDEX %s_pgid ON %s (pgid);", BATCH_TABLE,
                BATCH_TABLE);
-  p += sprintf(p, "CREATE INDEX %s_start ON %s (starttime);", BATCH_TABLE,
-               BATCH_TABLE);
+  sprintf(p, "CREATE INDEX %s_start ON %s (starttime);", BATCH_TABLE,
+          BATCH_TABLE);
   rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
   xfree(sql);
 
@@ -255,7 +255,7 @@ static Bool check_monbatch(DBG_Struct *dbg) {
   sql = (char *)xmalloc(SIZE_BUFF);
   p = sql;
   p += sprintf(p, "ALTER TABLE %s ADD", BATCH_TABLE);
-  p += sprintf(p, "       groupname    varchar(64);");
+  sprintf(p, "       groupname    varchar(64);");
   rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
   xfree(sql);
   return rc;
