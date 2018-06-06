@@ -62,7 +62,7 @@ static char *QueryAuditTable(void) {
   p += sprintf(p, "    result integer,               ");
   p += sprintf(p, "    ticket_id integer,            ");
   p += sprintf(p, "    exec_query text               ");
-  p += sprintf(p, ");                                ");
+  sprintf(p, ");                                ");
   return buff;
 }
 
