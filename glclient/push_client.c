@@ -52,6 +52,8 @@ static char *CAFile;
 static char *SubID;
 static char *TempDir;
 
+static unsigned int fConnected;
+static unsigned int fFirstConnect;
 static time_t PongLast;
 
 static int websocket_write_back(struct lws *wsi, char *str, int size,
@@ -169,7 +171,8 @@ message_handler_error:
 static void warn_reconnect() {
   json_object *obj, *data;
 
-  if (!getenv("GL-PUSH-CLIENT-RECONNECT")) {
+  if (fFirstConnect) {
+    fFirstConnect = 0;
     return;
   }
 
@@ -189,17 +192,19 @@ static void warn_reconnect() {
 static void warn_disconnect() {
   json_object *obj, *data;
 
-  obj = json_object_new_object();
-  json_object_object_add(obj, "command", json_object_new_string("event"));
-  data = json_object_new_object();
-  json_object_object_add(obj, "command", json_object_new_string("event"));
-  json_object_object_add(obj, "data", data);
-  json_object_object_add(data, "body", json_object_new_object());
-  json_object_object_add(data, "event",
-                         json_object_new_string("websocket_disconnect"));
+  if (fConnected) {
+    obj = json_object_new_object();
+    json_object_object_add(obj, "command", json_object_new_string("event"));
+    data = json_object_new_object();
+    json_object_object_add(obj, "command", json_object_new_string("event"));
+    json_object_object_add(obj, "data", data);
+    json_object_object_add(data, "body", json_object_new_object());
+    json_object_object_add(data, "event",
+                           json_object_new_string("websocket_disconnect"));
 
-  event_handler(obj);
-  json_object_put(obj);
+    event_handler(obj);
+    json_object_put(obj);
+  }
   exit(1);
 }
 
@@ -239,13 +244,12 @@ static int callback_push_receive(struct lws *wsi,
       websocket_write_back(wsi, buf, -1, LWS_WRITE_TEXT);
     }
 
-    ConnWait = CONN_WAIT_INIT;
     PongLast = time(NULL);
     warn_reconnect();
+    fConnected = 1;
     break;
 
   case LWS_CALLBACK_CLOSED:
-    WSI = NULL;
     warn_disconnect();
     break;
 
@@ -259,7 +263,6 @@ static int callback_push_receive(struct lws *wsi,
   case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
     if (wsi == WSI) {
       Info("LWS_CALLBACK_CLIENT_CONNECTION_ERROR:%s", (char *)in);
-      WSI = NULL;
     }
     warn_disconnect();
     break;
@@ -314,6 +317,8 @@ static void Execute() {
   struct lws_context *context;
   const char *prot, *p;
   char path[512];
+
+  fConnected = 0;
 
   memset(&info, 0, sizeof info);
   memset(&i, 0, sizeof(i));
@@ -383,9 +388,9 @@ static void Execute() {
 }
 
 void ExecLoop() {
-  int pid,num,status;
+  int pid,status;
 
-  num = 0;
+  fFirstConnect = 1;
   while(1) {
     pid = fork();
     if (pid == 0) {
@@ -396,13 +401,12 @@ void ExecLoop() {
     } else {
       wait(&status);
     }
-    num += 1;
     ConnWait *= 2;
     if (ConnWait > CONN_WAIT_MAX) {
       ConnWait = CONN_WAIT_MAX;
     }
     sleep(ConnWait);
-    setenv("GL-PUSH-CLIENT-RECONNECT","1",1);
+    fFirstConnect = 0;
   }
 }
 
