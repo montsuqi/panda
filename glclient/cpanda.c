@@ -118,6 +118,7 @@ static void SendEvent(GLProtocol *ctx, char *file) {
   memcpy(jsonstr, buf, size);
 
   obj = json_tokener_parse(jsonstr);
+  free(jsonstr);
   if (!CheckJSONObject(obj, json_type_object)) {
     fprintf(stderr, "json parse failure %s\n", file);
     exit(1);

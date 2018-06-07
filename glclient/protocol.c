@@ -770,6 +770,7 @@ LargeByteString *REST_GetBLOB_via_ENV() {
   if (lbs == NULL) {
     _Error("REST_GetBLOB failure");
   }
+  g_free(proto);
 
   return lbs;
 }
