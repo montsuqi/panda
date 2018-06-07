@@ -15,6 +15,8 @@
 #include <uuid/uuid.h>
 #include <json.h>
 #include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <glib.h>
 #include <libgen.h>
 #include <libmondai.h>
@@ -29,7 +31,6 @@
 #define PING_TIMEOUT (30L)
 
 static unsigned int ConnWait = CONN_WAIT_INIT;
-static unsigned int fConnWarned = 0;
 static struct lws *WSI;
 
 /* option*/
@@ -51,6 +52,8 @@ static char *CAFile;
 static char *SubID;
 static char *TempDir;
 
+static unsigned int fConnected;
+static unsigned int fFirstConnect;
 static time_t PongLast;
 
 static int websocket_write_back(struct lws *wsi, char *str, int size,
@@ -168,10 +171,10 @@ message_handler_error:
 static void warn_reconnect() {
   json_object *obj, *data;
 
-  if (!fConnWarned) {
+  if (fFirstConnect) {
+    fFirstConnect = 0;
     return;
   }
-  fConnWarned = 0;
 
   obj = json_object_new_object();
   json_object_object_add(obj, "command", json_object_new_string("event"));
@@ -189,22 +192,20 @@ static void warn_reconnect() {
 static void warn_disconnect() {
   json_object *obj, *data;
 
-  if (fConnWarned) {
-    return;
+  if (fConnected) {
+    obj = json_object_new_object();
+    json_object_object_add(obj, "command", json_object_new_string("event"));
+    data = json_object_new_object();
+    json_object_object_add(obj, "command", json_object_new_string("event"));
+    json_object_object_add(obj, "data", data);
+    json_object_object_add(data, "body", json_object_new_object());
+    json_object_object_add(data, "event",
+                           json_object_new_string("websocket_disconnect"));
+
+    event_handler(obj);
+    json_object_put(obj);
   }
-  fConnWarned = 1;
-
-  obj = json_object_new_object();
-  json_object_object_add(obj, "command", json_object_new_string("event"));
-  data = json_object_new_object();
-  json_object_object_add(obj, "command", json_object_new_string("event"));
-  json_object_object_add(obj, "data", data);
-  json_object_object_add(data, "body", json_object_new_object());
-  json_object_object_add(data, "event",
-                         json_object_new_string("websocket_disconnect"));
-
-  event_handler(obj);
-  json_object_put(obj);
+  exit(1);
 }
 
 static int callback_push_receive(struct lws *wsi,
@@ -243,13 +244,12 @@ static int callback_push_receive(struct lws *wsi,
       websocket_write_back(wsi, buf, -1, LWS_WRITE_TEXT);
     }
 
-    ConnWait = CONN_WAIT_INIT;
     PongLast = time(NULL);
     warn_reconnect();
+    fConnected = 1;
     break;
 
   case LWS_CALLBACK_CLOSED:
-    WSI = NULL;
     warn_disconnect();
     break;
 
@@ -263,7 +263,6 @@ static int callback_push_receive(struct lws *wsi,
   case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
     if (wsi == WSI) {
       Info("LWS_CALLBACK_CLIENT_CONNECTION_ERROR:%s", (char *)in);
-      WSI = NULL;
     }
     warn_disconnect();
     break;
@@ -310,27 +309,16 @@ static struct lws_protocols protocols[] = {
 static const struct lws_extension exts[] = {
     {NULL, NULL, NULL /* terminator */}};
 
-static int ratelimit_connects(unsigned int *last, unsigned int secs) {
-  struct timeval tv;
-
-  gettimeofday(&tv, NULL);
-  if (tv.tv_sec - (*last) < secs)
-    return 0;
-
-  *last = tv.tv_sec;
-
-  return 1;
-}
-
 static void Execute() {
   time_t ping_last, ping_now;
   int ietf_version = -1;
-  unsigned int conn_last = 0;
   struct lws_context_creation_info info;
   struct lws_client_connect_info i;
   struct lws_context *context;
   const char *prot, *p;
   char path[512];
+
+  fConnected = 0;
 
   memset(&info, 0, sizeof info);
   memset(&i, 0, sizeof(i));
@@ -374,13 +362,9 @@ static void Execute() {
 
   while (1) {
 
-    if (!WSI && ratelimit_connects(&conn_last, ConnWait)) {
+    if (!WSI) {
       i.protocol = protocols[0].name;
       WSI = lws_client_connect_via_info(&i);
-      ConnWait *= 2;
-      if (ConnWait > CONN_WAIT_MAX) {
-        ConnWait = CONN_WAIT_MAX;
-      }
     }
     lws_service(context, 500);
 
@@ -391,7 +375,7 @@ static void Execute() {
         ping_last = ping_now;
         if ((ping_now - PongLast) >= PING_TIMEOUT) {
           Warning("websocket ping timeout");
-          WSI = NULL;
+          warn_disconnect();
         } else {
           websocket_write_back(WSI, "ping", -1, LWS_WRITE_PING);
         }
@@ -401,6 +385,29 @@ static void Execute() {
 
   Info("exit gl-push-client");
   lws_context_destroy(context);
+}
+
+void ExecLoop() {
+  int pid,status;
+
+  fFirstConnect = 1;
+  while(1) {
+    pid = fork();
+    if (pid == 0) {
+      prctl(PR_SET_PDEATHSIG, SIGHUP);
+      Execute();
+    } else if (pid < 0) {
+      Error("fork error:%s", strerror(errno));
+    } else {
+      wait(&status);
+    }
+    ConnWait *= 2;
+    if (ConnWait > CONN_WAIT_MAX) {
+      ConnWait = CONN_WAIT_MAX;
+    }
+    sleep(ConnWait);
+    fFirstConnect = 0;
+  }
 }
 
 static GOptionEntry entries[] = {{"gl-push-action", 'a', 0, G_OPTION_ARG_STRING,
@@ -484,7 +491,7 @@ int main(int argc, char **argv) {
     _Error("set env GLPUSH_TEMPDIR");
   }
 
-  Execute();
+  ExecLoop();
 
   return 0;
 }
