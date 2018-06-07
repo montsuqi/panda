@@ -15,6 +15,8 @@
 #include <uuid/uuid.h>
 #include <json.h>
 #include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <glib.h>
 #include <libgen.h>
 #include <libmondai.h>
@@ -29,7 +31,6 @@
 #define PING_TIMEOUT (30L)
 
 static unsigned int ConnWait = CONN_WAIT_INIT;
-static unsigned int fConnWarned = 0;
 static struct lws *WSI;
 
 /* option*/
@@ -168,10 +169,9 @@ message_handler_error:
 static void warn_reconnect() {
   json_object *obj, *data;
 
-  if (!fConnWarned) {
+  if (!getenv("GL-PUSH-CLIENT-RECONNECT")) {
     return;
   }
-  fConnWarned = 0;
 
   obj = json_object_new_object();
   json_object_object_add(obj, "command", json_object_new_string("event"));
@@ -189,11 +189,6 @@ static void warn_reconnect() {
 static void warn_disconnect() {
   json_object *obj, *data;
 
-  if (fConnWarned) {
-    return;
-  }
-  fConnWarned = 1;
-
   obj = json_object_new_object();
   json_object_object_add(obj, "command", json_object_new_string("event"));
   data = json_object_new_object();
@@ -205,6 +200,7 @@ static void warn_disconnect() {
 
   event_handler(obj);
   json_object_put(obj);
+  exit(1);
 }
 
 static int callback_push_receive(struct lws *wsi,
@@ -310,22 +306,9 @@ static struct lws_protocols protocols[] = {
 static const struct lws_extension exts[] = {
     {NULL, NULL, NULL /* terminator */}};
 
-static int ratelimit_connects(unsigned int *last, unsigned int secs) {
-  struct timeval tv;
-
-  gettimeofday(&tv, NULL);
-  if (tv.tv_sec - (*last) < secs)
-    return 0;
-
-  *last = tv.tv_sec;
-
-  return 1;
-}
-
 static void Execute() {
   time_t ping_last, ping_now;
   int ietf_version = -1;
-  unsigned int conn_last = 0;
   struct lws_context_creation_info info;
   struct lws_client_connect_info i;
   struct lws_context *context;
@@ -374,13 +357,9 @@ static void Execute() {
 
   while (1) {
 
-    if (!WSI && ratelimit_connects(&conn_last, ConnWait)) {
+    if (!WSI) {
       i.protocol = protocols[0].name;
       WSI = lws_client_connect_via_info(&i);
-      ConnWait *= 2;
-      if (ConnWait > CONN_WAIT_MAX) {
-        ConnWait = CONN_WAIT_MAX;
-      }
     }
     lws_service(context, 500);
 
@@ -391,7 +370,7 @@ static void Execute() {
         ping_last = ping_now;
         if ((ping_now - PongLast) >= PING_TIMEOUT) {
           Warning("websocket ping timeout");
-          WSI = NULL;
+          warn_disconnect();
         } else {
           websocket_write_back(WSI, "ping", -1, LWS_WRITE_PING);
         }
@@ -401,6 +380,30 @@ static void Execute() {
 
   Info("exit gl-push-client");
   lws_context_destroy(context);
+}
+
+void ExecLoop() {
+  int pid,num,status;
+
+  num = 0;
+  while(1) {
+    pid = fork();
+    if (pid == 0) {
+      prctl(PR_SET_PDEATHSIG, SIGHUP);
+      Execute();
+    } else if (pid < 0) {
+      Error("fork error:%s", strerror(errno));
+    } else {
+      wait(&status);
+    }
+    num += 1;
+    ConnWait *= 2;
+    if (ConnWait > CONN_WAIT_MAX) {
+      ConnWait = CONN_WAIT_MAX;
+    }
+    sleep(ConnWait);
+    setenv("GL-PUSH-CLIENT-RECONNECT","1",1);
+  }
 }
 
 static GOptionEntry entries[] = {{"gl-push-action", 'a', 0, G_OPTION_ARG_STRING,
@@ -484,7 +487,7 @@ int main(int argc, char **argv) {
     _Error("set env GLPUSH_TEMPDIR");
   }
 
-  Execute();
+  ExecLoop();
 
   return 0;
 }
