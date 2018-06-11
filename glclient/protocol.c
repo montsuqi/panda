@@ -939,6 +939,16 @@ static CURL *InitCURL(const char *user, const char *pass) {
   curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
   curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
   curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
+  curl_easy_setopt(Curl, CURLOPT_TCP_KEEPALIVE, 0L);
+
+  long to = 30;
+  char *_to;
+
+  _to = getenv("GLCLIENT_CURL_TIMEOUT_SEC");
+  if (_to) {
+    to = atol(_to);
+  }
+  curl_easy_setopt(Curl, CURLOPT_TIMEOUT, to);
 
   return Curl;
 }
