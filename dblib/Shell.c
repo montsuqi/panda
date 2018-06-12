@@ -601,14 +601,15 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *mw;
   char *sbt;
 
+  pgid = ValueToInteger(GetItemLongName(args, "pgid"));
+  ctrl->rc = killpg(pgid, SIGHUP);
+
   sbt = getenv("MCP_SUPPORT_BATCHSERVER");
   mw = getenv("MCP_MIDDLEWARE_NAME");
   if (sbt != NULL) {
     ctrl->rc = CancelBatchServer(args);
   } else if ((mw != NULL) && (!strcmp("panda", mw))) {
     CheckBatchPg();
-    pgid = ValueToInteger(GetItemLongName(args, "pgid"));
-    ctrl->rc = killpg(pgid, SIGHUP);
   }
 
   return ret;
