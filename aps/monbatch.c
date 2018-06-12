@@ -49,6 +49,8 @@
 
 #define MAX_LINE 1024
 
+#define CANCEL_CODE 128
+
 static char *Directory;
 
 static volatile int child_exit_flag = FALSE;
@@ -450,6 +452,11 @@ static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
     }
     if (WIFEXITED(status)) {
       rc = WEXITSTATUS(status);
+      if (rc == CANCEL_CODE) {
+        exit_flag = TRUE;
+        Warning("Processing is canceled. Because child exit code is %d",
+                CANCEL_CODE);
+      }
     } else if (WIFSIGNALED(status)) {
       rc = -WTERMSIG(status);
     } else {
