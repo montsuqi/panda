@@ -124,11 +124,13 @@ static void ExecuteDB_Server(MessageHandler *handler) {
     }
     func = ValueStringPointer(GetItemLongName(recDBCTRL->value, "func"));
     if (*func != 0) {
-      if ((ono = (int)(long)g_hash_table_lookup(path->opHash, func)) != 0) {
+      if (path != NULL && (ono = (int)(long)g_hash_table_lookup(path->opHash, func)) != 0) {
         op = path->ops[ono - 1];
         value = (op->args != NULL) ? op->args : value;
       }
-      ConvSetRecName(handler->conv, rec->name);
+      if (rec != NULL) {
+        ConvSetRecName(handler->conv, rec->name);
+      }
       InitializeValue(value);
       conv->UnPackValue(handler->conv, LBS_Body(dbbuff), value);
       strncpy(ctrl.func, func, SIZE_FUNC);
@@ -150,7 +152,9 @@ static void ExecuteDB_Server(MessageHandler *handler) {
       Send(fpDBW, conv->fsep, strlen(conv->fsep));
       ON_IO_ERROR(fpDBW, badio);
       LBS_EmitStart(dbbuff);
-      ConvSetRecName(handler->conv, rec->name);
+      if (rec != NULL) {
+        ConvSetRecName(handler->conv, rec->name);
+      }
       size = conv->SizeValue(handler->conv, ret);
       LBS_ReserveSize(dbbuff, size, FALSE);
       conv->PackValue(handler->conv, LBS_Body(dbbuff), ret);
