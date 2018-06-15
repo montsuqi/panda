@@ -706,7 +706,7 @@ static Bool IgnoreCountTables(char *TableName) {
 
   for (i = 0; ignore_count_tables[i] != NULL; i++) {
     ignore = ignore_count_tables[i];
-    if (strncmp(ignore, TableName, strlen(ignore)) != 0) {
+    if (strncmp(ignore, TableName, strlen(ignore)) == 0) {
       return TRUE;
     }
   }
