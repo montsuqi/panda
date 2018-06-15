@@ -1165,7 +1165,7 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
         break;
       case SQL_OP_STO:
-        if (!fIntoAster) {
+        if (!fIntoAster && tuple != NULL) {
           tuple[items] = (ValueStruct *)LBS_FetchPointer(src);
           dbgprintf("STO [%s]", ValueToString(tuple[items], NULL));
           items++;
