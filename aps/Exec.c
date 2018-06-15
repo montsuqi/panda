@@ -161,7 +161,9 @@ static void ExecuteDB_Server(MessageHandler *handler) {
       Send(fpDBW, conv->fsep, strlen(conv->fsep));
       ON_IO_ERROR(fpDBW, badio);
       LBS_EmitStart(dbbuff);
-      ConvSetRecName(handler->conv, rec->name);
+      if(rec != NULL) {
+        ConvSetRecName(handler->conv, rec->name);
+      }
       size = conv->SizeValue(handler->conv, ret);
       LBS_ReserveSize(dbbuff, size, FALSE);
       conv->PackValue(handler->conv, LBS_Body(dbbuff), ret);
