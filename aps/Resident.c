@@ -124,12 +124,16 @@ static void ExecuteDB_Server(MessageHandler *handler) {
     }
     func = ValueStringPointer(GetItemLongName(recDBCTRL->value, "func"));
     if (*func != 0) {
-      if (path != NULL && (ono = (int)(long)g_hash_table_lookup(path->opHash, func)) != 0) {
+      if (path == NULL) {
+        Error("path is NULL");
+      } else if ((ono = (int)(long)g_hash_table_lookup(path->opHash, func)) != 0) {
         op = path->ops[ono - 1];
         value = (op->args != NULL) ? op->args : value;
       }
       if (rec != NULL) {
         ConvSetRecName(handler->conv, rec->name);
+      } else {
+        Error("rec is NULL");
       }
       InitializeValue(value);
       conv->UnPackValue(handler->conv, LBS_Body(dbbuff), value);

@@ -88,7 +88,9 @@ static void DBD_Par(CURFILE *in, DBD_Struct *dbd, char *gname) {
           }
           sprintf(name, "%s/%s.db", p, ComSymbol);
           if ((db = DB_Parser(name, gname, TRUE)) != NULL) {
-            if (dbd != NULL && g_hash_table_lookup(dbd->DBD_Table, ComSymbol) == NULL) {
+            if (dbd == NULL) {
+              Error("dbd is NULL");
+            } else if (g_hash_table_lookup(dbd->DBD_Table, ComSymbol) == NULL) {
               rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) *
                                               (dbd->cDB + 1));
               memcpy(rtmp, dbd->db, sizeof(RecordStruct *) * dbd->cDB);
@@ -150,15 +152,23 @@ static DBD_Struct *ParDB(CURFILE *in) {
       }
       break;
     case T_ARRAYSIZE:
-      if (GetSymbol == T_ICONST && ret != NULL) {
-        ret->arraysize = ComInt;
+      if (GetSymbol == T_ICONST) {
+        if (ret != NULL) {
+          ret->arraysize = ComInt;
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("invalid array size");
       }
       break;
     case T_TEXTSIZE:
-      if (GetSymbol == T_ICONST && ret != NULL) {
-        ret->textsize = ComInt;
+      if (GetSymbol == T_ICONST) {
+        if (ret != NULL) {
+          ret->textsize = ComInt;
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("invalid text size");
       }
@@ -204,6 +214,8 @@ extern DBD_Struct *DBD_Parser(char *name) {
     } else {
       if (in != NULL) {
         ParError("DBD file not found");
+      } else {
+        Error("in is NULL");
       }
       ret = NULL;
     }

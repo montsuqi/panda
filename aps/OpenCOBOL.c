@@ -151,6 +151,8 @@ static void _ReadyDC(MessageHandler *handler) {
   ConvSetCodeset(OpenCOBOL_Conv, ConvCodeset(handler->conv));
   if (handler->conv != NULL) {
     OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
+  } else {
+    Error("handler->conv is NULL");
   }
 
   InitMONFUNC(OpenCOBOL_Conv, OpenCOBOL_PackValue, OpenCOBOL_UnPackValue,
@@ -212,6 +214,8 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
   ConvSetCodeset(OpenCOBOL_Conv, ConvCodeset(handler->conv));
   if (handler->conv != NULL) {
     OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
+  } else {
+    Error("handler->conv is NULL");
   }
 
   InitMONFUNC(OpenCOBOL_Conv, OpenCOBOL_PackValue, OpenCOBOL_UnPackValue,

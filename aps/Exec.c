@@ -163,6 +163,8 @@ static void ExecuteDB_Server(MessageHandler *handler) {
       LBS_EmitStart(dbbuff);
       if(rec != NULL) {
         ConvSetRecName(handler->conv, rec->name);
+      } else {
+        Error("rec is NULL");
       }
       size = conv->SizeValue(handler->conv, ret);
       LBS_ReserveSize(dbbuff, size, FALSE);

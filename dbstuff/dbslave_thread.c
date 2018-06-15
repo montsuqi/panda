@@ -358,6 +358,8 @@ end_tran:
     TransactionRedirectRollback(ctx->dbg);
     if (log != NULL) {
       TransactionRedirectRollback(log->dbg);
+    } else {
+      Error("log is NULL");
     }
   }
   Close_DBLog(&log);
@@ -409,6 +411,8 @@ _end_tran:
     TransactionRedirectRollback(ctx->dbg);
     if (log != NULL) {
       TransactionRedirectRollback(log->dbg);
+    } else {
+      Error("log is NULL");
     }
   }
   Close_DBLog(&log);

@@ -94,6 +94,8 @@ extern void InitSystem(char *name) {
       SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.term"), term,
                      NULL);
     }
+  } else {
+    Error("ThisEnv-> mcprec is NULL");
   }
   if ((Bind = g_hash_table_lookup(ThisBD->BatchTable, name)) == NULL) {
     Error("%s application is not in BD.", name);

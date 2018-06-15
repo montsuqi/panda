@@ -158,6 +158,8 @@ static void ParWindow(CURFILE *in, LD_Struct *ld) {
         ld->cWindow++;
         if (window != NULL) {
           g_hash_table_insert(ld->whash, window->name, (void *)ld->cWindow);
+        } else {
+          Error("window is NULL");
         }
       } else {
         ParError("record name not found");
