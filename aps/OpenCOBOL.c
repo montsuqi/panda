@@ -149,7 +149,9 @@ static void _ReadyDC(MessageHandler *handler) {
   OpenCOBOL_Conv = NewConvOpt();
   ConvSetSize(OpenCOBOL_Conv, ThisLD->textsize, ThisLD->arraysize);
   ConvSetCodeset(OpenCOBOL_Conv, ConvCodeset(handler->conv));
-  OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
+  if (handler->conv != NULL) {
+    OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
+  }
 
   InitMONFUNC(OpenCOBOL_Conv, OpenCOBOL_PackValue, OpenCOBOL_UnPackValue,
               OpenCOBOL_SizeValue);
@@ -208,7 +210,9 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
   OpenCOBOL_Conv = NewConvOpt();
   ConvSetSize(OpenCOBOL_Conv, ThisBD->textsize, ThisBD->arraysize);
   ConvSetCodeset(OpenCOBOL_Conv, ConvCodeset(handler->conv));
-  OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
+  if (handler->conv != NULL) {
+    OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
+  }
 
   InitMONFUNC(OpenCOBOL_Conv, OpenCOBOL_PackValue, OpenCOBOL_UnPackValue,
               OpenCOBOL_SizeValue);
