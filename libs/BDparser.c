@@ -244,7 +244,7 @@ static BD_Struct *BD_Par(CURFILE *in) {
         if (ret != NULL) {
           ret->loadpath = strdup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
         } else {
-          ERROR("ret is NULL");
+          Error("ret is NULL");
         }
       } else {
         ParError("load path invalid");
@@ -255,7 +255,7 @@ static BD_Struct *BD_Par(CURFILE *in) {
         if (ret != NULL) {
           ret->handlerpath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
         } else {
-          ERROR("ret is null");
+          Error("ret is null");
         }
       } else {
         ParError("handler path invalid");
