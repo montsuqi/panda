@@ -62,7 +62,7 @@ static ValueStruct *_NewBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   snprintf(sql, sql_len,
            "INSERT INTO %s (id, blobid, status) VALUES('%s', '%u', '%d');",
            MONBLOB, monblob->id, (unsigned int)monblob->blobid, 503);
-  rc = ExecDBOP(mondbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   if ((val = GetItemLongName(args, "id")) != NULL) {
     SetValueString(val, monblob->id, dbg->coding);

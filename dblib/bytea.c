@@ -92,7 +92,7 @@ static Bool migration_monblob(DBG_Struct *dbg) {
   sql = (char *)xmalloc(SIZE_BUFF);
   sprintf(sql, "INSERT INTO %s (%s) SELECT %s FROM %s;", MONBLOB, columns,
           columns, table_name);
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   xfree(columns);
   xfree(table_name);
@@ -114,20 +114,20 @@ static Bool create_monblob(DBG_Struct *dbg) {
     p += sprintf(p, "%s %s", columns[i][0], columns[i][1]);
   }
   sprintf(p, ");");
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   if (rc == MCP_OK) {
     sprintf(sql, "ALTER TABLE ONLY %s ADD CONSTRAINT %s_pkey PRIMARY KEY(id);",
             MONBLOB, MONBLOB);
-    rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+    rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   }
   if (rc == MCP_OK) {
     sprintf(sql, "CREATE INDEX %s_blobid ON %s (blobid);", MONBLOB, MONBLOB);
-    rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+    rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   }
   if (rc == MCP_OK) {
     sprintf(sql, "CREATE INDEX %s_importtime ON %s (importtime);", MONBLOB,
             MONBLOB);
-    rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+    rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   }
   xfree(sql);
   return (rc == MCP_OK);
@@ -139,25 +139,25 @@ static Bool recreate_monblob(DBG_Struct *dbg) {
 
   if (table_exist(dbg, "monblob__bak") == TRUE) {
     sprintf(sql, "DROP TABLE %s__bak CASCADE;", MONBLOB);
-    if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+    if (ExecDBOP(dbg, sql, FALSE, DB_UPDATE) != MCP_OK) {
       return FALSE;
     }
   }
   if (index_exist(dbg, "monblob_pkey") == TRUE) {
     sprintf(sql, "ALTER TABLE %s DROP CONSTRAINT %s_pkey;", MONBLOB, MONBLOB);
-    if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+    if (ExecDBOP(dbg, sql, FALSE, DB_UPDATE) != MCP_OK) {
       return FALSE;
     }
   }
   sprintf(sql, "ALTER TABLE %s RENAME TO %s__bak;", MONBLOB, MONBLOB);
-  if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+  if (ExecDBOP(dbg, sql, FALSE, DB_UPDATE) != MCP_OK) {
     return FALSE;
   }
   int i;
   char *index[] = {"monblob_blobid", "monblob_importtime", NULL};
   for (i = 0; index[i] != NULL; i++) {
     sprintf(sql, "DROP INDEX IF EXISTS %s;", index[i]);
-    if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+    if (ExecDBOP(dbg, sql, FALSE, DB_UPDATE) != MCP_OK) {
       return FALSE;
     }
   }
@@ -168,7 +168,7 @@ static Bool recreate_monblob(DBG_Struct *dbg) {
     return FALSE;
   }
   sprintf(sql, "DROP TABLE %s__bak CASCADE;", MONBLOB);
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   return (rc == MCP_OK);
 }
 
@@ -178,7 +178,7 @@ static Bool create_sequence(DBG_Struct *dbg) {
 
   sql = (char *)xmalloc(SIZE_BUFF);
   sprintf(sql, "CREATE SEQUENCE %s;", SEQMONBLOB);
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -414,7 +414,7 @@ static Bool monblob_expire(DBG_Struct *dbg) {
            "CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > "
            "importtime + CAST('%d days' AS INTERVAL)));",
            MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -529,7 +529,7 @@ extern Bool monblob_insert(DBG_Struct *dbg, monblob_struct *monblob,
     sql_p += snprintf(sql_p, sql_len, "')");
   }
   snprintf(sql_p, sql_len, ";");
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
 
   return (rc == MCP_OK);
@@ -708,7 +708,7 @@ static Bool monblob_update(DBG_Struct *dbg, monblob_struct *monblob) {
   sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", id);
   xfree(id);
   snprintf(sql_p, sql_len, ";");
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -766,7 +766,7 @@ extern Bool monblob_delete(DBG_Struct *dbg, char *id) {
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s'", MONBLOB, id);
-  rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   return (rc == MCP_OK);
 }

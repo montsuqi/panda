@@ -629,7 +629,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "CLOSE %s_csr;", BATCH_TABLE);
-  ExecDBOP(mondbg, sql, TRUE, DB_UPDATE);
+  ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
 
   return (ret);
