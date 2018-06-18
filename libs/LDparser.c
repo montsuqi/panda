@@ -74,6 +74,7 @@ static TokenTable tokentable[] = {{"data", T_DATA},
                                   {"", 0}};
 
 static GHashTable *Reserved;
+static GHashTable *DBParsed;
 
 static GHashTable *Records;
 
@@ -187,21 +188,27 @@ static void _ParDB(CURFILE *in, LD_Struct *ld, char *dbgname,
       *q = 0;
     }
     sprintf(name, "%s/%s.db", p, table_name);
-    if (g_hash_table_lookup(ld->DB_Table, table_name) == NULL) {
-      db = DB_Parser(name, dbgname, TRUE);
-      if (db != NULL) {
-        rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * (ld->cDB + 1));
-        memcpy(rtmp, ld->db, sizeof(RecordStruct *) * ld->cDB);
-        if (ld->db != NULL) {
-          xfree(ld->db);
-        }
-        ld->db = rtmp;
-        ld->db[ld->cDB] = db;
-        ld->cDB++;
-        g_hash_table_insert(ld->DB_Table, StrDup(table_name), (void *)ld->cDB);
+    if ((db = g_hash_table_lookup(DBParsed, name)) == NULL) {
+      dbgprintf("Parsed %s\n", table_name);
+      if (g_hash_table_lookup(ld->DB_Table, table_name) == NULL) {
+        db = DB_Parser(name, dbgname, TRUE);
+      } else {
+        ParError("same db appier");
       }
+      g_hash_table_insert(DBParsed, StrDup(name), (void *)db);
     } else {
-      ParError("same db appier");
+      dbgprintf("Already Parsed %s\n", name);
+    }
+    if (db != NULL) {
+      rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * (ld->cDB + 1));
+      memcpy(rtmp, ld->db, sizeof(RecordStruct *) * ld->cDB);
+      if (ld->db != NULL) {
+        xfree(ld->db);
+      }
+      ld->db = rtmp;
+      ld->db[ld->cDB] = db;
+      ld->cDB++;
+      g_hash_table_insert(ld->DB_Table, StrDup(table_name), (void *)ld->cDB);
     }
     p = q + 1;
   } while ((q != NULL) && (db == NULL));
@@ -475,5 +482,6 @@ extern void LD_ParserInit(void) {
   Reserved = MakeReservedTable(tokentable);
 
   Records = NewNameHash();
+  DBParsed = NewNameHash();
   MessageHandlerInit();
 }
