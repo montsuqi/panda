@@ -356,7 +356,11 @@ end_tran:
   } else {
     dbgmsg("rollback");
     TransactionRedirectRollback(ctx->dbg);
-    TransactionRedirectRollback(log->dbg);
+    if (log != NULL) {
+      TransactionRedirectRollback(log->dbg);
+    } else {
+      Error("log is NULL");
+    }
   }
   Close_DBLog(&log);
   LEAVE_FUNC;
@@ -405,7 +409,11 @@ _end_tran:
   } else {
     dbgmsg("rollback");
     TransactionRedirectRollback(ctx->dbg);
-    TransactionRedirectRollback(log->dbg);
+    if (log != NULL) {
+      TransactionRedirectRollback(log->dbg);
+    } else {
+      Error("log is NULL");
+    }
   }
   Close_DBLog(&log);
 

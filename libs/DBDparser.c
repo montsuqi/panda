@@ -88,7 +88,9 @@ static void DBD_Par(CURFILE *in, DBD_Struct *dbd, char *gname) {
           }
           sprintf(name, "%s/%s.db", p, ComSymbol);
           if ((db = DB_Parser(name, gname, TRUE)) != NULL) {
-            if (g_hash_table_lookup(dbd->DBD_Table, ComSymbol) == NULL) {
+            if (dbd == NULL) {
+              Error("dbd is NULL");
+            } else if (g_hash_table_lookup(dbd->DBD_Table, ComSymbol) == NULL) {
               rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) *
                                               (dbd->cDB + 1));
               memcpy(rtmp, dbd->db, sizeof(RecordStruct *) * dbd->cDB);
@@ -151,14 +153,22 @@ static DBD_Struct *ParDB(CURFILE *in) {
       break;
     case T_ARRAYSIZE:
       if (GetSymbol == T_ICONST) {
-        ret->arraysize = ComInt;
+        if (ret != NULL) {
+          ret->arraysize = ComInt;
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("invalid array size");
       }
       break;
     case T_TEXTSIZE:
       if (GetSymbol == T_ICONST) {
-        ret->textsize = ComInt;
+        if (ret != NULL) {
+          ret->textsize = ComInt;
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("invalid text size");
       }
@@ -202,7 +212,11 @@ extern DBD_Struct *DBD_Parser(char *name) {
       ret = ParDB(in);
       DropLexInfo(&in);
     } else {
-      ParError("DBD file not found");
+      if (in != NULL) {
+        ParError("DBD file not found");
+      } else {
+        Error("in is NULL");
+      }
       ret = NULL;
     }
   } else {

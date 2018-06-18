@@ -812,12 +812,16 @@ void GLP_SetSSLPKCS11(GLProtocol *ctx, const char *p11lib, const char *pin) {
     }
   }
 
-  fprintf(stderr, "Slot manufacturer......: %s\n", slot->manufacturer);
-  fprintf(stderr, "Slot description.......: %s\n", slot->description);
-  fprintf(stderr, "Slot token label.......: %s\n", slot->token->label);
-  fprintf(stderr, "Slot token manufacturer: %s\n", slot->token->manufacturer);
-  fprintf(stderr, "Slot token model.......: %s\n", slot->token->model);
-  fprintf(stderr, "Slot token serialnr....: %s\n", slot->token->serialnr);
+  if (slot != NULL && slot->token != NULL) {
+    fprintf(stderr, "Slot manufacturer......: %s\n", slot->manufacturer);
+    fprintf(stderr, "Slot description.......: %s\n", slot->description);
+    fprintf(stderr, "Slot token label.......: %s\n", slot->token->label);
+    fprintf(stderr, "Slot token manufacturer: %s\n", slot->token->manufacturer);
+    fprintf(stderr, "Slot token model.......: %s\n", slot->token->model);
+    fprintf(stderr, "Slot token serialnr....: %s\n", slot->token->serialnr);
+  } else {
+    Error("slot or slot->token is NULL");
+  }
 
   rc = PKCS11_open_session(slot, 0);
   if (rc != 0) {
@@ -845,7 +849,11 @@ void GLP_SetSSLPKCS11(GLProtocol *ctx, const char *p11lib, const char *pin) {
   fprintf(stderr, "%s\n", certid);
 
   /* get all certs */
-  rc = PKCS11_enumerate_certs(slot->token, &certs, &ncerts);
+  if (slot != NULL) {
+    rc = PKCS11_enumerate_certs(slot->token, &certs, &ncerts);
+  } else {
+    Error("slot is NULL");
+  }
   if (rc) {
     Error("PKCS11_enumerate_certs");
   }

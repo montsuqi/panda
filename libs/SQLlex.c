@@ -58,7 +58,9 @@ extern int GetChar(CURFILE *in) {
       if (in->body == NULL) {
         fprintf(stderr, "nulpo!\n");
       }
-      if ((c = in->body[in->pos]) == 0) {
+      if (in->body == NULL) {
+        Error("in->body is NULL");
+      } else if ((c = in->body[in->pos]) == 0) {
         c = 0;
       }
     }

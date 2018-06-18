@@ -83,15 +83,19 @@ extern void InitSystem(char *name) {
   if (ThisEnv->mcprec != NULL) {
     InitializeValue(ThisEnv->mcprec->value);
   }
-  SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.module"), name,
-                 NULL);
-  if ((user = getenv("MCP_USER")) != NULL) {
-    SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.user"), user,
+  if (ThisEnv->mcprec != NULL) {
+    SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.module"), name,
                    NULL);
-  }
-  if ((term = getenv("MCP_TERM")) != NULL) {
-    SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.term"), term,
-                   NULL);
+    if ((user = getenv("MCP_USER")) != NULL) {
+      SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.user"), user,
+                     NULL);
+    }
+    if ((term = getenv("MCP_TERM")) != NULL) {
+      SetValueString(GetItemLongName(ThisEnv->mcprec->value, "dc.term"), term,
+                     NULL);
+    }
+  } else {
+    Error("ThisEnv-> mcprec is NULL");
   }
   if ((Bind = g_hash_table_lookup(ThisBD->BatchTable, name)) == NULL) {
     Error("%s application is not in BD.", name);

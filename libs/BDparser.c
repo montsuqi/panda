@@ -97,7 +97,9 @@ static void ParDB(CURFILE *in, BD_Struct *bd, char *gname) {
           }
           sprintf(name, "%s/%s.db", p, ComSymbol);
           if ((db = DB_Parser(name, gname, TRUE)) != NULL) {
-            if (g_hash_table_lookup(bd->DB_Table, ComSymbol) == NULL) {
+            if (bd == NULL) {
+              Error("bd is NULL");
+            } else if (g_hash_table_lookup(bd->DB_Table, ComSymbol) == NULL) {
               rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) *
                                               (bd->cDB + 1));
               memcpy(rtmp, bd->db, sizeof(RecordStruct *) * bd->cDB);
@@ -132,14 +134,20 @@ static void ParBIND(CURFILE *in, BD_Struct *ret) {
 
   ENTER_FUNC;
   if ((GetSymbol == T_SCONST) || (ComToken == T_SYMBOL)) {
-    if ((bind = g_hash_table_lookup(ret->BatchTable, ComSymbol)) == NULL) {
+    if (ret == NULL) {
+      Error("ret is NULL");
+    } else if ((bind = g_hash_table_lookup(ret->BatchTable, ComSymbol)) == NULL) {
       bind = New(BatchBind);
       bind->module = StrDup(ComSymbol);
       ;
       g_hash_table_insert(ret->BatchTable, bind->module, bind);
     }
     if ((GetSymbol == T_SCONST) || (ComToken == T_SYMBOL)) {
-      bind->handler = (void *)StrDup(ComSymbol);
+      if (bind != NULL) {
+        bind->handler = (void *)StrDup(ComSymbol);
+      } else {
+        Error("bind is NULL");
+      }
     } else {
       ParError("handler name error");
     }
@@ -186,14 +194,22 @@ static BD_Struct *BD_Par(CURFILE *in) {
       break;
     case T_ARRAYSIZE:
       if (GetSymbol == T_ICONST) {
-        ret->arraysize = ComInt;
+        if (ret != NULL) {
+          ret->arraysize = ComInt;
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("invalid array size");
       }
       break;
     case T_TEXTSIZE:
       if (GetSymbol == T_ICONST) {
-        ret->textsize = ComInt;
+        if (ret != NULL) {
+          ret->textsize = ComInt;
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("invalid text size");
       }
@@ -214,21 +230,33 @@ static BD_Struct *BD_Par(CURFILE *in) {
       break;
     case T_HOME:
       if (GetSymbol == T_SCONST) {
-        ret->home = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+        if (ret != NULL) {
+          ret->home = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+        } else {
+          Error("ret is NULL");
+        }
       } else {
         ParError("home directory invalid");
       }
       break;
     case T_LOADPATH:
       if (GetSymbol == T_SCONST) {
-        ret->loadpath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+        if (ret != NULL) {
+          ret->loadpath = strdup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+        } else {
+          ERROR("ret is NULL");
+        }
       } else {
         ParError("load path invalid");
       }
       break;
     case T_HANDLERPATH:
       if (GetSymbol == T_SCONST) {
-        ret->handlerpath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+        if (ret != NULL) {
+          ret->handlerpath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+        } else {
+          ERROR("ret is null");
+        }
       } else {
         ParError("handler path invalid");
       }
@@ -273,7 +301,11 @@ extern BD_Struct *BD_Parser(char *name) {
       DropLexInfo(&in);
       BindHandler(ret);
     } else {
-      ParErrorPrintf("BD file not found %s", name);
+      if (in != NULL) {
+        ParErrorPrintf("BD file not found %s", name);
+      } else {
+        Error("in is NULL");
+      }
       ret = NULL;
     }
   } else {
