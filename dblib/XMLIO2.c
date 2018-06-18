@@ -51,8 +51,6 @@
 #include "message.h"
 #include "debug.h"
 
-#define CAST_BAD(arg) (char *)(arg)
-
 typedef enum xml_open_mode {
   MODE_READ = 0,
   MODE_WRITE,

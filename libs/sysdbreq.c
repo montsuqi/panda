@@ -66,39 +66,28 @@ badio:
 }
 
 PacketClass SYSDB_GetData(NETFILE *fp, ValueStruct *val) {
-  ENTER_FUNC;
   return SYSDB_RequestCommon(fp, SYSDB_GET_DATA, val);
-  LEAVE_FUNC;
 }
 
 PacketClass SYSDB_GetMessage(NETFILE *fp, ValueStruct *val) {
-  ENTER_FUNC;
   return SYSDB_RequestCommon(fp, SYSDB_GET_MESSAGE, val);
-  LEAVE_FUNC;
 }
 
 PacketClass SYSDB_ResetMessage(NETFILE *fp, ValueStruct *val) {
-  ENTER_FUNC;
   return SYSDB_RequestCommon(fp, SYSDB_RESET_MESSAGE, val);
-  LEAVE_FUNC;
 }
 
 PacketClass SYSDB_SetMessage(NETFILE *fp, ValueStruct *val) {
-  ENTER_FUNC;
   return SYSDB_RequestCommon(fp, SYSDB_SET_MESSAGE, val);
-  LEAVE_FUNC;
 }
 
 PacketClass SYSDB_SetMessageAll(NETFILE *fp, ValueStruct *val) {
-  ENTER_FUNC;
   return SYSDB_RequestCommon(fp, SYSDB_SET_MESSAGE_ALL, val);
-  LEAVE_FUNC;
 }
 
 PacketClass SYSDB_GetDataAll(NETFILE *fp, int *size, ValueStruct *vals) {
   PacketClass rc;
   LargeByteString *buf;
-  ENTER_FUNC;
   rc = SESSION_CONTROL_NG;
   buf = NewLBS();
   SendPacketClass(fp, SYSDATA_SYSDB);
@@ -111,6 +100,5 @@ PacketClass SYSDB_GetDataAll(NETFILE *fp, int *size, ValueStruct *vals) {
   NativeUnPackValue(NULL, LBS_Body(buf), vals);
 badio:
   FreeLBS(buf);
-  LEAVE_FUNC;
   return rc;
 }
