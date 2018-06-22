@@ -928,6 +928,8 @@ void GLP_SetSSL(GLProtocol *ctx, const char *cert, const char *key,
 }
 #endif
 
+#define DEFAULT_CURL_TIMEOUT_SEC (300)
+
 static CURL *InitCURL(const char *user, const char *pass) {
   CURL *Curl;
   char userpass[1024];
@@ -949,7 +951,7 @@ static CURL *InitCURL(const char *user, const char *pass) {
   curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
   curl_easy_setopt(Curl, CURLOPT_TCP_KEEPALIVE, 0L);
 
-  long to = 30;
+  long to = DEFAULT_CURL_TIMEOUT_SEC;
   char *_to;
 
   _to = getenv("GLCLIENT_CURL_TIMEOUT_SEC");
