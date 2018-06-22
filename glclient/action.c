@@ -1178,8 +1178,8 @@ static void UpdateWindow(json_object *w, int idx) {
     if (child == NULL || is_error(child)) {
       Error("invalid json part:screeen_data");
     }
-    UpdateWidget(GetWidgetByLongName(wname), wdata->tmpl);
     if (!strcmp(wname, FOCUSEDWINDOW(Session))) {
+      UpdateWidget(GetWidgetByLongName(wname), wdata->tmpl);
       ShowWindow(wname);
     }
     ResetTimers((char *)wname);
