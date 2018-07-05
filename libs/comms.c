@@ -134,6 +134,7 @@ extern void SendValueString(NETFILE *fpComm, ValueStruct *value, char *name,
                       fName, fType, encode);
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     for (i = 0; i < ValueRecordSize(value); i++) {
       sprintf(name, ".%s", ValueRecordName(value, i));

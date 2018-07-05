@@ -138,7 +138,7 @@ static void OutPutValue(char *type, ValueStruct *value) {
 
   if (!value) {
     invalue = NewValue(GL_TYPE_ARRAY);
-  } else if (ValueType(value) == GL_TYPE_RECORD) {
+  } else if (IS_VALUE_RECORD(value)) {
     invalue = NewValue(GL_TYPE_ARRAY);
     ValueAddArrayItem(invalue, 0, value);
   } else {

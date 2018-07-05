@@ -48,8 +48,8 @@ extern RecordStruct *DD_Parse(CURFILE *in) {
     ret = New(RecordStruct);
     ret->value = value;
     ret->name = StrDup(in->ValueName);
-    if (ValueName(value) == NULL) {
-      ValueName(value) = ret->name;
+    if (ValueRootRecordName(value) == NULL) {
+      ValueRootRecordName(value) = ret->name;
     }
     ret->type = RECORD_NULL;
   } else {

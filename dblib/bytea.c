@@ -54,7 +54,7 @@ static char *get_columns(DBG_Struct *dbg, char *table_name) {
           table_name);
   retval = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
   if (retval) {
-    if (ValueType(retval) == GL_TYPE_RECORD) {
+    if (IS_VALUE_RECORD(retval)) {
       columns = StrDup(ValueToString(ValueRecordItem(retval, 0), dbg->coding));
     }
     FreeValueStruct(retval);

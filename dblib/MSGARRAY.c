@@ -212,7 +212,7 @@ static int _WriteXML(ValueStruct *ret) {
   val = GetRecordItem(ret, "data");
   node = Value2XMLNode("data", val);
   if (node != NULL) {
-    name = g_strdup_printf("%s_child", ValueName(ret));
+    name = g_strdup_printf("%s_child", ValueRootRecordName(ret));
     record = xmlNewNode(NULL, name);
     g_free(name);
     xmlNewProp(record, "type", "record");
@@ -347,7 +347,7 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   switch (CTX.mode) {
   case MODE_WRITE_XML:
     CTX.doc = xmlNewDoc("1.0");
-    root = xmlNewDocNode(CTX.doc, NULL, ValueName(args), NULL);
+    root = xmlNewDocNode(CTX.doc, NULL, ValueRootRecordName(args), NULL);
     xmlNewProp(root, "type", "array");
     xmlDocSetRootElement(CTX.doc, root);
     ctrl->rc = MCP_OK;

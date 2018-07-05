@@ -199,14 +199,14 @@ static void InsertValue(DBG_Struct *dbg, LargeByteString *lbs,
       LBS_EmitChar(lbs, '"');
       break;
     case GL_TYPE_NUMBER:
-      nv = FixedToNumeric(&ValueFixed(val));
+      nv = FixedToNumeric(ValueFixed(val));
       str = NumericOutput(nv);
       LBS_EmitString(lbs, str);
       xfree(str);
       NumericFree(nv);
       break;
     case GL_TYPE_INT:
-      sprintf(buff, "%d", ValueInteger(val));
+      sprintf(buff, "%ld", ValueInteger(val));
       LBS_EmitString(lbs, buff);
       break;
     case GL_TYPE_FLOAT:
@@ -219,6 +219,7 @@ static void InsertValue(DBG_Struct *dbg, LargeByteString *lbs,
       break;
     case GL_TYPE_BYTE:
     case GL_TYPE_ARRAY:
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       break;
     default:

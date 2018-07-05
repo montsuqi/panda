@@ -178,6 +178,7 @@ static void TableBody(LargeByteString *lbs, ValueStruct *val, size_t arraysize,
     TableBody(lbs, tmp, arraysize, textsize);
     alevel--;
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     fComm = FALSE;

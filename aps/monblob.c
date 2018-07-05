@@ -103,12 +103,12 @@ static Bool list_print(ValueStruct *ret) {
   if (ret == NULL) {
     return FALSE;
   }
-  if (ValueType(ret) == GL_TYPE_ARRAY) {
+  if (IS_VALUE_ARRAY(ret)) {
     for (i = 0; i < ValueArraySize(ret); i++) {
       value = ValueArrayItem(ret, i);
       _list_print(value);
     }
-  } else if (ValueType(ret) == GL_TYPE_RECORD) {
+  } else if (IS_VALUE_RECORD(ret)) {
     _list_print(ret);
   }
   return TRUE;

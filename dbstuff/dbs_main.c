@@ -446,6 +446,7 @@ static void DumpItems(NETFILE *fp, ValueStruct *value) {
     snprintf(buff, SIZE_LONGNAME, "[%d]", (int)ValueArraySize(value));
     SendStringDelim(fp, buff);
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     SendStringDelim(fp, "{");
     for (i = 0; i < ValueRecordSize(value); i++) {

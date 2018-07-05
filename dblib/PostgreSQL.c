@@ -237,7 +237,7 @@ static void ValueToSQL(DBG_Struct *dbg, LargeByteString *lbs,
       LBS_EmitString(lbs, ValueToString(val, dbg->coding));
       break;
     case GL_TYPE_NUMBER:
-      nv = FixedToNumeric(&ValueFixed(val));
+      nv = FixedToNumeric(ValueFixed(val));
       str = NumericOutput(nv);
       LBS_EmitString(lbs, str);
       xfree(str);
@@ -424,6 +424,7 @@ static char *ParArray(DBG_Struct *dbg, char *p, ValueStruct *val) {
       case GL_TYPE_ARRAY:
         p = ParArray(dbg, p, item);
         break;
+      case GL_TYPE_ROOT_RECORD:
       case GL_TYPE_RECORD:
         for (j = 0; j < ValueRecordSize(item); j++) {
           p = ParArray(dbg, p, ValueRecordItem(item, i));
@@ -651,6 +652,7 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
       ParArray(dbg, PQgetvalue(res, ix, fnum), val);
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     dbgmsg(">record");
@@ -741,6 +743,7 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
     case GL_TYPE_ARRAY:
       ParArray(dbg, PQgetvalue(res, tnum, fnum), val);
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       break;
     default:
@@ -889,6 +892,7 @@ static void UpdateValue(DBG_Struct *dbg, LargeByteString *lbs,
         }
       }
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       level++;
       fComm = FALSE;
@@ -935,6 +939,7 @@ static void InsertNames(LargeByteString *lbs, ValueStruct *val) {
       LBS_EmitString(lbs, ItemName());
       LBS_EmitString(lbs, PutDim());
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       level++;
       fComm = FALSE;
@@ -1001,6 +1006,7 @@ static void InsertValues(DBG_Struct *dbg, LargeByteString *lbs,
       }
       LBS_EmitString(lbs, "] ");
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       level++;
       fComm = FALSE;
@@ -1791,7 +1797,7 @@ static ValueStruct *_DBESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *ret, *bytea;
   ValueStruct *val;
   ENTER_FUNC;
-  if (ValueType(args) == GL_TYPE_RECORD) {
+  if (IS_VALUE_RECORD(args)) {
     if ((val = GetItemLongName(args, "dbescapebytea")) == NULL) {
       Warning("dbescapebytea is not found.");
       return args;
@@ -1820,7 +1826,7 @@ static ValueStruct *_DBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                      RecordStruct *rec, ValueStruct *args) {
   ValueStruct *bin, *val, *ret;
   ENTER_FUNC;
-  if (ValueType(args) == GL_TYPE_RECORD) {
+  if (IS_VALUE_RECORD(args)) {
     if ((val = GetItemLongName(args, "dbunescapebytea")) == NULL) {
       Warning("dbunescapebytea is not found.");
       return args;

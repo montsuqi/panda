@@ -143,6 +143,7 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
       i++;
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     if (xmlStrcmp(type, "record") != 0) {
       break;
@@ -193,6 +194,7 @@ static gboolean IsEmptyValue(ValueStruct *val) {
       }
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     for (i = 0; i < ValueRecordSize(val); i++) {
       ret = IsEmptyValue(ValueRecordItem(val, i));
@@ -275,6 +277,7 @@ static xmlNodePtr Value2XMLNode(char *name, ValueStruct *val) {
       g_free(childname);
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     have_data = FALSE;
     for (i = 0; i < ValueRecordSize(val); i++) {

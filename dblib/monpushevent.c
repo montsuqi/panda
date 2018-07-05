@@ -205,6 +205,7 @@ json_object *push_event_conv_value(ValueStruct *v) {
       }
     }
     return obj;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     obj = json_object_new_object();
     for (i = 0; i < ValueRecordSize(v); i++) {

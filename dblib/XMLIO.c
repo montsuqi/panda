@@ -234,6 +234,7 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
       node = node->next;
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     if (xmlStrcmp(root->name, "record") != 0) {
       break;
@@ -306,6 +307,7 @@ static xmlNodePtr Value2XMLNode(char *name, ValueStruct *val) {
       }
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     node = xmlNewNode(NULL, "record");
     for (i = 0; i < ValueRecordSize(val); i++) {
