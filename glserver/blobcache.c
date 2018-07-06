@@ -55,11 +55,7 @@ BlobCacheFileName(
 	char	buf[SIZE_BUFF];
 
 	if		(  ValueObjectFile(value)  ==  NULL  ) {
-		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			sprintf(buf,"%s/%p",CacheDir, value);
-		} else {
-			sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
-		}
+		sprintf(buf,"%s/%p",CacheDir, value);
 		ValueObjectFile(value) = StrDup(buf);
 	}
 	return	(ValueObjectFile(value));
