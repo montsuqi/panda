@@ -151,8 +151,8 @@ ShowDownloadDialog(
 	GtkWidget *save_button;
 	GtkWidget *close_button;
 	char hbytes[64];
+	gchar *basename;
 	FileInfo *info;
-
 	
 	parent = (GtkWindow *)g_list_nth_data(DialogStack,
 		g_list_length(DialogStack)-1);
@@ -160,6 +160,7 @@ ShowDownloadDialog(
 		parent = GTK_WINDOW(TopWindow);
 	}
 
+	basename = g_path_get_basename(filename);
 	get_human_bytes(LBS_Size(binary), hbytes);
 	if (description && strlen(description) > 0) {
 		dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
@@ -168,20 +169,20 @@ ShowDownloadDialog(
 			_("Do you open this file or save it?\n\n"
 			"File Name: %s\n"
 			"Description: %s\n"
-			"Size: %s"),filename,description,hbytes);
+			"Size: %s"),basename,description,hbytes);
 	} else {
 		dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
 			GTK_MESSAGE_INFO,
 			GTK_BUTTONS_NONE,
 			_("Do you open this file or save it?\n\n"
 			"File Name: %s\n"
-			"Size: %s"),filename,hbytes);
+			"Size: %s"),basename,hbytes);
 	}
 
 	info = g_new0(FileInfo,1);
 	info->dialog = dialog;
 	info->widget = widget;
-	info->filename = filename;
+	info->filename = basename;
 	info->binary = binary;
 
 	open_button = gtk_dialog_add_button(GTK_DIALOG(dialog),
@@ -206,5 +207,6 @@ ShowDownloadDialog(
 	gtk_widget_show_all(dialog);
 	gtk_main();
 	g_free(info);
+	g_free(basename);
 	gtk_widget_destroy(dialog);
 }
