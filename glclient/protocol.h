@@ -33,15 +33,6 @@ extern	Bool			GetScreenData(NETFILE *fpComm);
 extern  void			SendWindowData(void);
 extern	void			SendEvent(NETFILE *fpComm, char *window, char *widget, char *event);
 
-extern	void			GL_SendPacketClass(NETFILE *fp, PacketClass c);
-extern	PacketClass		GL_RecvPacketClass(NETFILE *fp);
-extern	PacketDataType	GL_RecvDataType(NETFILE *fp);
-extern	void			GL_SendInt(NETFILE *fp, int data);
-extern	int				GL_RecvInt(NETFILE *fp);
-extern	void			GL_SendDataType(NETFILE *fp, PacketClass c);
-extern	void			GL_RecvName(NETFILE *fp, size_t size, char *name);
-extern	void			GL_SendName(NETFILE *fp, char *name);
-
 extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
 extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);
 extern	PacketDataType	RecvStringData(NETFILE *fp, char *str, size_t size);

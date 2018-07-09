@@ -38,7 +38,9 @@
 #include	<math.h>
 
 #include	"libmondai.h"
+#include	"net.h"
 #include	"glcomm.h"
+#include	"glcomms.h"
 #include	"blobcache.h"
 #include	"message.h"
 #include	"debug.h"
@@ -49,282 +51,13 @@
 #include	<endian.h>
 #endif
 
-#define	RECV32(v)	ntohl(v)
-#define	RECV16(v)	ntohs(v)
-#define	SEND32(v)	htonl(v)
-#define	SEND16(v)	htons(v)
+static	LargeByteString	*Buff = NULL;
 
-static	LargeByteString	*Buff;
-static	Bool fNetwork;
-
-extern	void
-GL_SendPacketClass(
-	NETFILE	*fp,
-	PacketClass	c)
-{
-	nputc(c,fp);
-	Flush(fp);
-}
-
-extern	PacketClass
-GL_RecvPacketClass(
-	NETFILE	*fp)
-{
-	PacketClass	c;
-
-	c = ngetc(fp);
-	return	(c);
-}
-
-#define	SendChar(fp,c)	nputc((c),(fp))
-#define	RecvChar(fp)	ngetc(fp)
-
-extern	void
-GL_SendInt(
-	NETFILE	*fp,
-	int		data)
-{
-	unsigned char	buff[sizeof(int)];
-
-	if		(  fNetwork  ) {
-		data = SEND32(data);
+static void
+CheckBuff() {
+	if (Buff == NULL) {
+		Buff = NewLBS();
 	}
-	memcpy(buff,&data,sizeof(int));
-	Send(fp,buff,sizeof(int));
-}
-
-#if 0
-static	void
-GL_SendUInt(
-	NETFILE	*fp,
-	unsigned	int	data)
-{
-	unsigned char	buff[sizeof(unsigned int)];
-
-	if		(  fNetwork  ) {
-		*(unsigned int *)buff = SEND32(data);
-	} else {
-		*(unsigned int *)buff = data;
-	}
-	Send(fp,buff,sizeof(unsigned int));
-}
-
-static	unsigned	int
-GL_RecvUInt(
-	NETFILE	*fp,
-	Bool	fNetwork)
-{
-	unsigned char	buff[sizeof(unsigned int)];
-	unsigned	int	data;
-
-	Recv(fp,buff,sizeof(unsigned int));
-	if		(  fNetwork  ) {
-		data = RECV32(*(unsigned int *)buff);
-	} else {
-		data = *(unsigned int *)buff;
-	}
-	return	(data);
-}
-
-extern	void
-GL_SendLong(
-	NETFILE	*fp,
-	long	data)
-{
-	unsigned char	buff[sizeof(long)];
-
-	if		(  fNetwork  ) {
-		*(long *)buff = SEND32(data);
-	} else {
-		*(long *)buff = data;
-	}
-	Send(fp,buff,sizeof(long));
-}
-#endif
-static	void
-GL_SendLength(
-	NETFILE	*fp,
-	size_t	data)
-{
-	GL_SendInt(fp,data);
-}
-
-extern	int
-GL_RecvInt(
-	NETFILE	*fp)
-{
-	unsigned char	buff[sizeof(int)];
-	int		data;
-
-	Recv(fp,buff,sizeof(int));
-	memcpy(&data,buff,sizeof(int));
-	if		(  fNetwork  ) {
-		data = RECV32(data);
-	}
-	return	(data);
-}
-
-static	size_t
-GL_RecvLength(
-	NETFILE	*fp)
-{
-	return (size_t)GL_RecvInt(fp);
-}
-
-static	void
-GL_RecvLBS(
-	NETFILE	*fp,
-	LargeByteString	*lbs)
-{
-	size_t	size;
-ENTER_FUNC;
-	size = GL_RecvLength(fp);
-	LBS_ReserveSize(lbs,size,FALSE);
-	if		(  size  >  0  ) {
-		Recv(fp,LBS_Body(lbs),size);
-	}
-LEAVE_FUNC;
-}
-
-void
-GL_SendLBS(
-	NETFILE	*fp,
-	LargeByteString	*lbs)
-{
-ENTER_FUNC;
-	GL_SendLength(fp,LBS_Size(lbs));
-	if		(  LBS_Size(lbs)  >  0  ) {
-		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
-	}
-LEAVE_FUNC;
-}
-
-extern	void
-GL_RecvString(
-	NETFILE	*fp,
-	size_t  size,
-	char	*str)
-{
-	size_t	lsize;
-
-ENTER_FUNC;
-	lsize = GL_RecvLength(fp);
-	if		(	size >= lsize 	){
-		size = lsize;
-		Recv(fp,str,size);
-		str[size] = 0;
-	} else {
-		CloseNet(fp);
-		Warning("Error: receive size to large [%d]. defined size [%d]", (int)lsize, (int)size);
-	}
-LEAVE_FUNC;
-}
-
-extern	void
-GL_SendString(
-	NETFILE	*fp,
-	char	*str)
-{
-	size_t	size;
-
-ENTER_FUNC;
-	if		(   str  !=  NULL  ) { 
-		size = strlen(str);
-	} else {
-		size = 0;
-	}
-	GL_SendLength(fp,size);
-	if		(  size  >  0  ) {
-		Send(fp,str,size);
-	}
-LEAVE_FUNC;
-}
-
-extern	Fixed	*
-GL_RecvFixed(
-	NETFILE	*fp)
-{
-	Fixed	*xval;
-
-ENTER_FUNC;
-	xval = New(Fixed);
-	xval->flen = GL_RecvLength(fp);
-	xval->slen = GL_RecvLength(fp);
-	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp, xval->flen, xval->sval);
-LEAVE_FUNC;
-	return	(xval); 
-}
-
-static	void
-GL_SendFixed(
-	NETFILE	*fp,
-	Fixed	*xval)
-{
-	GL_SendLength(fp,xval->flen);
-	GL_SendLength(fp,xval->slen);
-	GL_SendString(fp,xval->sval);
-}
-
-extern	double
-GL_RecvFloat(
-	NETFILE	*fp)
-{
-	double	data;
-
-	Recv(fp,&data,sizeof(data));
-	return	(data);
-}
-
-static	void
-GL_SendFloat(
-	NETFILE	*fp,
-	double	data)
-{
-	Send(fp,&data,sizeof(data));
-}
-
-extern	Bool
-GL_RecvBool(
-	NETFILE	*fp)
-{
-	char	buf[1];
-
-	Recv(fp,buf,1);
-	return	((buf[0] == 'T' ) ? TRUE : FALSE);
-}
-
-static	void
-GL_SendBool(
-	NETFILE	*fp,
-	Bool	data)
-{
-	char	buf[1];
-
-	buf[0] = data ? 'T' : 'F';
-	Send(fp,buf,1);
-}
-
-static	void
-GL_SendDataType(
-	NETFILE	*fp,
-	PacketClass	c)
-{
-#ifdef	DEBUG
-	printf("SendDataType = %X\n",c);
-#endif
-	nputc(c,fp);
-}
-
-
-extern	PacketDataType
-GL_RecvDataType(
-	NETFILE	*fp)
-{
-	PacketClass	c;
-
-	c = ngetc(fp);
-	return	(c);
 }
 
 static void
@@ -381,6 +114,7 @@ GL_SendValue(
 	int		i;
 
 ENTER_FUNC;
+	CheckBuff();
 	ValueIsNotUpdate(value);
 	GL_SendDataType(fp,ValueType(value));
 	switch	(ValueType(value)) {
@@ -445,6 +179,7 @@ GL_RecvValue(
 	FILE		*fpf;
 
 ENTER_FUNC;
+	CheckBuff();
 	ValueIsUpdate(value);
 	type = GL_RecvDataType(fp);
 	ON_IO_ERROR(fp,badio);
@@ -497,17 +232,4 @@ ENTER_FUNC;
 	}
   badio:
 LEAVE_FUNC;
-}
-
-extern	void
-InitGL_Comm()
-{
-	Buff = NewLBS();
-}
-
-extern	void
-SetfNetwork(
-	Bool f)
-{
-	fNetwork = f;
 }

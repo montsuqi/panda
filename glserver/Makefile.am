@@ -48,5 +48,5 @@ glserver_SOURCES	=				\
 	blobcache.c		blobcache.h		\
 	sessioncall.c	sessioncall.h	\
 	driver.c		driver.h		\
-	glcomm.c		glcomm.h		\
+	glcomms.c		glcomms.h		\
 	server.c

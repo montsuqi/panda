@@ -59,6 +59,7 @@
 #include	"widgetcache.h"
 #include	"desktop.h"
 #include	"bootdialog.h"
+#include	"glcomm.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"action.h"

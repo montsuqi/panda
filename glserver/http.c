@@ -53,6 +53,7 @@
 #include	"authstub.h"
 #include	"glserver.h"
 #include	"glcomm.h"
+#include	"glcomms.h"
 #include	"term.h"
 #include	"http.h"
 #include	"driver.h"
