@@ -52,10 +52,11 @@ extern	char	*
 BlobCacheFileName(
 	ValueStruct	*value)
 {
-	char	buf[SIZE_BUFF];
+	char	buf[SIZE_BUFF+1];
 
 	if		(  ValueObjectFile(value)  ==  NULL  ) {
-		sprintf(buf,"%s/%p",CacheDir, value);
+		memset(buf,0,SIZE_BUFF+1);
+		snprintf(buf,SIZE_BUFF,"%s/%p",CacheDir, value);
 		ValueObjectFile(value) = StrDup(buf);
 	}
 	return	(ValueObjectFile(value));
