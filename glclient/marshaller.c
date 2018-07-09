@@ -46,6 +46,7 @@
 #include	"widgetOPS.h"
 #include	"dialogs.h"
 #include	"printservice.h"
+#include	"glcomm.h"
 #include	"message.h"
 #include	"debug.h"
 

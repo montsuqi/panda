@@ -17,31 +17,14 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_GLCOMM_H
-#define	_GLCOMM_H
-#include	"net.h"
-
-extern	void	GL_SendPacketClass(NETFILE *fp, PacketClass c);
-extern	PacketClass	GL_RecvPacketClass(NETFILE *fp);
-
-extern	void	GL_SendInt(NETFILE *fp, int data);
-extern	void	GL_SendLong(NETFILE *fp, long data);
-extern	void	GL_SendString(NETFILE *fp, char *str);
-extern	int		GL_RecvInt(NETFILE *fp);
-extern	void	GL_RecvString(NETFILE *fp, size_t size, char *str);
-extern	Fixed	*GL_RecvFixed(NETFILE *fp);
-extern	double	GL_RecvFloat(NETFILE *fp);
-extern	Bool	GL_RecvBool(NETFILE *fp);
-extern	void	GL_SendLBS(NETFILE *fp,LargeByteString *lbs);
+#ifndef	_GLCOMMS_H
+#define	_GLCOMMS_H
 
 extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding);
 extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding);
 
-extern	void	InitGL_Comm(void);
-extern	void	SetfNetwork(Bool f);
-
 #undef	GLOBAL
-#ifdef	GLCOMM_MAIN
+#ifdef	GLCOMMS_MAIN
 #	define	GLOBAL		/*	*/
 #else
 #	define	GLOBAL		extern

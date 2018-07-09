@@ -59,7 +59,8 @@ libpanda_la_SOURCES	=				\
 	sysdbreq.c		sysdbreq.h		\
 	term.c			term.h			\
 	wfcio.c			wfcio.h			\
-	pushevent.c		pushevent.h
+	pushevent.c		pushevent.h		\
+	glcomm.c		glcomm.h
 
 libpanda_la_LIBADD		=	\
 	-lm									\
@@ -102,7 +103,8 @@ libpandainclude_HEADERS =	\
 	sysdbreq.h			\
 	term.h				\
 	wfcio.h				\
-	pushevent.h
+	pushevent.h			\
+	glcomm.h
 
 AM_CPPFLAGS 			= 	\
 	-I$(top_srcdir)					\

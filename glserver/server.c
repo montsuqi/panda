@@ -56,6 +56,7 @@
 #include	"driver.h"
 #include	"glserver.h"
 #include	"glcomm.h"
+#include	"glcomms.h"
 #include	"blobcache.h"
 #include	"term.h"
 #include	"dirs.h"
