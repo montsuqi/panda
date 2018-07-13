@@ -94,9 +94,8 @@ static void WriteMetaFile(const char *metafile, json_object *obj) {
   json_object_put(obj);
 }
 
-static void AddMetaData(MonObjectType mobj, const char *metafile) {
+static void AddMetaData(char *oid, const char *metafile) {
   json_object *obj, *result, *child;
-  char mobjstr[256];
 
   obj = ReadMetaFile(metafile);
   if (obj == NULL) {
@@ -109,8 +108,7 @@ static void AddMetaData(MonObjectType mobj, const char *metafile) {
 
   child = json_object_new_object();
   json_object_object_add(child, "type", json_object_new_string(Type));
-  sprintf(mobjstr, "%ld", (long)mobj);
-  json_object_object_add(child, "object_id", json_object_new_string(mobjstr));
+  json_object_object_add(child, "object_id", json_object_new_string(oid));
   if (Printer != NULL) {
     json_object_object_add(child, "printer", json_object_new_string(Printer));
   }
@@ -136,7 +134,7 @@ static void _MonUpload(const char *file, const char *metafile) {
   NETFILE *fp;
   Port *port;
   int fd;
-  MonObjectType mobj;
+  char *id;
 
   /* upload sysdata */
   fp = NULL;
@@ -150,13 +148,14 @@ static void _MonUpload(const char *file, const char *metafile) {
     return;
   }
 
-  mobj = RequestImportBLOB(fp, file);
-  if (mobj == GL_OBJ_NULL) {
+  id = RequestImportBLOB(fp, file);
+  if (id == NULL) {
     return;
   }
   CloseNet(fp);
 
-  AddMetaData(mobj, metafile);
+  AddMetaData(id, metafile);
+  xfree(id);
 }
 
 static void MonUpload(const char *file) {
