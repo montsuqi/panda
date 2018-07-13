@@ -47,14 +47,14 @@ const char *KILLBATCH = "/usr/local/bin/push_kill_batch_queue";
 
 #include "directory.h"
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRedirect, int usage) {
+static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRedirect) {
   int rc;
 
   rc = MCP_OK;
   return (rc);
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
   return NULL;
 }
 
@@ -530,7 +530,7 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
            "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s ORDER BY groupname, "
            "starttime;",
            BATCH_TABLE, BATCH_TABLE, where);
-  ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+  ret = ExecDBQuery(mondbg, sql, FALSE);
   xfree(where);
   xfree(sql);
   return ret;
@@ -548,7 +548,7 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   mondbg = GetDBG_monsys();
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "FETCH 1 FROM %s_csr;", BATCH_TABLE);
-  mondbg_val = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+  mondbg_val = ExecDBQuery(mondbg, sql, FALSE);
   xfree(sql);
   if (mondbg_val) {
     ctrl->rc = MCP_OK;
@@ -628,7 +628,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "CLOSE %s_csr;", BATCH_TABLE);
-  ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
+  ExecDBOP(mondbg, sql, FALSE);
   xfree(sql);
 
   return (ret);

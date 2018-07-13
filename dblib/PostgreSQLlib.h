@@ -24,10 +24,10 @@
 
 #define APPLICATION_NAME "montsuqi"
 
-extern LargeByteString	*CreateConninfo(DBG_Struct	*dbg, int usage);
-extern LargeByteString	*Template1Conninfo(DBG_Struct	*dbg, int usage);
+extern LargeByteString	*CreateConninfo(DBG_Struct	*dbg);
+extern LargeByteString	*Template1Conninfo(DBG_Struct	*dbg);
 extern PGconn	*PGCONN( DBG_Struct	*dbg);
-extern PGconn	*PgConnect(	DBG_Struct	*dbg, int usage);
+extern PGconn	*PgConnect(	DBG_Struct	*dbg);
 extern  char	*GetPGencoding(PGconn	*conn);
 extern  void	LockRedirectorConnect(PGconn	*conn);
 extern  char	*LockRedirectorQuery(void);

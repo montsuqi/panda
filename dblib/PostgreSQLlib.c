@@ -48,13 +48,13 @@ extern void AddConninfo(LargeByteString *conninfo, char *item, char *value) {
 }
 
 static LargeByteString *_CreateConninfo(LargeByteString *conninfo,
-                                        DBG_Struct *dbg, int usage) {
+                                        DBG_Struct *dbg) {
   int portnum;
   char portstr[SIZE_OTHER];
 
-  AddConninfo(conninfo, "host", GetDB_Host(dbg, usage));
-  if (GetDB_PortName(dbg, usage) != NULL) {
-    AddConninfo(conninfo, "port", GetDB_PortName(dbg, usage));
+  AddConninfo(conninfo, "host", GetDB_Host(dbg));
+  if (GetDB_PortName(dbg) != NULL) {
+    AddConninfo(conninfo, "port", GetDB_PortName(dbg));
   } else {
     /* for PostgreSQL
              db_group{
@@ -63,19 +63,19 @@ static LargeByteString *_CreateConninfo(LargeByteString *conninfo,
              host='/var/run/postgresql/'
              mode='5432'
              socket = /var/run/postgresql/.s.PGSQL.5432 */
-    portnum = GetDB_PortMode(dbg, usage);
+    portnum = GetDB_PortMode(dbg);
     if (portnum != 0) {
       snprintf(portstr, sizeof(portstr), "%d", portnum);
       AddConninfo(conninfo, "port", portstr);
     }
   }
-  AddConninfo(conninfo, "user", GetDB_User(dbg, usage));
-  AddConninfo(conninfo, "password", GetDB_Pass(dbg, usage));
-  AddConninfo(conninfo, "sslmode", GetDB_Sslmode(dbg, usage));
-  AddConninfo(conninfo, "sslcert", GetDB_Sslcert(dbg, usage));
-  AddConninfo(conninfo, "sslkey", GetDB_Sslkey(dbg, usage));
-  AddConninfo(conninfo, "sslrootcert", GetDB_Sslrootcert(dbg, usage));
-  AddConninfo(conninfo, "sslcrl", GetDB_Sslcrl(dbg, usage));
+  AddConninfo(conninfo, "user", GetDB_User(dbg));
+  AddConninfo(conninfo, "password", GetDB_Pass(dbg));
+  AddConninfo(conninfo, "sslmode", GetDB_Sslmode(dbg));
+  AddConninfo(conninfo, "sslcert", GetDB_Sslcert(dbg));
+  AddConninfo(conninfo, "sslkey", GetDB_Sslkey(dbg));
+  AddConninfo(conninfo, "sslrootcert", GetDB_Sslrootcert(dbg));
+  AddConninfo(conninfo, "sslcrl", GetDB_Sslcrl(dbg));
 #ifdef POSTGRES_APPLICATIONNAME
   AddConninfo(conninfo, "application_name", dbg->appname);
   AddConninfo(conninfo, "fallback_application_name", APPLICATION_NAME);
@@ -83,24 +83,24 @@ static LargeByteString *_CreateConninfo(LargeByteString *conninfo,
   return conninfo;
 }
 
-extern LargeByteString *CreateConninfo(DBG_Struct *dbg, int usage) {
+extern LargeByteString *CreateConninfo(DBG_Struct *dbg) {
   LargeByteString *conninfo;
 
   ENTER_FUNC;
   conninfo = NewLBS();
-  conninfo = _CreateConninfo(conninfo, dbg, usage);
-  AddConninfo(conninfo, "dbname", GetDB_DBname(dbg, usage));
+  conninfo = _CreateConninfo(conninfo, dbg);
+  AddConninfo(conninfo, "dbname", GetDB_DBname(dbg));
   LBS_EmitEnd(conninfo);
   LEAVE_FUNC;
 
   return conninfo;
 }
 
-extern LargeByteString *Template1Conninfo(DBG_Struct *dbg, int usage) {
+extern LargeByteString *Template1Conninfo(DBG_Struct *dbg) {
   LargeByteString *conninfo;
   ENTER_FUNC;
   conninfo = NewLBS();
-  conninfo = _CreateConninfo(conninfo, dbg, usage);
+  conninfo = _CreateConninfo(conninfo, dbg);
   AddConninfo(conninfo, "dbname", "template1");
   LBS_EmitEnd(conninfo);
   LEAVE_FUNC;
@@ -111,16 +111,16 @@ extern PGconn *PGCONN(DBG_Struct *dbg) {
   return ((PGconn *)dbg->conn);
 }
 
-extern PGconn *PgConnect(DBG_Struct *dbg, int usage) {
+extern PGconn *PgConnect(DBG_Struct *dbg) {
   LargeByteString *conninfo;
   PGconn *conn;
 
-  conninfo = CreateConninfo(dbg, usage);
+  conninfo = CreateConninfo(dbg);
   conn = PQconnectdb(LBS_Body(conninfo));
   FreeLBS(conninfo);
 
   if (PQstatus(conn) != CONNECTION_OK) {
-    Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg, usage));
+    Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
     Message("%s", PQerrorMessage(conn));
     PQfinish(conn);
     conn = NULL;

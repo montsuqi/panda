@@ -71,11 +71,11 @@ extern ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   return (NULL);
 }
 
-extern int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+extern int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
   return (MCP_OK);
 }
 
-extern ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+extern ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
   return NULL;
 }
 

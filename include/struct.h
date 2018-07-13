@@ -183,9 +183,9 @@ typedef	struct _DBG_Struct	{
 typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
 typedef struct	{
-	int		(*exec)(DBG_Struct *, char *, Bool, int);
+	int		(*exec)(DBG_Struct *, char *, Bool);
 	ValueStruct	*(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-	ValueStruct	*(*query)(DBG_Struct *, char *, Bool, int);
+	ValueStruct	*(*query)(DBG_Struct *, char *, Bool);
 	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 

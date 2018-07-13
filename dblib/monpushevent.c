@@ -40,7 +40,7 @@ static void reset_id(DBG_Struct *dbg) {
   ValueStruct *ret;
 
   sql = "SELECT setval('" SEQMONPUSHEVENT "', 1, false);";
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+  ret = ExecDBQuery(dbg, sql, FALSE);
   FreeValueStruct(ret);
 }
 
@@ -50,7 +50,7 @@ extern int new_monpushevent_id(DBG_Struct *dbg) {
   int id;
 
   sql = "SELECT nextval('" SEQMONPUSHEVENT "') AS id;";
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+  ret = ExecDBQuery(dbg, sql, FALSE);
   if (ret) {
     val = GetItemLongName(ret, "id");
     id = ValueToInteger(val);
@@ -77,39 +77,39 @@ static Bool create_monpushevent(DBG_Struct *dbg) {
         "  pushed_at timestamp with time zone,"
         "  data	     varchar(2048)"
         ");";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
     Warning("SQL Error:%s", sql);
     return FALSE;
   }
   sql = "CREATE INDEX " MONPUSHEVENT "_uuid ON " MONPUSHEVENT " (uuid);";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
     Warning("SQL Error:%s", sql);
     return FALSE;
   }
   sql = "CREATE INDEX " MONPUSHEVENT "_event ON " MONPUSHEVENT " (event);";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
     Warning("SQL Error:%s", sql);
     return FALSE;
   }
   sql = "CREATE INDEX " MONPUSHEVENT "_user ON " MONPUSHEVENT " (user_);";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
     Warning("SQL Error:%s", sql);
     return FALSE;
   }
   sql = "CREATE INDEX " MONPUSHEVENT "_pushed_at ON " MONPUSHEVENT
         " (pushed_at);";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
     Warning("SQL Error:%s", sql);
     return FALSE;
   }
 
   sql = "CREATE SEQUENCE " SEQMONPUSHEVENT " ;";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
     Warning("SQL Error:%s", sql);
     return FALSE;
@@ -136,7 +136,7 @@ static Bool monpushevent_expire(DBG_Struct *dbg) {
   sql = "DELETE FROM " MONPUSHEVENT
         " WHERE (now() > pushed_at + CAST('" MONPUSHEVENT_EXPIRE
         " days' AS INTERVAL));";
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
   return (rc == MCP_OK);
 }
 
@@ -157,7 +157,7 @@ static Bool monpushevent_insert(DBG_Struct *dbg, const char *uuid, int id,
                         "VALUES ('%s','%d','%s','%s','%s','%s');",
                         MONPUSHEVENT, uuid, id, e_user, e_event, e_pushed_at,
                         e_data);
-  rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+  rc = ExecDBOP(dbg, sql, FALSE);
 
   xfree(e_user);
   xfree(e_event);

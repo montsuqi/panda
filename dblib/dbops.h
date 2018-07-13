@@ -24,8 +24,8 @@ extern	ValueStruct	* _DBOPEN(DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
 extern	ValueStruct	* _DBDISCONNECT( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
 extern	ValueStruct	* _DBSTART( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
 extern	ValueStruct	* _DBCOMMIT( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
-extern	int _EXEC(DBG_Struct *dbg,char *sql,Bool fRed,int usage);
-extern	ValueStruct	* _QUERY(DBG_Struct *dbg, char *sql,Bool fRed,int usage);
+extern	int _EXEC(DBG_Struct *dbg,char *sql,Bool fRed);
+extern	ValueStruct	* _QUERY(DBG_Struct *dbg, char *sql,Bool fRed);
 extern	ValueStruct	* _DBACCESS(DBG_Struct *dbg,DBCOMM_CTRL *ctrl,RecordStruct *rec,ValueStruct *args);
 
 #endif

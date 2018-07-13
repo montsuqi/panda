@@ -122,7 +122,7 @@ static int FileCommands(DBG_Struct *dbg, Bool redirect, char *sqlfile) {
   TransactionStart(dbg);
   sql = ReadSQLFile(dbg, sqlfile);
   if (sql) {
-    ExecDBOP(dbg, sql, redirect, DB_UPDATE);
+    ExecDBOP(dbg, sql, redirect);
     xfree(sql);
   }
   rc = TransactionEnd(dbg);
@@ -173,7 +173,7 @@ static int SingleCommand(DBG_Struct *dbg, Bool redirect, char *str) {
   TransactionStart(dbg);
 
   sql = Coding_monsys(dbg, str);
-  ret = ExecDBQuery(dbg, sql, redirect, DB_UPDATE);
+  ret = ExecDBQuery(dbg, sql, redirect);
   OutPutValue(Output, ret);
   FreeValueStruct(ret);
   xfree(sql);

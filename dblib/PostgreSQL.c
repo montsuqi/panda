@@ -164,7 +164,7 @@ static void CryptoMode(DBG_Struct *dbg) {
   char sql[SIZE_SQL + 1];
   PGresult *res;
 
-  if ((crypto = GetDB_Crypt(dbg, DB_UPDATE)) != NULL) {
+  if ((crypto = GetDB_Crypt(dbg)) != NULL) {
     if (ExistFunc(PGCONN(dbg), "crypto_mode")) {
       sprintf(sql, "SELECT crypto_mode('%s');", crypto);
       res = PQexec(PGCONN(dbg), sql);
@@ -1016,14 +1016,13 @@ static Bool IsRedirectQuery(PGresult *res) {
   return rc;
 }
 
-static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
 
-  ENTER_FUNC;
   dbgprintf("%s", sql);
   res = PQexecParams(PGCONN(dbg), sql, 0, NULL, NULL, NULL, NULL, 0);
   if (res != NULL) {
-    if ((fRed) && (IsUsageUpdate(usage)) && (IsRedirectQuery(res))) {
+    if ((fRed) && (IsRedirectQuery(res))) {
       PutDB_Redirect(dbg, sql);
       PutDB_Redirect(dbg, ";\n");
       PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
@@ -1032,19 +1031,18 @@ static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   if (sql) {
     LBS_String(dbg->last_query, sql);
   }
-  LEAVE_FUNC;
   return (res);
 }
 
-static int _PQsendQuery(DBG_Struct *dbg, char *sql, int usage) {
+static int _PQsendQuery(DBG_Struct *dbg, char *sql) {
   dbgprintf("%s", sql);
   return PQsendQuery(PGCONN(dbg), sql);
 }
 
-static PGresult *_PQgetResult(DBG_Struct *dbg, int usage) {
+static PGresult *_PQgetResult(DBG_Struct *dbg) {
   return PQgetResult(PGCONN(dbg));
 }
-static Bool CheckConnect(DBG_Struct *dbg, int usage) {
+static Bool CheckConnect(DBG_Struct *dbg) {
   if (PQstatus(PGCONN(dbg)) != CONNECTION_OK) {
     Warning("PostgreSQL: Unconnected.");
     dbg->dbstatus = DB_STATUS_UNCONNECT;
@@ -1053,9 +1051,9 @@ static Bool CheckConnect(DBG_Struct *dbg, int usage) {
   return TRUE;
 }
 
-static int CheckResult(DBG_Struct *dbg, int usage, PGresult *res, int status) {
+static int CheckResult(DBG_Struct *dbg, PGresult *res, int status) {
   int rc;
-  if (!CheckConnect(dbg, usage)) {
+  if (!CheckConnect(dbg)) {
     rc = MCP_BAD_CONN;
   } else if (res && (PQresultStatus(res) == status)) {
     dbgmsg("OK");
@@ -1068,8 +1066,7 @@ static int CheckResult(DBG_Struct *dbg, int usage, PGresult *res, int status) {
 }
 
 static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
-                              LargeByteString *src, ValueStruct *args,
-                              int usage) {
+                              LargeByteString *src, ValueStruct *args) {
   LargeByteString *sql;
   int c;
   ValueStruct *val, *ret, *value;
@@ -1156,7 +1153,7 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         break;
       case SQL_OP_EOL:
         LBS_EmitEnd(sql);
-        res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+        res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
         LBS_Clear(sql);
         status = PGRES_FATAL_ERROR;
         if ((res == NULL) ||
@@ -1236,14 +1233,14 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return (ret);
 }
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
   int rc = MCP_OK;
 
   ENTER_FUNC;
-  if (_PQsendQuery(dbg, sql, usage) == TRUE) {
-    while ((res = _PQgetResult(dbg, usage)) != NULL) {
-      rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
+  if (_PQsendQuery(dbg, sql) == TRUE) {
+    while ((res = _PQgetResult(dbg)) != NULL) {
+      rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       if ((rc == MCP_OK) && fRed) {
         PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
       }
@@ -1260,14 +1257,14 @@ static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   return rc;
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
   ValueStruct *ret;
   ExecStatusType status;
 
   ENTER_FUNC;
-  res = _PQexec(dbg, sql, fRed, usage);
-  if (!CheckConnect(dbg, usage)) {
+  res = _PQexec(dbg, sql, fRed);
+  if (!CheckConnect(dbg)) {
     ret = NULL;
   } else if ((res == NULL) ||
              ((status = PQresultStatus(res)) == PGRES_BAD_RESPONSE) ||
@@ -1292,7 +1289,7 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     Warning("database is already connected.");
   }
-  if ((conn = PgConnect(dbg, DB_UPDATE)) != NULL) {
+  if ((conn = PgConnect(dbg)) != NULL) {
     PgInitConnect(conn);
     encoding = GetPGencoding(conn);
     SetDBGcoding(dbg, encoding);
@@ -1336,9 +1333,9 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     LockDB_Redirect(dbg);
     BeginDB_Redirect(dbg);
-    res = _PQexec(dbg, "BEGIN", FALSE, DB_UPDATE);
+    res = _PQexec(dbg, "BEGIN", FALSE);
     UnLockDB_Redirect(dbg);
-    rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+    rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
   }
   if (ctrl != NULL) {
@@ -1358,8 +1355,8 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     conn = PGCONN(dbg);
     CheckDB_Redirect(dbg);
     fCommit = InTrans(conn);
-    res = _PQexec(dbg, "COMMIT WORK", FALSE, DB_UPDATE);
-    rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+    res = _PQexec(dbg, "COMMIT WORK", FALSE);
+    rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
     if ((fCommit == TRUE) && (rc == MCP_OK)) {
       CommitDB_Redirect(dbg);
@@ -1394,7 +1391,7 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     db = rec->opt.db;
     path = db->path[ctrl->pno];
     src = path->ops[DBOP_SELECT]->proc;
-    ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+    ret = ExecPGSQL(dbg, ctrl, src, args);
   }
   LEAVE_FUNC;
   return (ret);
@@ -1420,13 +1417,13 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_FETCH]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       ret = NULL;
       sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
               ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect, ctrl->usage);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_TUPLES_OK);
+      res = _PQexec(dbg, sql, ctrl->redirect);
+      ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
       ret = PGresToValue(dbg, ctrl, res, args);
       _PQclear(res);
     }
@@ -1455,12 +1452,12 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_CLOSE]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       p = sql;
       sprintf(p, "CLOSE %s_%s_csr", ctrl->rname, ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect, ctrl->usage);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      res = _PQexec(dbg, sql, ctrl->redirect);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
     }
   }
@@ -1489,7 +1486,7 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_UPDATE]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       sql = NewLBS();
       LBS_EmitString(sql, "UPDATE ");
@@ -1521,9 +1518,9 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
       ctrl->rcount = cmdTuples(res);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
       FreeLBS(sql);
     }
@@ -1553,7 +1550,7 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_DELETE]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       sql = NewLBS();
       LBS_EmitString(sql, "DELETE\tFROM\t");
@@ -1580,9 +1577,9 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
       ctrl->rcount = cmdTuples(res);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
       FreeLBS(sql);
     }
@@ -1611,7 +1608,7 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_INSERT]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       sql = NewLBS();
       LBS_EmitString(sql, "INSERT\tINTO\t");
@@ -1624,9 +1621,9 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       InsertValues(dbg, sql, args);
       LBS_EmitString(sql, ") ");
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
       ctrl->rcount = cmdTuples(res);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
       FreeLBS(sql);
     }
@@ -1721,8 +1718,8 @@ static ValueStruct *_DBLOCK(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     LBS_EmitString(sql, "LOCK\tTABLE\t");
     LBS_EmitString(sql, rec->name);
     LBS_EmitEnd(sql);
-    res = _PQexec(dbg, LBS_Body(sql), FALSE, DB_UPDATE);
-    ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+    res = _PQexec(dbg, LBS_Body(sql), FALSE);
+    ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
     FreeLBS(sql);
   }
@@ -1778,7 +1775,7 @@ static ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       src = path->ops[ix - 1]->proc;
       if (src != NULL) {
         ctrl->rc = MCP_OK;
-        ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+        ret = ExecPGSQL(dbg, ctrl, src, args);
       } else {
         ctrl->rc = MCP_BAD_OTHER;
       }

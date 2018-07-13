@@ -488,7 +488,7 @@ static Bool ConnectDB(void) {
   DBG_Struct *rdbg;
   int retry = 0;
   ENTER_FUNC;
-  if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
+  if (GetDB_DBname(ThisDBG) == NULL) {
     return rc;
   }
   if (ThisDBG->dbstatus != DB_STATUS_CONNECT) {
@@ -631,7 +631,7 @@ extern int WriteDB(LargeByteString *query, LargeByteString *orgcheck) {
   LBS_EmitStart(ThisDBG->checkData);
   rc = TransactionRedirectStart(ThisDBG);
   if (rc == MCP_OK) {
-    rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), TRUE, DB_UPDATE);
+    rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), TRUE);
     LBS_EmitEnd(ThisDBG->checkData);
     redcheck = ThisDBG->checkData;
   }
@@ -739,7 +739,7 @@ extern void WriteAuditLog(FILE *afp, FILE *fp, Ticket *ticket) {
         LBS_EmitStart(AuditDBG->redirectData);
         LBS_EmitStart(AuditDBG->checkData);
         TransactionStart(AuditDBG);
-        rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), TRUE, DB_UPDATE);
+        rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), TRUE);
         TransactionEnd(AuditDBG);
         LBS_EmitEnd(AuditDBG->redirectData);
         LBS_EmitEnd(AuditDBG->checkData);
@@ -783,7 +783,7 @@ static void FileThread(void *dummy) {
   ConnectAuditDB();
 
   strncpy(header, "dbredirector start", sizeof(header));
-  if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
+  if (GetDB_DBname(ThisDBG) == NULL) {
     strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
     /* ReRedirect */
     OpenDB_RedirectPort(ThisDBG);
@@ -826,7 +826,7 @@ static void FileThread(void *dummy) {
     }
     xfree(ticket);
   }
-  if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
+  if (GetDB_DBname(ThisDBG) == NULL) {
     /* ReRedirect */
     CloseDB_RedirectPort(ThisDBG);
   }
@@ -877,10 +877,10 @@ extern void ExecuteServer(void) {
 static void DumpDBG(char *name, DBG_Struct *dbg, void *dummy) {
   dbgprintf("name     = [%s]\n", dbg->name);
   dbgprintf("\ttype     = [%s]\n", dbg->type);
-  dbgprintf("\tDB name  = [%s]\n", GetDB_DBname(dbg, DB_UPDATE));
-  dbgprintf("\tDB user  = [%s]\n", GetDB_User(dbg, DB_UPDATE));
-  dbgprintf("\tDB pass  = [%s]\n", GetDB_Pass(dbg, DB_UPDATE));
-  dbgprintf("\tDB sslmode  = [%s]\n", GetDB_Sslmode(dbg, DB_UPDATE));
+  dbgprintf("\tDB name  = [%s]\n", GetDB_DBname(dbg));
+  dbgprintf("\tDB user  = [%s]\n", GetDB_User(dbg));
+  dbgprintf("\tDB pass  = [%s]\n", GetDB_Pass(dbg));
+  dbgprintf("\tDB sslmode  = [%s]\n", GetDB_Sslmode(dbg));
 
   if (dbg->file != NULL) {
     dbgprintf("\tlog file = [%s]\n", dbg->file);
@@ -901,12 +901,12 @@ static void _CheckDBG(char *name, DBG_Struct *dbg, char *red_name) {
   if (dbg->redirect != NULL) {
     red_dbg = dbg->redirect;
     if (strcmp(red_dbg->name, red_name) == 0) {
-      src_port = StrDup(StringPort(GetDB_Port(dbg, DB_UPDATE)));
-      dsc_port = StrDup(StringPort(GetDB_Port(red_dbg, DB_UPDATE)));
-      if ((dbname = GetDB_DBname(dbg, DB_UPDATE)) != NULL) {
+      src_port = StrDup(StringPort(GetDB_Port(dbg)));
+      dsc_port = StrDup(StringPort(GetDB_Port(red_dbg)));
+      if ((dbname = GetDB_DBname(dbg)) != NULL) {
         dbg_dbname = dbname;
       }
-      if ((dbname = GetDB_DBname(red_dbg, DB_UPDATE)) != NULL) {
+      if ((dbname = GetDB_DBname(red_dbg)) != NULL) {
         red_dbg_dbname = dbname;
       }
       if ((strcmp(dbg->type, red_dbg->type) == 0) &&

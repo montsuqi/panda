@@ -109,12 +109,12 @@ static void info_print(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
   ms_print("", "Master", "Slave");
   separator();
   ms_print("type", master_dbg->type, slave_dbg->type);
-  ms_print("host", GetDB_Host(master_dbg, DB_UPDATE),
-           GetDB_Host(slave_dbg, DB_UPDATE));
-  ms_print("name", GetDB_DBname(master_dbg, DB_UPDATE),
-           GetDB_DBname(slave_dbg, DB_UPDATE));
-  ms_print("user", GetDB_User(master_dbg, DB_UPDATE),
-           GetDB_User(slave_dbg, DB_UPDATE));
+  ms_print("host", GetDB_Host(master_dbg),
+           GetDB_Host(slave_dbg));
+  ms_print("name", GetDB_DBname(master_dbg),
+           GetDB_DBname(slave_dbg));
+  ms_print("user", GetDB_User(master_dbg),
+           GetDB_User(slave_dbg));
   separator();
 }
 
@@ -147,10 +147,10 @@ static Bool all_allsync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
   ret = dbexist(master_dbg);
   if (!ret) {
     Warning("ERROR: database \"%s\" does not exist.",
-            GetDB_DBname(master_dbg, DB_UPDATE));
+            GetDB_DBname(master_dbg));
     return FALSE;
   }
-  dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg, DB_UPDATE));
+  dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg));
   if (slave_dbg->coding != NULL) {
     encoding = slave_dbg->coding;
   } else {
@@ -183,7 +183,7 @@ static Bool all_allsync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
                    lc_ctype);
     if (!ret) {
       Warning("ERROR: create database \"%s\" failed.",
-              GetDB_DBname(slave_dbg, DB_UPDATE));
+              GetDB_DBname(slave_dbg));
       return FALSE;
     }
   }
@@ -422,7 +422,7 @@ extern int main(int argc, char **argv) {
   }
   if (!template1_check(master_dbg)) {
     Error("ERROR: database can not access server %s",
-          GetDB_Host(master_dbg, DB_UPDATE));
+          GetDB_Host(master_dbg));
   }
   if (!template1_check(slave_dbg)) {
     /*		Error("ERROR: database can not access server %s",
@@ -433,7 +433,7 @@ extern int main(int argc, char **argv) {
   }
   if (!dbexist(master_dbg)) {
     Error("ERROR: database \"%s\" does not exist.",
-          GetDB_DBname(master_dbg, DB_UPDATE));
+          GetDB_DBname(master_dbg));
   }
   if (!fTablecheck && !dbexist(slave_dbg)) {
     fAllsync = TRUE;

@@ -40,7 +40,7 @@ extern void CheckBatchExist(DBG_Struct *dbg, int pgid) {
     sql = (char *)xmalloc(sql_len);
     snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid='%d';", BATCH_TABLE,
              pgid);
-    ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+    ExecDBOP(dbg, sql, FALSE);
     xfree(sql);
   }
 }
@@ -55,7 +55,7 @@ extern void CheckBatchPg(void) {
   mondbg = GetDBG_monsys();
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "SELECT pgid FROM %s ;", BATCH_TABLE);
-  ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+  ret = ExecDBQuery(mondbg, sql, FALSE);
   xfree(sql);
   if (!ret) {
     return;
@@ -131,7 +131,7 @@ extern Bool BatchIDExist(DBG_Struct *dbg, char *id) {
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "SELECT 1 FROM %s WHERE id='%s';", BATCH_LOG_TABLE,
            id);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+  ret = ExecDBQuery(dbg, sql, FALSE);
   xfree(sql);
   if (ret) {
     rc = TRUE;
