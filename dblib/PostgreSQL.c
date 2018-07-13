@@ -52,19 +52,6 @@ static char *rname[SIZE_RNAME];
 static int alevel;
 static int Dim[SIZE_RNAME];
 
-/*	This code depends on sizeof(Oid).	*/
-static void SetValueOid(ValueStruct *value, Oid id) {
-  ValueObjectId(value) = (uint64_t)id;
-}
-
-static Oid ValueOid(MonObjectType obj) {
-  Oid id;
-
-  id = (Oid)obj;
-  return (id);
-}
-/**/
-
 static void EscapeString(DBG_Struct *dbg, LargeByteString *lbs, char *str) {
   int error;
   size_t len;
@@ -224,6 +211,7 @@ static void ValueToSQL(DBG_Struct *dbg, LargeByteString *lbs,
     case GL_TYPE_CHAR:
     case GL_TYPE_VARCHAR:
     case GL_TYPE_TEXT:
+    case GL_TYPE_OBJECT:
       LBS_EmitChar(lbs, '\'');
       EscapeString(dbg, lbs, ValueToString(val, dbg->coding));
       LBS_EmitChar(lbs, '\'');
@@ -253,10 +241,6 @@ static void ValueToSQL(DBG_Struct *dbg, LargeByteString *lbs,
       break;
     case GL_TYPE_BOOL:
       snprintf(buff, sizeof(buff), "'%s'", ValueToBool(val) ? "t" : "f");
-      LBS_EmitString(lbs, buff);
-      break;
-    case GL_TYPE_OBJECT:
-      snprintf(buff, sizeof(buff), "%u", ValueOid(ValueObjectId(val)));
       LBS_EmitString(lbs, buff);
       break;
     case GL_TYPE_TIMESTAMP:
@@ -317,7 +301,6 @@ static char *ParArray(DBG_Struct *dbg, char *p, ValueStruct *val) {
   Bool fMinus;
   size_t len;
   char *pp, *q, *qq;
-  Oid id;
   int i, j;
   int ival;
 
@@ -346,19 +329,11 @@ static char *ParArray(DBG_Struct *dbg, char *p, ValueStruct *val) {
         ival = (fMinus) ? -ival : ival;
         SetValueInteger(item, ival);
         break;
-      case GL_TYPE_OBJECT:
-        id = 0;
-        while (isdigit(*p)) {
-          id *= 10;
-          id += (*p - '0');
-          p++;
-        }
-        SetValueOid(item, id);
-        break;
       case GL_TYPE_BOOL:
         SetValueBool(item, *p == 't');
         p++;
         break;
+      case GL_TYPE_OBJECT:
       case GL_TYPE_BYTE:
       case GL_TYPE_CHAR:
       case GL_TYPE_VARCHAR:
@@ -531,7 +506,6 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
   ValueStruct *tmp;
   int fnum;
   Numeric nv;
-  Oid id;
   char buff[SIZE_OTHER];
   char *str;
 
@@ -598,6 +572,7 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
       ParseDate(val, buff, STATE_DATE_HOUR);
     }
     break;
+  case GL_TYPE_OBJECT:
   case GL_TYPE_BYTE:
   case GL_TYPE_CHAR:
   case GL_TYPE_VARCHAR:
@@ -664,18 +639,6 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
     dbgmsg("<record");
     level--;
     break;
-  case GL_TYPE_OBJECT:
-    dbgmsg("object");
-    fnum = PQfnumber(res, ItemName());
-    if (fnum < 0) {
-      if (!IS_VALUE_VIRTUAL(val)) {
-        ValueIsNil(val);
-      }
-    } else {
-      id = (Oid)atol(PQgetvalue(res, ix, fnum));
-      SetValueOid(val, id);
-    }
-    break;
   case GL_TYPE_ALIAS:
     Warning("invalid data type");
     break;
@@ -703,9 +666,6 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
     case GL_TYPE_INT:
       SetValueInteger(val, atoi(PQgetvalue(res, tnum, fnum)));
       break;
-    case GL_TYPE_OBJECT:
-      SetValueOid(val, (Oid)atol(PQgetvalue(res, tnum, fnum)));
-      break;
     case GL_TYPE_BOOL:
       SetValueBool(val, *PQgetvalue(res, tnum, fnum) == 't');
       break;
@@ -721,6 +681,7 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
       strcpy(buff, PQgetvalue(res, tnum, fnum));
       ParseDate(val, buff, STATE_DATE_HOUR);
       break;
+    case GL_TYPE_OBJECT:
     case GL_TYPE_BYTE:
     case GL_TYPE_CHAR:
     case GL_TYPE_VARCHAR:

@@ -89,7 +89,7 @@ static ValueStruct *_OpenXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         rc = MCP_OK;
       } else {
         mondbg = GetDBG_monsys();
-        if (blob_export_mem(mondbg, ValueObjectId(obj), &buff, &size)) {
+        if (monblob_export_mem(mondbg, ValueObjectId(obj), &buff, &size)) {
           if (size > 0) {
             XMLDoc = xmlReadMemory(buff, size, "http://www.montsuqi.org/", NULL,
                                    XML_PARSE_NOBLANKS | XML_PARSE_NOENT);
@@ -117,6 +117,7 @@ static ValueStruct *_CloseXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   xmlChar *buff;
   int size;
   DBG_Struct *mondbg;
+  char *id;
 
   ENTER_FUNC;
   buff = NULL;
@@ -138,9 +139,10 @@ static ValueStruct *_CloseXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     xmlDocDumpFormatMemoryEnc(XMLDoc, &buff, &size, "UTF-8", 0);
     if (buff != NULL) {
       mondbg = GetDBG_monsys();
-      ValueObjectId(obj) = blob_import_mem(mondbg, 0, "XMLIO.xml",
-                                           "application/xml", 0, buff, size);
-      if (ValueObjectId(obj) != GL_OBJ_NULL) {
+      id = monblob_import_mem(mondbg, NULL, 0, "XMLIO.xml", "application/xml", 0, buff, size);
+      if (id != NULL) {
+        SetValueString(obj,id,NULL);
+        xfree(id);
         ret = DuplicateValue(args, TRUE);
         ctrl->rc = MCP_OK;
       } else {

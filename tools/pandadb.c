@@ -153,7 +153,8 @@ static void TableBody(LargeByteString *lbs, ValueStruct *val, size_t arraysize,
     break;
   case GL_TYPE_OBJECT:
     PutItemName(lbs);
-    LBS_EmitString(lbs, "oid");
+    sprintf(buff, "varchar(%d)", SIZE_UUID);
+    LBS_EmitString(lbs, buff);
     PutDim(lbs);
     break;
   case GL_TYPE_TIMESTAMP:

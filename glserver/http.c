@@ -96,7 +96,7 @@ HTTP_REQUEST *HTTP_Init(NETFILE *fp) {
   req->window = NULL;
   req->status = HTTP_OK;
   req->session_id = NULL;
-  req->oid = 0;
+  req->oid = NULL;
   req->require_auth = FALSE;
   return req;
 }
@@ -341,7 +341,7 @@ void ParseReqLine(HTTP_REQUEST *req) {
   }
 
   /*blob export*/
-  re = g_regex_new("^get\\s+/rest/sessions/([a-zA-Z0-9-]+)/blob/(\\d+)",
+  re = g_regex_new("^get\\s+/rest/sessions/([a-zA-Z0-9-]+)/blob/([a-zA-Z0-9-]+)",
                    G_REGEX_CASELESS, 0, NULL);
   if (g_regex_match(re, line, 0, &match)) {
     req->session_id = g_match_info_fetch(match, 1);
@@ -575,8 +575,8 @@ static json_object *ParseReqArguments(char *args) {
 
 json_object *MakeAPIReqJSON(HTTP_REQUEST *req) {
   json_object *obj, *params, *meta, *arguments;
-  gchar *ctype, oid[256];
-  MonObjectType mon;
+  gchar *ctype;
+  char *id;
 
   obj = json_object_new_object();
   json_object_object_add(obj, "jsonrpc", json_object_new_string("2.0"));
@@ -611,12 +611,15 @@ json_object *MakeAPIReqJSON(HTTP_REQUEST *req) {
     json_object_object_add(params, "content_type", json_object_new_string(""));
   }
 
-  mon = GL_OBJ_NULL;
   if (req->method == HTTP_POST) {
-    mon = GLImportBLOB(req->body, req->body_size);
+    id = GLImportBLOB(req->body, req->body_size);
+    if (id != NULL) {
+      json_object_object_add(params, "body", json_object_new_string(id));
+      xfree(id);
+    } else {
+      json_object_object_add(params, "body", json_object_new_string("0"));
+    }
   }
-  sprintf(oid, "%lu", mon);
-  json_object_object_add(params, "body", json_object_new_string(oid));
   json_object_object_add(obj, "params", params);
 
   return obj;
@@ -625,10 +628,9 @@ json_object *MakeAPIReqJSON(HTTP_REQUEST *req) {
 void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
   json_object *json_result, *json_status, *json_body, *json_ctype, *api_status;
   int status;
-  char *blob;
+  char *blob,*id;
   const char *ctype;
   size_t blob_size;
-  MonObjectType mon;
 
   if (!CheckJSONObject(obj, json_type_object)) {
     Warning("json error: invalid json");
@@ -647,7 +649,7 @@ void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
   }
 
   status = 200;
-  mon = 0;
+  id = NULL;
   switch (json_object_get_int(api_status)) {
   case WFC_API_OK:
     if (json_object_object_get_ex(json_result, "http_status", &json_status)) {
@@ -665,7 +667,7 @@ void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
       ctype = (const char *)json_object_get_string(json_ctype);
     }
     if (json_object_object_get_ex(json_result, "body", &json_body)) {
-      mon = (MonObjectType)atoll(json_object_get_string(json_body));
+      id = (char*)json_object_get_string(json_body);
     }
     break;
   case WFC_API_NOT_FOUND:
@@ -677,8 +679,8 @@ void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
     break;
   }
 
-  if (status == 200 && mon != 0) {
-    GLExportBLOB(mon, &blob, &blob_size);
+  if (status == 200 && id != NULL) {
+    GLExportBLOB(id, &blob, &blob_size);
     SendResponse(req, status, blob, blob_size, "Content-Type", ctype, NULL);
     xfree(blob);
   } else {
@@ -702,8 +704,7 @@ static gboolean APIHandler(HTTP_REQUEST *req) {
 }
 
 static gboolean BLOBImportHandler(HTTP_REQUEST *req) {
-  MonObjectType obj;
-  char oid[256];
+  char *id;
 
   if (!CheckSession(req->session_id)) {
     SendResponse(req, HTTP_FORBIDDEN, NULL, 0, NULL);
@@ -712,18 +713,17 @@ static gboolean BLOBImportHandler(HTTP_REQUEST *req) {
     return FALSE;
   }
 
-  obj = GLImportBLOB(req->body, req->body_size);
-  if (obj == GL_OBJ_NULL) {
+  id = GLImportBLOB(req->body, req->body_size);
+  if (id == NULL) {
     SendResponse(req, HTTP_INTERNAL_SERVER_ERROR, NULL, 0, NULL);
     return TRUE;
   }
-  sprintf(oid, "%lu", obj);
-  SendResponse(req, HTTP_OK, NULL, 0, "X-BLOB-ID", oid, NULL);
+  SendResponse(req, HTTP_OK, NULL, 0, "X-BLOB-ID", id, NULL);
+  xfree(id);
   return TRUE;
 }
 
 static gboolean BLOBExportHandler(HTTP_REQUEST *req) {
-  MonObjectType obj;
   char *body;
   size_t size;
 
@@ -734,12 +734,11 @@ static gboolean BLOBExportHandler(HTTP_REQUEST *req) {
     return FALSE;
   }
 
-  obj = (MonObjectType)atoll(req->oid);
-  if (obj == GL_OBJ_NULL) {
+  if (req->oid == NULL) {
     SendResponse(req, HTTP_NOT_FOUND, NULL, 0, NULL);
     return TRUE;
   }
-  GLExportBLOB(obj, &body, &size);
+  GLExportBLOB(req->oid, &body, &size);
   if (body == NULL || size == 0) {
     SendResponse(req, HTTP_NOT_FOUND, NULL, 0, NULL);
     return TRUE;
@@ -1138,6 +1137,7 @@ static gboolean PrepareNextRequest(HTTP_REQUEST *req) {
   XFree(&(req->window));
   XFree(&(req->agent));
   XFree(&(req->session_id));
+  XFree(&(req->oid));
   req->status = HTTP_OK;
   req->body_size = 0;
   req->require_auth = FALSE;

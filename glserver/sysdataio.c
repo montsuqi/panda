@@ -70,22 +70,22 @@ static void DisconnectSysData(NETFILE *fp) {
   }
 }
 
-void GLExportBLOB(MonObjectType obj, char **out, size_t *size) {
+void GLExportBLOB(char* id, char **out, size_t *size) {
   NETFILE *fp;
 
   fp = ConnectSysData();
-  RequestExportBLOBMem(fp, obj, out, size);
+  RequestExportBLOBMem(fp, id, out, size);
   DisconnectSysData(fp);
 }
 
-MonObjectType GLImportBLOB(char *in, size_t size) {
+char* GLImportBLOB(char *in, size_t size) {
   NETFILE *fp;
-  MonObjectType ret;
+  char *id;
 
   fp = ConnectSysData();
-  ret = RequestImportBLOBMem(fp, in, size);
+  id = RequestImportBLOBMem(fp, in, size);
   DisconnectSysData(fp);
-  return ret;
+  return id;
 }
 
 static ValueStruct *val = NULL;

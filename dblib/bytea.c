@@ -221,39 +221,6 @@ static Bool monblob_idcheck(DBG_Struct *dbg, char *id) {
   return rc;
 }
 
-static void reset_blobid(DBG_Struct *dbg) {
-  char *sql;
-  ValueStruct *ret;
-
-  sql = (char *)xmalloc(SIZE_BUFF);
-  sprintf(sql, "SELECT setval('%s', 1, false);", SEQMONBLOB);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  FreeValueStruct(ret);
-  xfree(sql);
-}
-
-extern MonObjectType new_blobid(DBG_Struct *dbg) {
-  MonObjectType blobid;
-  ValueStruct *ret, *val;
-  char *sql;
-
-  sql = (char *)xmalloc(SIZE_BUFF);
-  sprintf(sql, "SELECT nextval('%s') AS id;", SEQMONBLOB);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  if (ret) {
-    val = GetItemLongName(ret, "id");
-    blobid = (MonObjectType)ValueToInteger(val);
-    FreeValueStruct(ret);
-  } else {
-    blobid = 0;
-  }
-  xfree(sql);
-  if ((unsigned int)blobid >= USHRT_MAX) {
-    reset_blobid(dbg);
-  }
-  return blobid;
-}
-
 extern char *new_id() {
   uuid_t u;
   static char *id;
@@ -264,8 +231,7 @@ extern char *new_id() {
   return id;
 }
 
-extern monblob_struct *new_monblob_struct(DBG_Struct *dbg, char *id,
-                                          MonObjectType obj) {
+extern monblob_struct *new_monblob_struct(DBG_Struct *dbg, char *id) {
   monblob_struct *monblob;
 
   monblob = New(monblob_struct);
@@ -273,11 +239,6 @@ extern monblob_struct *new_monblob_struct(DBG_Struct *dbg, char *id,
     monblob->id = new_id();
   } else {
     monblob->id = StrDup(id);
-  }
-  if (obj <= 0) {
-    monblob->blobid = new_blobid(dbg);
-  } else {
-    monblob->blobid = obj;
   }
   monblob->lifetype = 0;
   monblob->filename = NULL;
@@ -373,7 +334,7 @@ static char *_monblob_import(DBG_Struct *dbg, char *id, int persist,
     return NULL;
   }
 
-  monblob = new_monblob_struct(dbg, id, 0);
+  monblob = new_monblob_struct(dbg, id);
   monblob->filename = StrDup(basename((char *)filename));
   monblob->lifetype = lifetype;
   if (persist > 0) {
@@ -436,19 +397,6 @@ extern char *monblob_import(DBG_Struct *dbg, char *id, int persist,
                          value, size);
 }
 
-extern MonObjectType blob_import(DBG_Struct *dbg, int persist, char *filename,
-                                 char *content_type, unsigned int lifetype) {
-  char *id;
-  MonObjectType blobid;
-
-  id = monblob_import(dbg, NULL, persist, filename, content_type, lifetype);
-  blobid = monblob_get_blobid(dbg, id);
-  if (id != NULL) {
-    xfree(id);
-  }
-  return blobid;
-}
-
 extern char *monblob_import_mem(DBG_Struct *dbg, char *id, int persist,
                                 char *filename, char *content_type,
                                 unsigned int lifetype, char *buf, size_t size) {
@@ -462,22 +410,6 @@ extern char *monblob_import_mem(DBG_Struct *dbg, char *id, int persist,
                          value, size);
 }
 
-extern MonObjectType blob_import_mem(DBG_Struct *dbg, int persist,
-                                     char *filename, char *content_type,
-                                     unsigned int lifetype, char *buf,
-                                     size_t size) {
-  char *id;
-  MonObjectType blobid;
-
-  id = monblob_import_mem(dbg, NULL, persist, filename, content_type, lifetype,
-                          buf, size);
-  blobid = monblob_get_blobid(dbg, id);
-  if (id != NULL) {
-    xfree(id);
-  }
-  return blobid;
-}
-
 static size_t insert_query(DBG_Struct *dbg, monblob_struct *blob, char *query) {
   size_t size;
   char *filename;
@@ -487,7 +419,7 @@ static size_t insert_query(DBG_Struct *dbg, monblob_struct *blob, char *query) {
                   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, "
                   "size, content_type, status, file_data) "
                   "VALUES ('%s', '%u', '%s', %d, '%s', %d, '%s', %d, '",
-                  MONBLOB, blob->id, (unsigned int)blob->blobid,
+                  MONBLOB, blob->id, 1,
                   blob->importtime, blob->lifetype, filename, blob->size,
                   blob->content_type, blob->status);
   xfree(filename);
@@ -503,7 +435,7 @@ static size_t update_query(DBG_Struct *dbg, monblob_struct *blob, char *query) {
       query, SIZE_SQL,
       "UPDATE %s SET blobid = '%u', importtime = '%s', lifetype = %d, filename "
       "= '%s', size = %d,  content_type = '%s', status = %d, file_data = '",
-      MONBLOB, (unsigned int)blob->blobid, blob->importtime, blob->lifetype,
+      MONBLOB, 1, blob->importtime, blob->lifetype,
       filename, blob->size, blob->content_type, blob->status);
   xfree(filename);
   return size;
@@ -618,21 +550,6 @@ extern Bool monblob_export_file(DBG_Struct *dbg, char *id, char *filename) {
   return rc;
 }
 
-extern Bool blob_export(DBG_Struct *dbg, MonObjectType blobid, char *filename) {
-  char *id;
-  Bool ret;
-
-  id = monblob_get_id(dbg, blobid);
-  if (id == NULL) {
-    Warning("object[%d] not found\n", (unsigned int)blobid);
-    return FALSE;
-  }
-  ret = monblob_export_file(dbg, id, filename);
-  monblob_delete(dbg, id);
-  xfree(id);
-  return ret;
-}
-
 extern Bool monblob_export_mem(DBG_Struct *dbg, char *id, char **buf,
                                size_t *size) {
   char *sql;
@@ -664,22 +581,6 @@ extern Bool monblob_export_mem(DBG_Struct *dbg, char *id, char **buf,
   FreeValueStruct(ret);
 
   return TRUE;
-}
-
-extern Bool blob_export_mem(DBG_Struct *dbg, MonObjectType blobid, char **buf,
-                            size_t *size) {
-  char *id;
-  Bool ret;
-
-  id = monblob_get_id(dbg, blobid);
-  if (id == NULL) {
-    Warning("object[%d] not found\n", (unsigned int)blobid);
-    return FALSE;
-  }
-  ret = monblob_export_mem(dbg, id, buf, size);
-  monblob_delete(dbg, id);
-  xfree(id);
-  return ret;
 }
 
 static Bool monblob_update(DBG_Struct *dbg, monblob_struct *monblob) {
@@ -718,7 +619,7 @@ extern int monblob_persist(DBG_Struct *dbg, char *id, char *filename,
   int rc;
   monblob_struct *monblob;
 
-  monblob = new_monblob_struct(dbg, id, 0);
+  monblob = new_monblob_struct(dbg, id);
   monblob->filename = StrDup(filename);
   monblob->lifetype = lifetype;
   if (monblob->lifetype == 0) {
@@ -734,31 +635,6 @@ extern int monblob_persist(DBG_Struct *dbg, char *id, char *filename,
   return rc;
 }
 
-/* update only lifetime */
-extern Bool blob_persist(DBG_Struct *dbg, MonObjectType blobid) {
-  Bool rc;
-  monblob_struct *monblob;
-  char *id;
-
-  id = monblob_get_id(dbg, blobid);
-  if (id != NULL) {
-    monblob = new_monblob_struct(dbg, id, 0);
-    if (monblob->lifetype <= 0) {
-      monblob->lifetype = 1;
-    }
-    if (monblob->lifetype > 2) {
-      monblob->lifetype = 2;
-    }
-    monblob->status = 200;
-    rc = monblob_update(dbg, monblob);
-    free_monblob_struct(monblob);
-    xfree(id);
-  } else {
-    rc = FALSE;
-  }
-  return rc;
-}
-
 extern Bool monblob_delete(DBG_Struct *dbg, char *id) {
   Bool rc;
   char *sql;
@@ -769,20 +645,6 @@ extern Bool monblob_delete(DBG_Struct *dbg, char *id) {
   rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
   xfree(sql);
   return (rc == MCP_OK);
-}
-
-extern Bool blob_delete(DBG_Struct *dbg, MonObjectType blobid) {
-  Bool rc;
-  char *id;
-
-  id = monblob_get_id(dbg, blobid);
-  if (id != NULL) {
-    rc = monblob_delete(dbg, id);
-    xfree(id);
-  } else {
-    rc = FALSE;
-  }
-  return rc;
 }
 
 extern char *monblob_get_filename(DBG_Struct *dbg, char *id) {
@@ -803,58 +665,6 @@ extern char *monblob_get_filename(DBG_Struct *dbg, char *id) {
   }
   FreeValueStruct(ret);
   return filename;
-}
-
-extern char *monblob_get_id(DBG_Struct *dbg, MonObjectType blobid) {
-  char *sql;
-  ValueStruct *ret, *val;
-  char *id = NULL;
-
-  if (blobid == 0) {
-    return NULL;
-  }
-  sql = (char *)xmalloc(SIZE_BUFF);
-  sprintf(sql,
-          "SELECT id FROM %s WHERE blobid = %u AND now() < importtime + "
-          "CAST('%d days' AS INTERVAL) ORDER BY importtime DESC LIMIT 1;",
-          MONBLOB, (unsigned int)blobid, BLOBEXPIRE);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  xfree(sql);
-  if (ret == NULL) {
-    return NULL;
-  }
-  val = GetItemLongName(ret, "id");
-  if (val) {
-    id = StrDup(ValueToString(val, dbg->coding));
-  } else {
-    Warning("[%s] is not registered\n", id);
-  }
-  FreeValueStruct(ret);
-  return id;
-}
-
-extern MonObjectType monblob_get_blobid(DBG_Struct *dbg, char *id) {
-  char *sql;
-  char *eid;
-  ValueStruct *ret, *val;
-  MonObjectType blobid;
-
-  blobid = 0;
-  if (id == NULL) {
-    return 0;
-  }
-  sql = (char *)xmalloc(SIZE_BUFF);
-  eid = Escape_monsys(dbg, id);
-  sprintf(sql, "SELECT blobid FROM %s WHERE id = '%s';", MONBLOB, eid);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  xfree(eid);
-  xfree(sql);
-  if (ret) {
-    val = GetItemLongName(ret, "blobid");
-    blobid = (MonObjectType)ValueToInteger(val);
-    FreeValueStruct(ret);
-  }
-  return blobid;
 }
 
 extern Bool monblob_check_id(DBG_Struct *dbg, char *id) {
@@ -880,39 +690,6 @@ extern Bool monblob_check_id(DBG_Struct *dbg, char *id) {
   }
 }
 
-extern Bool blob_check_id(DBG_Struct *dbg, MonObjectType blobid) {
-  char *sql;
-  ValueStruct *ret;
-
-  sql = (char *)xmalloc(SIZE_BUFF);
-  sprintf(sql, "SELECT id FROM %s WHERE blobid = '%u' and status = 200;",
-          MONBLOB, (unsigned int)blobid);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  xfree(sql);
-  if (ret) {
-    FreeValueStruct(ret);
-    return TRUE;
-  } else {
-    return FALSE;
-  }
-}
-
-extern ValueStruct *blob_list(DBG_Struct *dbg) {
-  char *sql;
-  size_t sql_len = SIZE_SQL;
-  ValueStruct *ret;
-
-  sql = (char *)xmalloc(sql_len);
-  snprintf(
-      sql, sql_len,
-      "SELECT importtime, id, blobid, "
-      "filename,size,content_type,lifetype,status FROM %s ORDER BY importtime;",
-      MONBLOB);
-  ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  xfree(sql);
-  return ret;
-}
-
 extern ValueStruct *monblob_info(DBG_Struct *dbg, char *id) {
   char *sql;
   char *eid;
@@ -935,21 +712,18 @@ extern ValueStruct *monblob_info(DBG_Struct *dbg, char *id) {
   return ret;
 }
 
-extern ValueStruct *blob_info(DBG_Struct *dbg, char *blobid) {
+extern ValueStruct *monblob_list(DBG_Struct *dbg) {
   char *sql;
-  char *eblobid;
   size_t sql_len = SIZE_SQL;
   ValueStruct *ret;
 
   sql = (char *)xmalloc(sql_len);
-  eblobid = Escape_monsys(dbg, blobid);
   snprintf(
       sql, sql_len,
       "SELECT importtime, id, blobid, "
-      "filename,size,content_type,lifetype,status FROM %s WHERE blobid = '%s';",
-      MONBLOB, eblobid);
+      "filename,size,content_type,lifetype,status FROM %s ORDER BY importtime;",
+      MONBLOB);
   ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-  xfree(eblobid);
   xfree(sql);
   return ret;
 }

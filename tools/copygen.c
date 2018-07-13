@@ -191,7 +191,7 @@ static void _COBOL(CONVOPT *conv, ValueStruct *val) {
     PutString(buff);
     break;
   case GL_TYPE_OBJECT:
-    sprintf(buff, "PIC X(%d)", (int)sizeof(MonObjectType));
+    sprintf(buff, "PIC X(%d)", SIZE_UUID);
     PutString(buff);
     break;
   case GL_TYPE_NUMBER:

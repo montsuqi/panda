@@ -169,7 +169,7 @@ static void TableBody(ValueStruct *val, size_t arraysize, size_t textsize) {
     break;
   case GL_TYPE_OBJECT:
     PutItemName();
-    printf("oid");
+    printf("varchar(%d)", SIZE_UUID);
     PutDim();
     break;
   case GL_TYPE_ARRAY:
