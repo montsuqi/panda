@@ -51,7 +51,7 @@
 #include "message.h"
 #include "debug.h"
 
-#define NBCONN(dbg) (NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
+#define NBCONN(dbg) (NETFILE *)(dbg->conn)
 
 static ValueStruct *GETDATA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                             RecordStruct *rec, ValueStruct *args) {

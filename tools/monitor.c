@@ -386,7 +386,7 @@ static void InitRedirector(DBG_Struct *dbg) {
   argv[argc++] = NULL;
   Message("start redirector:%s", dbg->name);
   proc->interval = Interval;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+  dbg->dbstatus = DB_STATUS_CONNECT;
   ProcessList = g_list_append(ProcessList, proc);
   LEAVE_FUNC;
 }
@@ -397,7 +397,7 @@ static void _InitRedirectors(DBG_Struct *dbg) {
   if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
     _InitRedirectors(dbg->redirect);
   }
-  if (dbg->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
+  if (dbg->dbstatus != DB_STATUS_CONNECT) {
     InitRedirector(dbg);
   }
   LEAVE_FUNC;
@@ -409,7 +409,7 @@ static void InitRedirectors(void) {
 
   ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
-    ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+    ThisEnv->DBG[i]->dbstatus = DB_STATUS_UNCONNECT;
   }
   for (i = 0; i < ThisEnv->cDBG; i++) {
     dbg = ThisEnv->DBG[i];
@@ -521,7 +521,7 @@ static void InitDBLog(DBG_Struct *dbg) {
   proc->argc = argc;
   argv[argc++] = NULL;
   proc->interval = Interval;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+  dbg->dbstatus = DB_STATUS_CONNECT;
   ProcessList = g_list_append(ProcessList, proc);
   LEAVE_FUNC;
 }
@@ -532,7 +532,7 @@ static void _InitDBLogs(DBG_Struct *dbg) {
   if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
     _InitDBLogs(dbg->redirect);
   }
-  if (dbg->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
+  if (dbg->dbstatus != DB_STATUS_CONNECT) {
     InitDBLog(dbg);
   }
   LEAVE_FUNC;
@@ -544,7 +544,7 @@ static void InitDBLogs(void) {
 
   ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
-    ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+    ThisEnv->DBG[i]->dbstatus = DB_STATUS_UNCONNECT;
   }
   for (i = 0; i < ThisEnv->cDBG; i++) {
     dbg = ThisEnv->DBG[i];

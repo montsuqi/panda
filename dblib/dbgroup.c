@@ -311,8 +311,8 @@ extern int GetDBRedirectStatus(int newstatus) {
     dbg = ThisEnv->DBG[i];
     if (dbg->redirect != NULL) {
       rdbg = dbg->redirect;
-      if (dbstatus < rdbg->process[PROCESS_UPDATE].dbstatus) {
-        dbstatus = rdbg->process[PROCESS_UPDATE].dbstatus;
+      if (dbstatus < rdbg->dbstatus) {
+        dbstatus = rdbg->dbstatus;
       }
     }
   }

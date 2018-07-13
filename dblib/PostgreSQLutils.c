@@ -52,22 +52,17 @@ const char *PSQL = "psql";
 extern PGconn *pg_connect(DBG_Struct *dbg) {
   PGconn *conn = NULL;
 
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
     /* database is already connected. */
-    conn = PGCONN(dbg, DB_UPDATE);
-  } else {
-    if ((conn = PgConnect(dbg, DB_UPDATE)) != NULL) {
-      dbg->process[PROCESS_UPDATE].conn = (void *)conn;
-      dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-    }
+    conn = PGCONN(dbg);
   }
   return conn;
 }
 
 extern void pg_disconnect(DBG_Struct *dbg) {
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    PQfinish(PGCONN(dbg, DB_UPDATE));
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    PQfinish(PGCONN(dbg));
+    dbg->dbstatus = DB_STATUS_DISCONNECT;
   }
 }
 
@@ -84,7 +79,7 @@ extern Bool pg_trans_commit(DBG_Struct *dbg) {
   Bool ret = FALSE;
   PGconn *conn = NULL;
 
-  conn = PGCONN(dbg, DB_UPDATE);
+  conn = PGCONN(dbg);
   ret = db_command(conn, "COMMIT;");
   return ret;
 }
@@ -92,7 +87,7 @@ extern Bool pg_trans_commit(DBG_Struct *dbg) {
 extern void pg_lockredirector(DBG_Struct *dbg) {
   PGconn *conn = NULL;
 
-  conn = PGCONN(dbg, DB_UPDATE);
+  conn = PGCONN(dbg);
   LockRedirectorConnect(conn);
 }
 
@@ -773,7 +768,7 @@ extern TableList *get_table_info(DBG_Struct *dbg, char opt) {
   PGconn *conn;
   TableList *tablelist;
 
-  conn = PGCONN(dbg, DB_UPDATE);
+  conn = PGCONN(dbg);
 
   tablelist = getTableList(conn);
 

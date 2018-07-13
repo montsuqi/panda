@@ -107,11 +107,8 @@ extern LargeByteString *Template1Conninfo(DBG_Struct *dbg, int usage) {
   return conninfo;
 }
 
-extern PGconn *PGCONN(DBG_Struct *dbg, int usage) {
-  int ix;
-
-  ix = IsUsageUpdate(usage) ? PROCESS_UPDATE : PROCESS_READONLY;
-  return ((PGconn *)dbg->process[ix].conn);
+extern PGconn *PGCONN(DBG_Struct *dbg) {
+  return ((PGconn *)dbg->conn);
 }
 
 extern PGconn *PgConnect(DBG_Struct *dbg, int usage) {

@@ -139,8 +139,6 @@ typedef	struct {
 #define DB_STATUS_SYNC			0x07
 
 typedef	struct {
-	void		*conn;
-	int			dbstatus;
 }	DB_Process;
 
 #define	PROCESS_UPDATE		0
@@ -177,7 +175,8 @@ typedef	struct _DBG_Struct	{
 	int					sumcheck;
 	char				*appname;
 	DB_Server			*server;
-	DB_Process			process[2];
+	void		*conn;
+	int			dbstatus;
 	int					nServer;
 }	DBG_Struct;
 

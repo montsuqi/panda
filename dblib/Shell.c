@@ -61,9 +61,8 @@ static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
 static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   ENTER_FUNC;
   OpenDB_RedirectPort(dbg);
-  dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG) * sizeof(char *));
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-  dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+  dbg->conn = xmalloc((SIZE_ARG) * sizeof(char *));
+  dbg->dbstatus = DB_STATUS_CONNECT;
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
@@ -72,11 +71,10 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 }
 
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    xfree(dbg->process[PROCESS_UPDATE].conn);
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    xfree(dbg->conn);
     CloseDB_RedirectPort(dbg);
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+    dbg->dbstatus = DB_STATUS_DISCONNECT;
     if (ctrl != NULL) {
       ctrl->rc = MCP_OK;
     }
@@ -91,7 +89,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   while (waitpid(-1, NULL, WNOHANG) > 0)
     ;
   dbg->count = 0;
-  cmdv = dbg->process[PROCESS_UPDATE].conn;
+  cmdv = dbg->conn;
   cmdv[dbg->count] = NULL;
   unsetenv("MON_BATCH_ID");
   unsetenv("MON_BATCH_NAME");
@@ -167,7 +165,7 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   LBS_EmitEnd(dbg->checkData);
   setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->checkData), 1);
 
-  cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
+  cmdv = (char **)dbg->conn;
   rc = DoShell(cmdv);
   CommitDB_Redirect(dbg);
   for (i = 0; i < dbg->count; i++) {
@@ -314,7 +312,7 @@ static ValueStruct *RegistShell(DBCOMM_CTRL *ctrl, RecordStruct *rec,
   ENTER_FUNC;
   ret = NULL;
   dbg = rec->opt.db->dbg;
-  cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
+  cmdv = (char **)dbg->conn;
   if (src == NULL) {
     Error("function \"%s\" is not found.", ctrl->func);
   }

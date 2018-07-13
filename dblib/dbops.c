@@ -43,8 +43,7 @@
 
 extern ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   ENTER_FUNC;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-  dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+  dbg->dbstatus = DB_STATUS_CONNECT;
   ctrl->rc = MCP_OK;
   LEAVE_FUNC;
   return (NULL);
@@ -52,7 +51,7 @@ extern ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 
 extern ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   ENTER_FUNC;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+  dbg->dbstatus = DB_STATUS_DISCONNECT;
   ctrl->rc = MCP_OK;
   LEAVE_FUNC;
   return (NULL);

@@ -687,10 +687,8 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   dbg->dbt = NULL;
   dbg->priority = 50;
   dbg->errcount = 0;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
-  dbg->process[PROCESS_UPDATE].conn = NULL;
-  dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
-  dbg->process[PROCESS_READONLY].conn = NULL;
+  dbg->dbstatus = DB_STATUS_NOCONNECT;
+  dbg->conn = NULL;
 
   if ((env = getenv("MONDB_LOCALE")) == NULL) {
     dbg->coding = DB_LOCALE;
