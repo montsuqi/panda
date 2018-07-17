@@ -21,7 +21,6 @@ sbin_PROGRAMS =  dbredirector
 dbredirector_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.la	\
-	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la	\
 	$(POSTGRES_LIBS)					\
@@ -48,6 +47,5 @@ dbredirector_SOURCES	=	\
 dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.la	\
-	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la

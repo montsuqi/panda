@@ -23,7 +23,6 @@
 #include "libmondai.h"
 #include "comm.h"
 #include "port.h"
-#include "dblog.h"
 
 #define DBREPLICATION_COMMAND_OK     0x00
 #define DBREPLICATION_COMMAND_NG     0x01
