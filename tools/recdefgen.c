@@ -258,12 +258,16 @@ int main(int argc, char *argv[]) {
   }
 
   win = NULL;
-  re = g_regex_new("\\/([a-zA-Z0-9_-]+).glade", G_REGEX_CASELESS, 0, NULL);
+  re = g_regex_new("([a-zA-Z0-9_-]+).glade", G_REGEX_CASELESS, 0, NULL);
   if (g_regex_match(re, argv[1], 0, &m)) {
     win = g_match_info_fetch(m, 1);
     g_match_info_free(m);
   }
   g_regex_unref(re);
+
+  if (!win) {
+    g_error("cant get win");
+  }
 
   gtk_init(&argc, &argv);
   gtk_panda_init(&argc, &argv);
