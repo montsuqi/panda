@@ -438,13 +438,14 @@ extern int GetDB_PortMode(DBG_Struct *dbg) {
 }
 
 extern char *GetDB_DBname(DBG_Struct *dbg) {
-  char *name = NULL;
   if (DB_Name != NULL) {
-    name = DB_Name;
-  } else {
-    name = GetMONDB_ENV(dbg, "NAME");
+    return DB_Name;
   }
-  return (name);
+  char *name = GetMONDB_ENV(dbg, "NAME");
+  if (name != NULL) {
+    return DB_Name;
+  }
+  return dbg->server[0].dbname;
 }
 
 extern char *GetDB_User(DBG_Struct *dbg) {
