@@ -58,9 +58,9 @@ BlobCacheFileName(
 		memset(buf,0,SIZE_BUFF+1);
 		if (ValueType(value) == GL_TYPE_OBJECT) {
 			snprintf(buf,SIZE_BUFF,"%s/%s",CacheDir, ValueToString(value,NULL));
-        } else {
+		} else {
 			snprintf(buf,SIZE_BUFF,"%s/%p",CacheDir, value);
-        }
+		}
 		ValueObjectFile(value) = StrDup(buf);
 	}
 	return	(ValueObjectFile(value));
