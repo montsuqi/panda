@@ -579,6 +579,7 @@ static void ResolveAlias(RecordStruct *root, ValueStruct *val) {
         ResolveAlias(root, ValueArrayItem(val, i));
       }
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       for (i = 0; i < ValueRecordSize(val); i++) {
         item = ValueRecordItem(val, i);

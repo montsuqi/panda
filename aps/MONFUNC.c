@@ -72,9 +72,9 @@ static void CTRLtoMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl) {
   strcpy(ValueStringPointer(GetItemLongName(mcp, "func")), ctrl->func);
   strcpy(ValueStringPointer(GetItemLongName(mcp, "db.table")), ctrl->rname);
   strcpy(ValueStringPointer(GetItemLongName(mcp, "db.pathname")), ctrl->pname);
-  ValueInteger(GetItemLongName(mcp, "rc")) = ctrl->rc;
-  ValueInteger(GetItemLongName(mcp, "db.rcount")) = ctrl->rcount;
-  ValueInteger(GetItemLongName(mcp, "db.limit")) = ctrl->limit;
+  SetValueInteger(GetItemLongName(mcp, "rc"), ctrl->rc);
+  SetValueInteger(GetItemLongName(mcp, "db.rcount"), ctrl->rcount);
+  SetValueInteger(GetItemLongName(mcp, "db.limit"), ctrl->limit);
 }
 
 static void MCPtoCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp) {
@@ -129,7 +129,7 @@ static int MonDBFunc(ValueStruct *mcp, char *func, char *data,
 
 static int MonLOGFunc(ValueStruct *mcp) {
   ENTER_FUNC;
-  ValueInteger(GetItemLongName(mcp, "rc")) = 0;
+  SetValueInteger(GetItemLongName(mcp, "rc"), 0);
   LEAVE_FUNC;
   return 0;
 }
@@ -137,7 +137,7 @@ static int MonLOGFunc(ValueStruct *mcp) {
 static int MonGLFunc(ValueStruct *mcp) {
   ENTER_FUNC;
   strcpy(ValueStringPointer(GetItemLongName(mcp, "dc.status")), "PUTG");
-  ValueInteger(GetItemLongName(mcp, "rc")) = 0;
+  SetValueInteger(GetItemLongName(mcp, "rc"), 0);
   LEAVE_FUNC;
   return 0;
 }
@@ -166,7 +166,7 @@ static int _MONFUNC(char *mcpdata, char *data, ValueStruct **retval) {
   }
   if (ValueInteger(GetItemLongName(mcp, "db.logflag")) > 0) {
     AuditLog(mcp);
-    ValueInteger(GetItemLongName(mcp, "db.logflag")) = 0;
+    SetValueInteger(GetItemLongName(mcp, "db.logflag"),0);
   }
 #ifdef DEBUG
   DumpValueStruct(mcp);

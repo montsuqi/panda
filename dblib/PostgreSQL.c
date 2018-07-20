@@ -52,19 +52,6 @@ static char *rname[SIZE_RNAME];
 static int alevel;
 static int Dim[SIZE_RNAME];
 
-/*	This code depends on sizeof(Oid).	*/
-static void SetValueOid(ValueStruct *value, Oid id) {
-  ValueObjectId(value) = (uint64_t)id;
-}
-
-static Oid ValueOid(MonObjectType obj) {
-  Oid id;
-
-  id = (Oid)obj;
-  return (id);
-}
-/**/
-
 static void EscapeString(DBG_Struct *dbg, LargeByteString *lbs, char *str) {
   int error;
   size_t len;
@@ -78,13 +65,13 @@ static void EscapeString(DBG_Struct *dbg, LargeByteString *lbs, char *str) {
 
   size = LBS_Size(lbs);
   LBS_ReserveSize(lbs, size + (len * 2) + 1, TRUE);
-  size += PQescapeStringConn(PGCONN(dbg, DB_UPDATE), LBS_Body(lbs) + size, str,
+  size += PQescapeStringConn(PGCONN(dbg), LBS_Body(lbs) + size, str,
                              len, &error);
   if (error == 0) {
     LBS_ReserveSize(lbs, size, TRUE);
     LBS_SetPos(lbs, size);
   } else {
-    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, DB_UPDATE)));
+    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
   }
 }
 
@@ -97,7 +84,7 @@ static void EscapeBytea(DBG_Struct *dbg, LargeByteString *lbs,
 
   old_size = LBS_Size(lbs);
   to_char =
-      PQescapeByteaConn(PGCONN(dbg, DB_UPDATE), bintext, binlen, &to_length);
+      PQescapeByteaConn(PGCONN(dbg), bintext, binlen, &to_length);
   if (to_char != NULL) {
     LBS_ReserveSize(lbs, old_size + to_length, TRUE);
     dp = LBS_Body(lbs) + old_size;
@@ -105,7 +92,7 @@ static void EscapeBytea(DBG_Struct *dbg, LargeByteString *lbs,
     PQfreemem(to_char);
     LBS_SetPos(lbs, old_size + to_length);
   } else {
-    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, DB_UPDATE)));
+    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
   }
 }
 
@@ -177,10 +164,10 @@ static void CryptoMode(DBG_Struct *dbg) {
   char sql[SIZE_SQL + 1];
   PGresult *res;
 
-  if ((crypto = GetDB_Crypt(dbg, DB_UPDATE)) != NULL) {
-    if (ExistFunc(PGCONN(dbg, DB_UPDATE), "crypto_mode")) {
+  if ((crypto = GetDB_Crypt(dbg)) != NULL) {
+    if (ExistFunc(PGCONN(dbg), "crypto_mode")) {
       sprintf(sql, "SELECT crypto_mode('%s');", crypto);
-      res = PQexec(PGCONN(dbg, DB_UPDATE), sql);
+      res = PQexec(PGCONN(dbg), sql);
       PQclear(res);
     }
   }
@@ -224,6 +211,7 @@ static void ValueToSQL(DBG_Struct *dbg, LargeByteString *lbs,
     case GL_TYPE_CHAR:
     case GL_TYPE_VARCHAR:
     case GL_TYPE_TEXT:
+    case GL_TYPE_OBJECT:
       LBS_EmitChar(lbs, '\'');
       EscapeString(dbg, lbs, ValueToString(val, dbg->coding));
       LBS_EmitChar(lbs, '\'');
@@ -237,7 +225,7 @@ static void ValueToSQL(DBG_Struct *dbg, LargeByteString *lbs,
       LBS_EmitString(lbs, ValueToString(val, dbg->coding));
       break;
     case GL_TYPE_NUMBER:
-      nv = FixedToNumeric(&ValueFixed(val));
+      nv = FixedToNumeric(ValueFixed(val));
       str = NumericOutput(nv);
       LBS_EmitString(lbs, str);
       xfree(str);
@@ -253,10 +241,6 @@ static void ValueToSQL(DBG_Struct *dbg, LargeByteString *lbs,
       break;
     case GL_TYPE_BOOL:
       snprintf(buff, sizeof(buff), "'%s'", ValueToBool(val) ? "t" : "f");
-      LBS_EmitString(lbs, buff);
-      break;
-    case GL_TYPE_OBJECT:
-      snprintf(buff, sizeof(buff), "%u", ValueOid(ValueObjectId(val)));
       LBS_EmitString(lbs, buff);
       break;
     case GL_TYPE_TIMESTAMP:
@@ -317,7 +301,6 @@ static char *ParArray(DBG_Struct *dbg, char *p, ValueStruct *val) {
   Bool fMinus;
   size_t len;
   char *pp, *q, *qq;
-  Oid id;
   int i, j;
   int ival;
 
@@ -346,19 +329,11 @@ static char *ParArray(DBG_Struct *dbg, char *p, ValueStruct *val) {
         ival = (fMinus) ? -ival : ival;
         SetValueInteger(item, ival);
         break;
-      case GL_TYPE_OBJECT:
-        id = 0;
-        while (isdigit(*p)) {
-          id *= 10;
-          id += (*p - '0');
-          p++;
-        }
-        SetValueOid(item, id);
-        break;
       case GL_TYPE_BOOL:
         SetValueBool(item, *p == 't');
         p++;
         break;
+      case GL_TYPE_OBJECT:
       case GL_TYPE_BYTE:
       case GL_TYPE_CHAR:
       case GL_TYPE_VARCHAR:
@@ -424,6 +399,7 @@ static char *ParArray(DBG_Struct *dbg, char *p, ValueStruct *val) {
       case GL_TYPE_ARRAY:
         p = ParArray(dbg, p, item);
         break;
+      case GL_TYPE_ROOT_RECORD:
       case GL_TYPE_RECORD:
         for (j = 0; j < ValueRecordSize(item); j++) {
           p = ParArray(dbg, p, ValueRecordItem(item, i));
@@ -530,7 +506,6 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
   ValueStruct *tmp;
   int fnum;
   Numeric nv;
-  Oid id;
   char buff[SIZE_OTHER];
   char *str;
 
@@ -597,6 +572,7 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
       ParseDate(val, buff, STATE_DATE_HOUR);
     }
     break;
+  case GL_TYPE_OBJECT:
   case GL_TYPE_BYTE:
   case GL_TYPE_CHAR:
   case GL_TYPE_VARCHAR:
@@ -651,6 +627,7 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
       ParArray(dbg, PQgetvalue(res, ix, fnum), val);
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     dbgmsg(">record");
@@ -661,18 +638,6 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
     }
     dbgmsg("<record");
     level--;
-    break;
-  case GL_TYPE_OBJECT:
-    dbgmsg("object");
-    fnum = PQfnumber(res, ItemName());
-    if (fnum < 0) {
-      if (!IS_VALUE_VIRTUAL(val)) {
-        ValueIsNil(val);
-      }
-    } else {
-      id = (Oid)atol(PQgetvalue(res, ix, fnum));
-      SetValueOid(val, id);
-    }
     break;
   case GL_TYPE_ALIAS:
     Warning("invalid data type");
@@ -701,9 +666,6 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
     case GL_TYPE_INT:
       SetValueInteger(val, atoi(PQgetvalue(res, tnum, fnum)));
       break;
-    case GL_TYPE_OBJECT:
-      SetValueOid(val, (Oid)atol(PQgetvalue(res, tnum, fnum)));
-      break;
     case GL_TYPE_BOOL:
       SetValueBool(val, *PQgetvalue(res, tnum, fnum) == 't');
       break;
@@ -719,6 +681,7 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
       strcpy(buff, PQgetvalue(res, tnum, fnum));
       ParseDate(val, buff, STATE_DATE_HOUR);
       break;
+    case GL_TYPE_OBJECT:
     case GL_TYPE_BYTE:
     case GL_TYPE_CHAR:
     case GL_TYPE_VARCHAR:
@@ -741,6 +704,7 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
     case GL_TYPE_ARRAY:
       ParArray(dbg, PQgetvalue(res, tnum, fnum), val);
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       break;
     default:
@@ -889,6 +853,7 @@ static void UpdateValue(DBG_Struct *dbg, LargeByteString *lbs,
         }
       }
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       level++;
       fComm = FALSE;
@@ -935,6 +900,7 @@ static void InsertNames(LargeByteString *lbs, ValueStruct *val) {
       LBS_EmitString(lbs, ItemName());
       LBS_EmitString(lbs, PutDim());
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       level++;
       fComm = FALSE;
@@ -1001,6 +967,7 @@ static void InsertValues(DBG_Struct *dbg, LargeByteString *lbs,
       }
       LBS_EmitString(lbs, "] ");
       break;
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       level++;
       fComm = FALSE;
@@ -1049,14 +1016,13 @@ static Bool IsRedirectQuery(PGresult *res) {
   return rc;
 }
 
-static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
 
-  ENTER_FUNC;
   dbgprintf("%s", sql);
-  res = PQexecParams(PGCONN(dbg, usage), sql, 0, NULL, NULL, NULL, NULL, 0);
+  res = PQexecParams(PGCONN(dbg), sql, 0, NULL, NULL, NULL, NULL, 0);
   if (res != NULL) {
-    if ((fRed) && (IsUsageUpdate(usage)) && (IsRedirectQuery(res))) {
+    if ((fRed) && (IsRedirectQuery(res))) {
       PutDB_Redirect(dbg, sql);
       PutDB_Redirect(dbg, ";\n");
       PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
@@ -1065,44 +1031,42 @@ static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   if (sql) {
     LBS_String(dbg->last_query, sql);
   }
-  LEAVE_FUNC;
   return (res);
 }
 
-static int _PQsendQuery(DBG_Struct *dbg, char *sql, int usage) {
+static int _PQsendQuery(DBG_Struct *dbg, char *sql) {
   dbgprintf("%s", sql);
-  return PQsendQuery(PGCONN(dbg, usage), sql);
+  return PQsendQuery(PGCONN(dbg), sql);
 }
 
-static PGresult *_PQgetResult(DBG_Struct *dbg, int usage) {
-  return PQgetResult(PGCONN(dbg, usage));
+static PGresult *_PQgetResult(DBG_Struct *dbg) {
+  return PQgetResult(PGCONN(dbg));
 }
-static Bool CheckConnect(DBG_Struct *dbg, int usage) {
-  if (PQstatus(PGCONN(dbg, usage)) != CONNECTION_OK) {
+static Bool CheckConnect(DBG_Struct *dbg) {
+  if (PQstatus(PGCONN(dbg)) != CONNECTION_OK) {
     Warning("PostgreSQL: Unconnected.");
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+    dbg->dbstatus = DB_STATUS_UNCONNECT;
     return FALSE;
   }
   return TRUE;
 }
 
-static int CheckResult(DBG_Struct *dbg, int usage, PGresult *res, int status) {
+static int CheckResult(DBG_Struct *dbg, PGresult *res, int status) {
   int rc;
-  if (!CheckConnect(dbg, usage)) {
+  if (!CheckConnect(dbg)) {
     rc = MCP_BAD_CONN;
   } else if (res && (PQresultStatus(res) == status)) {
     dbgmsg("OK");
     rc = MCP_OK;
   } else {
-    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, usage)));
+    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
     rc = MCP_BAD_OTHER;
   }
   return rc;
 }
 
 static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
-                              LargeByteString *src, ValueStruct *args,
-                              int usage) {
+                              LargeByteString *src, ValueStruct *args) {
   LargeByteString *sql;
   int c;
   ValueStruct *val, *ret, *value;
@@ -1189,14 +1153,14 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         break;
       case SQL_OP_EOL:
         LBS_EmitEnd(sql);
-        res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+        res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
         LBS_Clear(sql);
         status = PGRES_FATAL_ERROR;
         if ((res == NULL) ||
             ((status = PQresultStatus(res)) == PGRES_BAD_RESPONSE) ||
             (status == PGRES_FATAL_ERROR) || (status == PGRES_NONFATAL_ERROR)) {
           Warning("PostgreSQL: %s: %s: %s: %s", ctrl->func, ctrl->rname,
-                  ctrl->pname, PQerrorMessage(PGCONN(dbg, usage)));
+                  ctrl->pname, PQerrorMessage(PGCONN(dbg)));
           ctrl->rc = -status;
           ctrl->rcount = 0;
           break;
@@ -1269,14 +1233,14 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return (ret);
 }
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
   int rc = MCP_OK;
 
   ENTER_FUNC;
-  if (_PQsendQuery(dbg, sql, usage) == TRUE) {
-    while ((res = _PQgetResult(dbg, usage)) != NULL) {
-      rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
+  if (_PQsendQuery(dbg, sql) == TRUE) {
+    while ((res = _PQgetResult(dbg)) != NULL) {
+      rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       if ((rc == MCP_OK) && fRed) {
         PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
       }
@@ -1286,27 +1250,27 @@ static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
       PutDB_Redirect(dbg, sql);
     }
   } else {
-    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, usage)));
+    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
     rc = MCP_BAD_OTHER;
   }
   LEAVE_FUNC;
   return rc;
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
   ValueStruct *ret;
   ExecStatusType status;
 
   ENTER_FUNC;
-  res = _PQexec(dbg, sql, fRed, usage);
-  if (!CheckConnect(dbg, usage)) {
+  res = _PQexec(dbg, sql, fRed);
+  if (!CheckConnect(dbg)) {
     ret = NULL;
   } else if ((res == NULL) ||
              ((status = PQresultStatus(res)) == PGRES_BAD_RESPONSE) ||
              (status == PGRES_FATAL_ERROR) ||
              (status == PGRES_NONFATAL_ERROR)) {
-    Warning("PostgreSQL: %s:%s", sql, PQerrorMessage(PGCONN(dbg, usage)));
+    Warning("PostgreSQL: %s:%s", sql, PQerrorMessage(PGCONN(dbg)));
     ret = NULL;
   } else {
     ret = PGresToValue2(dbg, res);
@@ -1320,148 +1284,64 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   PGconn *conn;
   char *encoding;
   int rc;
-  int i;
 
-  ENTER_FUNC;
   rc = 0;
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    Warning("database is already *UPDATE* connected.");
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    Warning("database is already connected.");
   }
-  for (i = 0; i < dbg->nServer; i++) {
-    dbgprintf("usage = %d", dbg->server[i].usage);
-    if ((IsUsageNotFail(dbg->server[i].usage)) &&
-        (IsUsageUpdate(dbg->server[i].usage)))
-      break;
-  }
-  if (i == dbg->nServer) {
-    Warning("UPDATE SERVER is none.");
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
-  } else {
-    if ((conn = PgConnect(dbg, DB_UPDATE)) != NULL) {
-      PgInitConnect(conn);
-      encoding = GetPGencoding(conn);
-      SetDBGcoding(dbg, encoding);
-      if (encoding != NULL) {
-        xfree(encoding);
-      }
-      OpenDB_RedirectPort(dbg);
-      dbg->process[PROCESS_UPDATE].conn = (void *)conn;
-      dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-      if (dbg->redirectPort != NULL) {
-        LockRedirectorConnect(conn);
-      }
-      CryptoMode(dbg);
-      rc = MCP_OK;
-    } else {
-      dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
-      rc = MCP_BAD_CONN;
+  if ((conn = PgConnect(dbg)) != NULL) {
+    PgInitConnect(conn);
+    encoding = GetPGencoding(conn);
+    SetDBGcoding(dbg, encoding);
+    if (encoding != NULL) {
+      xfree(encoding);
     }
-  }
-  dbgmsg("*");
-  for (i = 0; i < dbg->nServer; i++) {
-    if ((IsUsageNotFail(dbg->server[i].usage)) &&
-        (!IsUsageUpdate(dbg->server[i].usage)))
-      break;
-  }
-  if (i == dbg->nServer) {
-    dbgmsg("READONLY SERVER is none.");
-#if 1
-    dbgmsg("using UPDATE SERVER.");
-    if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-      dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-      dbg->process[PROCESS_READONLY].dbstatus =
-          dbg->process[PROCESS_UPDATE].dbstatus;
-      rc = MCP_OK;
+    OpenDB_RedirectPort(dbg);
+    dbg->conn = (void *)conn;
+    dbg->dbstatus = DB_STATUS_CONNECT;
+    if (dbg->redirectPort != NULL) {
+      LockRedirectorConnect(conn);
     }
-#else
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
-    rc = MCP_BAD_CONN;
-#endif
-  } else {
-    if ((conn = PgConnect(dbg, DB_READONLY)) != NULL) {
-      PgInitConnect(conn);
-      dbg->process[PROCESS_READONLY].conn = (void *)conn;
-      dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_CONNECT;
-      if (rc == 0) {
-        rc = MCP_OK;
-      }
-    } else {
-#if 1
-      dbgmsg("using UPDATE SERVER.");
-      dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-      dbg->process[PROCESS_READONLY].dbstatus =
-          dbg->process[PROCESS_UPDATE].dbstatus;
-      rc = MCP_OK;
-#else
-      rc = MCP_BAD_CONN;
-#endif
-    }
+    CryptoMode(dbg);
+    rc = MCP_OK;
   }
   if (ctrl != NULL) {
     ctrl->rc = rc;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  PGconn *conn;
-  ENTER_FUNC;
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    conn = PGCONN(dbg, DB_UPDATE);
-    PQfinish(PGCONN(dbg, DB_UPDATE));
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    PQfinish(PGCONN(dbg));
     CloseDB_RedirectPort(dbg);
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
-  } else {
-    conn = NULL;
-  }
-  if (dbg->process[PROCESS_READONLY].dbstatus == DB_STATUS_CONNECT) {
-    if (PGCONN(dbg, DB_READONLY) != conn) {
-      PQfinish(PGCONN(dbg, DB_READONLY));
-    }
-    dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_DISCONNECT;
+    dbg->dbstatus = DB_STATUS_DISCONNECT;
   }
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   PGresult *res;
   int rc;
-  PGconn *conn;
 
-  ENTER_FUNC;
   rc = 0;
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    conn = PGCONN(dbg, DB_UPDATE);
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
     LockDB_Redirect(dbg);
     BeginDB_Redirect(dbg);
-    res = _PQexec(dbg, "BEGIN", FALSE, DB_UPDATE);
+    res = _PQexec(dbg, "BEGIN", FALSE);
     UnLockDB_Redirect(dbg);
-    rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+    rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
-  } else {
-    conn = NULL;
-  }
-  if (dbg->process[PROCESS_READONLY].dbstatus == DB_STATUS_CONNECT) {
-    if (PGCONN(dbg, DB_READONLY) != conn) {
-      res = _PQexec(dbg, "BEGIN", FALSE, DB_READONLY);
-      if (rc == 0) {
-        rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
-      }
-      _PQclear(res);
-    }
   }
   if (ctrl != NULL) {
     ctrl->rc = rc;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -1470,14 +1350,13 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   PGconn *conn;
   Bool fCommit;
-  ENTER_FUNC;
   rc = 0;
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    conn = PGCONN(dbg, DB_UPDATE);
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    conn = PGCONN(dbg);
     CheckDB_Redirect(dbg);
     fCommit = InTrans(conn);
-    res = _PQexec(dbg, "COMMIT WORK", FALSE, DB_UPDATE);
-    rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+    res = _PQexec(dbg, "COMMIT WORK", FALSE);
+    rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
     if ((fCommit == TRUE) && (rc == MCP_OK)) {
       CommitDB_Redirect(dbg);
@@ -1488,21 +1367,10 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   } else {
     conn = NULL;
   }
-  if (dbg->process[PROCESS_READONLY].dbstatus == DB_STATUS_CONNECT) {
-    if (PGCONN(dbg, DB_READONLY) != conn) {
-      res = _PQexec(dbg, "COMMIT WORK", FALSE, DB_READONLY);
-      if (rc == 0) {
-        rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
-      }
-      _PQclear(res);
-    }
-  }
-
   if (ctrl != NULL) {
     ctrl->rc = rc;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -1523,7 +1391,7 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     db = rec->opt.db;
     path = db->path[ctrl->pno];
     src = path->ops[DBOP_SELECT]->proc;
-    ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+    ret = ExecPGSQL(dbg, ctrl, src, args);
   }
   LEAVE_FUNC;
   return (ret);
@@ -1549,13 +1417,13 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_FETCH]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       ret = NULL;
       sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
               ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect, ctrl->usage);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_TUPLES_OK);
+      res = _PQexec(dbg, sql, ctrl->redirect);
+      ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
       ret = PGresToValue(dbg, ctrl, res, args);
       _PQclear(res);
     }
@@ -1584,12 +1452,12 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_CLOSE]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       p = sql;
       sprintf(p, "CLOSE %s_%s_csr", ctrl->rname, ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect, ctrl->usage);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      res = _PQexec(dbg, sql, ctrl->redirect);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
     }
   }
@@ -1618,7 +1486,7 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_UPDATE]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       sql = NewLBS();
       LBS_EmitString(sql, "UPDATE ");
@@ -1650,9 +1518,9 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
       ctrl->rcount = cmdTuples(res);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
       FreeLBS(sql);
     }
@@ -1682,7 +1550,7 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_DELETE]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       sql = NewLBS();
       LBS_EmitString(sql, "DELETE\tFROM\t");
@@ -1709,9 +1577,9 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
       ctrl->rcount = cmdTuples(res);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
       FreeLBS(sql);
     }
@@ -1740,7 +1608,7 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_INSERT]->proc;
     if (src != NULL) {
       ctrl->rc = MCP_OK;
-      ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+      ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       sql = NewLBS();
       LBS_EmitString(sql, "INSERT\tINTO\t");
@@ -1753,9 +1621,9 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       InsertValues(dbg, sql, args);
       LBS_EmitString(sql, ") ");
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect, ctrl->usage);
+      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
       ctrl->rcount = cmdTuples(res);
-      ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+      ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
       FreeLBS(sql);
     }
@@ -1791,7 +1659,7 @@ static ValueStruct *_DBESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *ret, *bytea;
   ValueStruct *val;
   ENTER_FUNC;
-  if (ValueType(args) == GL_TYPE_RECORD) {
+  if (IS_VALUE_RECORD(args)) {
     if ((val = GetItemLongName(args, "dbescapebytea")) == NULL) {
       Warning("dbescapebytea is not found.");
       return args;
@@ -1820,7 +1688,7 @@ static ValueStruct *_DBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                      RecordStruct *rec, ValueStruct *args) {
   ValueStruct *bin, *val, *ret;
   ENTER_FUNC;
-  if (ValueType(args) == GL_TYPE_RECORD) {
+  if (IS_VALUE_RECORD(args)) {
     if ((val = GetItemLongName(args, "dbunescapebytea")) == NULL) {
       Warning("dbunescapebytea is not found.");
       return args;
@@ -1850,8 +1718,8 @@ static ValueStruct *_DBLOCK(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     LBS_EmitString(sql, "LOCK\tTABLE\t");
     LBS_EmitString(sql, rec->name);
     LBS_EmitEnd(sql);
-    res = _PQexec(dbg, LBS_Body(sql), FALSE, DB_UPDATE);
-    ctrl->rc = CheckResult(dbg, ctrl->usage, res, PGRES_COMMAND_OK);
+    res = _PQexec(dbg, LBS_Body(sql), FALSE);
+    ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
     FreeLBS(sql);
   }
@@ -1907,7 +1775,7 @@ static ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       src = path->ops[ix - 1]->proc;
       if (src != NULL) {
         ctrl->rc = MCP_OK;
-        ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
+        ret = ExecPGSQL(dbg, ctrl, src, args);
       } else {
         ctrl->rc = MCP_BAD_OTHER;
       }

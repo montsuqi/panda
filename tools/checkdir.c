@@ -94,6 +94,7 @@ static void _DumpItems(ValueStruct *value) {
     _DumpItems(ValueArrayItem(value, 0));
     printf("[%d]", (int)ValueArraySize(value));
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     printf("{\n");
     nTab++;

@@ -52,9 +52,6 @@ static char *ApsPath;
 static char *WfcPath;
 static char *RedirectorPath;
 static char *GlserverPath;
-static char *DBLoggerPath;
-static char *DBMasterPath;
-static char *DBSlavePath;
 static char *MONSetupPath;
 static char *DDir;
 static char *RecDir;
@@ -75,9 +72,6 @@ static Bool fVerifyPeer;
 static char *GlAuth;
 static char *GlCert;
 static char *GlCAfile;
-
-static Bool fDBMaster;
-static Bool fDBLog;
 
 static GList *ProcessList;
 static volatile sig_atomic_t fLoop = TRUE;
@@ -144,13 +138,6 @@ static ARG_TABLE option[] = {
      "redirector command path"},
     {"GlsPath", STRING, TRUE, (void *)&GlserverPath, "glserver command path"},
 
-    {"DBLoggerPath", STRING, TRUE, (void *)&DBLoggerPath,
-     "dblogger command path"},
-
-    {"DBMasterPath", STRING, TRUE, (void *)&DBMasterPath,
-     "dbmaster command path"},
-
-    {"DBSlavePath", STRING, TRUE, (void *)&DBSlavePath, "dbslave command path"},
     {"MONSetupPath", STRING, TRUE, (void *)&MONSetupPath,
      "monsetup command path"},
     {"dir", STRING, TRUE, (void *)&Directory, "directory file name"},
@@ -161,8 +148,6 @@ static ARG_TABLE option[] = {
      "root of temporary directory"},
 
     {"redirector", BOOLEAN, TRUE, (void *)&fRedirector, "start dbredirector"},
-    {"dblogger", BOOLEAN, TRUE, (void *)&fDBLog, "start dblogger"},
-    {"dbmaster", BOOLEAN, TRUE, (void *)&fDBMaster, "start dbmaster"},
     {"nocheck", BOOLEAN, TRUE, (void *)&fNoCheck,
      "no check dbredirector start"},
     {"nosumcheck", BOOLEAN, TRUE, (void *)&fNoSumCheck,
@@ -231,9 +216,6 @@ static void SetDefault(void) {
   WfcPath = NULL;
   RedirectorPath = NULL;
   GlserverPath = NULL;
-  DBLoggerPath = NULL;
-  DBMasterPath = NULL;
-  DBSlavePath = NULL;
   MONSetupPath = NULL;
   Directory = "./directory";
   TempDir = "/tmp/panda_root/";
@@ -264,8 +246,6 @@ static void SetDefault(void) {
   GlAuth = NULL;
   GlCert = NULL;
   GlCAfile = NULL;
-  fDBLog = FALSE;
-  fDBMaster = FALSE;
 }
 
 static void InitSystem(void) {
@@ -386,7 +366,7 @@ static void InitRedirector(DBG_Struct *dbg) {
   argv[argc++] = NULL;
   Message("start redirector:%s", dbg->name);
   proc->interval = Interval;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+  dbg->dbstatus = DB_STATUS_CONNECT;
   ProcessList = g_list_append(ProcessList, proc);
   LEAVE_FUNC;
 }
@@ -397,7 +377,7 @@ static void _InitRedirectors(DBG_Struct *dbg) {
   if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
     _InitRedirectors(dbg->redirect);
   }
-  if (dbg->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
+  if (dbg->dbstatus != DB_STATUS_CONNECT) {
     InitRedirector(dbg);
   }
   LEAVE_FUNC;
@@ -409,147 +389,12 @@ static void InitRedirectors(void) {
 
   ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
-    ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+    ThisEnv->DBG[i]->dbstatus = DB_STATUS_UNCONNECT;
   }
   for (i = 0; i < ThisEnv->cDBG; i++) {
     dbg = ThisEnv->DBG[i];
     if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
       _InitRedirectors(dbg->redirect);
-    }
-  }
-  LEAVE_FUNC;
-}
-
-static void InitDBMaster(void) {
-  int argc;
-  char **argv;
-  Process *proc;
-  int back;
-  int i;
-
-  ENTER_FUNC;
-  if (HerePort(ThisEnv->DBMasterPort)) {
-    back = 0;
-    for (i = 0; i < ThisEnv->cLD; i++) {
-      back += ThisEnv->ld[i]->nports;
-    }
-    proc = New(Process);
-    proc->type = PTYPE_MST;
-    argv = (char **)xmalloc(sizeof(char *) * 24);
-    proc->argv = argv;
-    argc = 0;
-    if (DBMasterPath != NULL) {
-      argv[argc++] = DBMasterPath;
-    } else if (ThisEnv->DBMasterPath != NULL) {
-      argv[argc++] = ThisEnv->DBMasterPath;
-    } else {
-      argv[argc++] = SERVER_DIR "/dbmaster";
-    }
-    if (Directory != NULL) {
-      argv[argc++] = "-dir";
-      argv[argc++] = Directory;
-    }
-    if (DDir != NULL) {
-      argv[argc++] = "-ddir";
-      argv[argc++] = DDir;
-    }
-    if (RecDir != NULL) {
-      argv[argc++] = "-record";
-      argv[argc++] = RecDir;
-    }
-    if (ThisEnv->DBMasterAuth != NULL) {
-      argv[argc++] = "-auth";
-      argv[argc++] = ThisEnv->DBMasterAuth;
-    }
-    argv[argc++] = "-port";
-    argv[argc++] = StrDup(StringPortName(ThisEnv->DBMasterPort));
-    argv[argc++] = ThisEnv->DBMasterLogDBName;
-
-    if (fQ) {
-      argv[argc++] = "-?";
-    }
-    proc->argc = argc;
-    argv[argc++] = NULL;
-    proc->interval = Interval;
-    ProcessList = g_list_append(ProcessList, proc);
-  }
-  LEAVE_FUNC;
-}
-
-static void InitDBLog(DBG_Struct *dbg) {
-  int argc;
-  char **argv;
-  Process *proc;
-
-  ENTER_FUNC;
-  proc = New(Process);
-  argv = (char **)xmalloc(sizeof(char *) * 15);
-  proc->argv = argv;
-  proc->type = PTYPE_LOG;
-  argc = 0;
-  if (DBLoggerPath != NULL) {
-    argv[argc++] = DBLoggerPath;
-  } else if (ThisEnv->DBLoggerPath != NULL) {
-    argv[argc++] = ThisEnv->DBLoggerPath;
-  } else {
-    argv[argc++] = SERVER_DIR "/dblogger";
-  }
-  if (Directory != NULL) {
-    argv[argc++] = "-dir";
-    argv[argc++] = Directory;
-  }
-  if (DDir != NULL) {
-    argv[argc++] = "-ddir";
-    argv[argc++] = DDir;
-  }
-  if (RecDir != NULL) {
-    argv[argc++] = "-record";
-    argv[argc++] = RecDir;
-  }
-  if (fTimer) {
-    argv[argc++] = "-timer";
-  }
-  if (fNoSumCheck) {
-    argv[argc++] = "-nosumcheck";
-  }
-  argv[argc++] = dbg->name;
-  if (fQ) {
-    argv[argc++] = "-?";
-  }
-  argv[argc++] = "-maxretry";
-  argv[argc++] = IntStrDup(MaxSendRetry);
-  proc->argc = argc;
-  argv[argc++] = NULL;
-  proc->interval = Interval;
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-  ProcessList = g_list_append(ProcessList, proc);
-  LEAVE_FUNC;
-}
-
-static void _InitDBLogs(DBG_Struct *dbg) {
-
-  ENTER_FUNC;
-  if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
-    _InitDBLogs(dbg->redirect);
-  }
-  if (dbg->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
-    InitDBLog(dbg);
-  }
-  LEAVE_FUNC;
-}
-
-static void InitDBLogs(void) {
-  int i;
-  DBG_Struct *dbg;
-
-  ENTER_FUNC;
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
-  }
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    dbg = ThisEnv->DBG[i];
-    if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
-      _InitDBLogs(dbg->redirect);
     }
   }
   LEAVE_FUNC;
@@ -766,12 +611,6 @@ static void InitServers(void) {
   ENTER_FUNC;
   if (fRedirector) {
     InitRedirectors();
-  }
-  if (fDBLog) {
-    InitDBLogs();
-  }
-  if (fDBMaster) {
-    InitDBMaster();
   }
   if (fGlserver) {
     InitGlserver();

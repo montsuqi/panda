@@ -59,7 +59,7 @@ typedef enum xml_open_mode {
   MODE_NONE,
 } XMLMode;
 
-static MonObjectType ObjectID = 0;
+static char *ObjectID = NULL;
 static XMLMode PrevMode = MODE_WRITE_XML;
 
 static int _ReadXML(ValueStruct *ret, unsigned char *buff, size_t size) {
@@ -132,7 +132,6 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   size_t size;
   int mode;
   DBG_Struct *mondbg;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -151,7 +150,7 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     return NULL;
   }
   mondbg = GetDBG_monsys();
-  if (blob_export_mem(mondbg, ObjectID, &buff, &size)) {
+  if (monblob_export_mem(mondbg, ObjectID, &buff, &size)) {
     ret = DuplicateValue(args, TRUE);
     if (size > 0) {
       switch (CheckFormat(buff, size)) {
@@ -170,14 +169,13 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     }
     xfree(buff);
   } else {
-    Warning("RequestReadBLOB failure");
+    Warning("monblob_export_mem failure");
     ctrl->rc = MCP_BAD_OTHER;
     return NULL;
   }
 #ifdef TRACE
   DumpValueStruct(ret);
 #endif
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -188,6 +186,8 @@ static int _WriteXML(DBG_Struct *dbg, ValueStruct *ret) {
   unsigned char *buff;
   int rc, size;
   DBG_Struct *mondbg;
+  char *id;
+
   rc = MCP_BAD_OTHER;
   obj = GetItemLongName(ret, "object");
   rname = GetItemLongName(ret, "recordname");
@@ -204,9 +204,10 @@ static int _WriteXML(DBG_Struct *dbg, ValueStruct *ret) {
   xmlDocDumpFormatMemoryEnc(doc, &buff, &size, "UTF-8", TRUE);
   if (buff != NULL) {
     mondbg = GetDBG_monsys();
-    ValueObjectId(obj) = blob_import_mem(mondbg, 0, "XMLIO2.xml",
-                                         "application/xml", 0, buff, size);
-    if (ValueObjectId(obj) != GL_OBJ_NULL) {
+    id = monblob_import_mem(mondbg, NULL, 0, "XMLIO2.xml", "application/xml", 0, buff, size);
+    if (id != NULL) {
+      SetValueString(obj,id,NULL);
+      xfree(id);
       rc = MCP_OK;
     } else {
       Warning("_WriteXML_XML failure");
@@ -220,7 +221,7 @@ static int _WriteXML(DBG_Struct *dbg, ValueStruct *ret) {
 
 static int _WriteJSON(DBG_Struct *dbg, ValueStruct *ret) {
   ValueStruct *val, *obj;
-  char *buff, *rname;
+  char *buff, *rname, *id;
   size_t size;
   int rc;
   json_object *root, *jobj;
@@ -245,9 +246,10 @@ static int _WriteJSON(DBG_Struct *dbg, ValueStruct *ret) {
   buff = (char *)json_object_to_json_string_ext(root, JSON_C_TO_STRING_PLAIN);
   size = strlen(buff);
   mondbg = GetDBG_monsys();
-  ValueObjectId(obj) = blob_import_mem(mondbg, 0, "XMLIO2.json",
-                                       "application/json", 0, buff, size);
-  if (ValueObjectId(obj) != GL_OBJ_NULL) {
+  id = monblob_import_mem(mondbg, NULL, 0, "XMLIO2.json", "application/json", 0, buff, size);
+  if (id != NULL) {
+    SetValueString(obj,id,NULL);
+    xfree(id);
     rc = MCP_OK;
   } else {
     Warning("_WriteXML_JSON failure");
@@ -261,7 +263,6 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                            RecordStruct *rec, ValueStruct *args) {
   ValueStruct *rname, *val, *ret;
   int mode;
-  ENTER_FUNC;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
@@ -311,14 +312,12 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   }
   val = GetRecordItem(ret, ValueToString(rname, NULL));
   InitializeValue(val);
-  LEAVE_FUNC;
   return ret;
 }
 
 static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
   ValueStruct *val;
-  ENTER_FUNC;
   ctrl->rc = MCP_BAD_ARG;
   if (rec->type != RECORD_DB) {
     return NULL;
@@ -328,31 +327,34 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     ctrl->rc = MCP_BAD_ARG;
     return NULL;
   }
-  ObjectID = ValueObjectId(val);
+  if (ObjectID != NULL) {
+    xfree(ObjectID);
+    ObjectID = NULL;
+  }
+  ObjectID = StrDup(ValueObjectId(val));
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return NULL;
 }
 
 static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                            RecordStruct *rec, ValueStruct *args) {
-  ENTER_FUNC;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return NULL;
 }
 
 extern ValueStruct *XML_BEGIN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
-  ObjectID = 0;
-  LEAVE_FUNC;
+  if (ObjectID != NULL) {
+    xfree(ObjectID);
+    ObjectID = NULL;
+  }
   return (NULL);
 }
 
 extern ValueStruct *XML_END(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
-  ObjectID = 0;
-  LEAVE_FUNC;
+  if (ObjectID != NULL) {
+    xfree(ObjectID);
+    ObjectID = NULL;
+  }
   return (NULL);
 }
 

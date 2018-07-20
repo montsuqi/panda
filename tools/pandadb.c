@@ -153,7 +153,8 @@ static void TableBody(LargeByteString *lbs, ValueStruct *val, size_t arraysize,
     break;
   case GL_TYPE_OBJECT:
     PutItemName(lbs);
-    LBS_EmitString(lbs, "oid");
+    sprintf(buff, "varchar(%d)", SIZE_UUID);
+    LBS_EmitString(lbs, buff);
     PutDim(lbs);
     break;
   case GL_TYPE_TIMESTAMP:
@@ -178,6 +179,7 @@ static void TableBody(LargeByteString *lbs, ValueStruct *val, size_t arraysize,
     TableBody(lbs, tmp, arraysize, textsize);
     alevel--;
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     fComm = FALSE;
@@ -241,7 +243,7 @@ static void MakeCreate(DBG_Struct *dbg, RecordStruct *rec) {
 #ifdef DEBUG
     printf("[%s]", (char *)LBS_Body(lbs));
 #endif
-    if (ExecDBOP(dbg, (char *)LBS_Body(lbs), TRUE, DB_UPDATE) != MCP_OK) {
+    if (ExecDBOP(dbg, (char *)LBS_Body(lbs), TRUE) != MCP_OK) {
       fprintf(stderr, N_("create table error on %s\n"), rec->name);
     }
     FreeLBS(lbs);

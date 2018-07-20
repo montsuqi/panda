@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-noinst_LIBRARIES = libpostgresqlutils.a libdblog.a
+noinst_LIBRARIES = libpostgresqlutils.a
 pkglib_LTLIBRARIES = $(DB_OBJECTS)
 lib_LTLIBRARIES = libpandadb.la
 
@@ -60,10 +60,6 @@ libpandadb_la_SOURCES	=			\
 	bytea.c			bytea.h			\
 	msglib.c		msglib.h		\
 	monpushevent.c	monpushevent.h
-
-libdblog_a_CFLAGS = $(AM_CFLAGS)
-libdblog_a_SOURCES	=	\
-	dblog.c         dblog.h
 
 libpostgresqlutils_a_LIBADD = 
 

@@ -55,11 +55,11 @@ badio:
   return (rc);
 }
 
-extern Bool RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname) {
+extern Bool RequestExportBLOB(NETFILE *fp, const char *id, char *fname) {
   char *buff;
   size_t size;
   ENTER_FUNC;
-  if (RequestExportBLOBMem(fp, obj, &buff, &size)) {
+  if (RequestExportBLOBMem(fp, id, &buff, &size)) {
     if (buff != NULL) {
       return g_file_set_contents(fname, buff, size, NULL);
     } else {
@@ -72,7 +72,7 @@ extern Bool RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname) {
   return FALSE;
 }
 
-extern Bool RequestExportBLOBMem(NETFILE *fp, MonObjectType obj, char **out,
+extern Bool RequestExportBLOBMem(NETFILE *fp, const char *id, char **out,
                                  size_t *size) {
   char *p;
 
@@ -81,7 +81,7 @@ extern Bool RequestExportBLOBMem(NETFILE *fp, MonObjectType obj, char **out,
   *out = NULL;
   RequestBLOB(fp, BLOB_EXPORT);
   ON_IO_ERROR(fp, badio);
-  SendObject(fp, obj);
+  SendString(fp, (char*)id);
   ON_IO_ERROR(fp, badio);
   if (RecvPacketClass(fp) == BLOB_OK) {
     *size = RecvLength(fp);
@@ -99,31 +99,29 @@ badio:
   return FALSE;
 }
 
-extern MonObjectType RequestImportBLOB(NETFILE *fp, const char *fname) {
-  MonObjectType obj;
-  char *buff;
+extern char* RequestImportBLOB(NETFILE *fp, const char *fname) {
+  char *buff, *id;
   size_t size ENTER_FUNC;
-  obj = GL_OBJ_NULL;
+
+  id = NULL;
   if (g_file_get_contents(fname, &buff, &size, NULL)) {
-    obj = RequestImportBLOBMem(fp, buff, size);
+    id = RequestImportBLOBMem(fp, buff, size);
   }
-  LEAVE_FUNC;
-  return (obj);
+  return id;
 }
 
-extern MonObjectType RequestImportBLOBMem(NETFILE *fp, char *in, size_t size) {
-  MonObjectType obj;
+extern char* RequestImportBLOBMem(NETFILE *fp, char *in, size_t size) {
+  char *id,_id[SIZE_UUID+1];
 
-  ENTER_FUNC;
-  obj = GL_OBJ_NULL;
+  id = NULL;
   RequestBLOB(fp, BLOB_IMPORT);
   ON_IO_ERROR(fp, badio);
   SendLength(fp, size);
   Send(fp, in, size);
   ON_IO_ERROR(fp, badio);
-  obj = RecvObject(fp);
+  RecvnString(fp, SIZE_UUID, _id);
+  id = StrDup(_id);
   ON_IO_ERROR(fp, badio);
 badio:
-  LEAVE_FUNC;
-  return (obj);
+  return id;
 }

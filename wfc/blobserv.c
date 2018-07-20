@@ -61,21 +61,22 @@ extern void InitServeBLOB() {
 }
 
 static void BLOBEXPORT(NETFILE *fp) {
-  MonObjectType obj;
+  char id[SIZE_UUID+1];
   ssize_t size;
   char *buff;
 
   dbgmsg("BLOB_EXPORT");
   TransactionStart(dbg);
-  obj = RecvObject(fp);
+  RecvnString(fp,SIZE_UUID,id);
   ON_IO_ERROR(fp, badio);
-  if (blob_export_mem(dbg, obj, &buff, &size)) {
+  if (monblob_export_mem(dbg, id, &buff, &size)) {
     SendPacketClass(fp, BLOB_OK);
     ON_IO_ERROR(fp, badio);
     SendLength(fp, size);
     ON_IO_ERROR(fp, badio);
     Send(fp, buff, size);
     xfree(buff);
+    monblob_delete(dbg,id);
   } else {
     SendPacketClass(fp, BLOB_NOT);
     ON_IO_ERROR(fp, badio);
@@ -86,7 +87,7 @@ badio:
 }
 
 static void BLOBIMPORT(NETFILE *fp) {
-  MonObjectType obj;
+  char *id;
   ssize_t ssize;
   unsigned char *buff;
 
@@ -97,9 +98,14 @@ static void BLOBIMPORT(NETFILE *fp) {
   buff = xmalloc(ssize);
   Recv(fp, buff, ssize);
   ON_IO_ERROR(fp, badio);
-  obj = blob_import_mem(dbg, 0, "blobserv.bin", NULL, 0, buff, ssize);
+  id = monblob_import_mem(dbg, NULL, 0, "blobserv.bin", NULL, 0, buff, ssize);
+  if (id != NULL) {
+    SendString(fp, id);
+    xfree(id);
+  } else {
+    SendString(fp, "");
+  }
   xfree(buff);
-  SendObject(fp, obj);
   ON_IO_ERROR(fp, badio);
 badio:
   TransactionEnd(dbg);

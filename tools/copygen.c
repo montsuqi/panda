@@ -191,7 +191,7 @@ static void _COBOL(CONVOPT *conv, ValueStruct *val) {
     PutString(buff);
     break;
   case GL_TYPE_OBJECT:
-    sprintf(buff, "PIC X(%d)", (int)sizeof(MonObjectType));
+    sprintf(buff, "PIC X(%d)", SIZE_UUID);
     PutString(buff);
     break;
   case GL_TYPE_NUMBER:
@@ -296,6 +296,7 @@ static void _COBOL(CONVOPT *conv, ValueStruct *val) {
       n = conv->arraysize;
     }
     switch (ValueType(tmp)) {
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       sprintf(buff, "OCCURS  %d TIMES", n);
       PutTab(8);
@@ -320,6 +321,7 @@ static void _COBOL(CONVOPT *conv, ValueStruct *val) {
       break;
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     if (fFull) {
@@ -343,15 +345,14 @@ static void _COBOL(CONVOPT *conv, ValueStruct *val) {
       if (is_return) {
         /* new line if current ValueStruct children is item and it has
            occurs */
-        if ((ValueType(tmp) != GL_TYPE_RECORD) &&
-            (ValueType(tmp) == GL_TYPE_ARRAY) &&
-            (ValueType(ValueArrayItem(tmp, 0)) != GL_TYPE_RECORD)) {
+        if (!IS_VALUE_RECORD(tmp) && IS_VALUE_ARRAY(tmp) &&
+            !IS_VALUE_RECORD(ValueArrayItem(tmp, 0))) {
           printf("\n");
           PutLevel(level, FALSE);
         }
         is_return = FALSE;
       }
-      if (ValueType(tmp) != GL_TYPE_RECORD) {
+      if (!IS_VALUE_RECORD(tmp)) {
         PutTab(4);
       }
       _COBOL(conv, tmp);

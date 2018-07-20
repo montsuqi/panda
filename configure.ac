@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([panda],[2.0.0])
+AC_INIT([panda],[3.0.0])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR([aps/C.c])
@@ -117,7 +117,7 @@ dnl ***************************************************************************
 PKG_CHECK_MODULES(COMMON,
 [
 	uuid		>= 2.17.0
-	libmondai 	>= 2.0.0
+	libmondai 	>= 3.0.0
 	librabbitmq	>= 0.4.1
 ])
 

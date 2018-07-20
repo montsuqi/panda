@@ -20,10 +20,10 @@
 #ifndef	_SYSDATAIO_H
 #define	_SYSDATAIO_H
 
-extern	void			GLExportBLOB(MonObjectType obj,char**,size_t*);
-extern	MonObjectType	GLImportBLOB(char *,size_t);
-extern	void			GetSessionMessage(const char*,char**,char**,char**);
-extern	void			ResetSessionMessage(const char*);
-extern	gboolean		CheckSession(const char *term);
+extern	void		GLExportBLOB(char *,char**,size_t*);
+extern	char*		GLImportBLOB(char *,size_t);
+extern	void		GetSessionMessage(const char*,char**,char**,char**);
+extern	void		ResetSessionMessage(const char*);
+extern	gboolean	CheckSession(const char *term);
 
 #endif

@@ -212,7 +212,7 @@ static int _WriteXML(ValueStruct *ret) {
   val = GetRecordItem(ret, "data");
   node = Value2XMLNode("data", val);
   if (node != NULL) {
-    name = g_strdup_printf("%s_child", ValueName(ret));
+    name = g_strdup_printf("%s_child", ValueRootRecordName(ret));
     record = xmlNewNode(NULL, name);
     g_free(name);
     xmlNewProp(record, "type", "record");
@@ -347,7 +347,7 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   switch (CTX.mode) {
   case MODE_WRITE_XML:
     CTX.doc = xmlNewDoc("1.0");
-    root = xmlNewDocNode(CTX.doc, NULL, ValueName(args), NULL);
+    root = xmlNewDocNode(CTX.doc, NULL, ValueRootRecordName(args), NULL);
     xmlNewProp(root, "type", "array");
     xmlDocSetRootElement(CTX.doc, root);
     ctrl->rc = MCP_OK;
@@ -358,7 +358,7 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     break;
   case MODE_READ:
     mondbg = GetDBG_monsys();
-    if (blob_export_mem(mondbg, ValueObjectId(oid), &buf, &size)) {
+    if (monblob_export_mem(mondbg, ValueObjectId(oid), &buf, &size)) {
       if (size > 0) {
         CTX.format = CheckFormat(buf, size);
         switch (CTX.format) {
@@ -377,7 +377,7 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
       }
       free(buf);
     } else {
-      Warning("RequestReadBLOB failure");
+      Warning("monblob_export_mem failure");
       ctrl->rc = MCP_BAD_OTHER;
       return NULL;
     }
@@ -394,6 +394,7 @@ static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *ret, *oid;
   DBG_Struct *mondbg;
   xmlChar *buf;
+  char *id;
   int size;
 
   ctrl->rc = MCP_BAD_OTHER;
@@ -410,7 +411,6 @@ static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   ret = DuplicateValue(args, TRUE);
   oid = GetItemLongName(ret, "object");
-  ValueObjectId(oid) = GL_OBJ_NULL;
 
   switch (CTX.mode) {
   case MODE_WRITE_XML:
@@ -420,16 +420,22 @@ static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     }
     xmlDocDumpFormatMemoryEnc(CTX.doc, &buf, &size, "UTF-8", TRUE);
     mondbg = GetDBG_monsys();
-    ValueObjectId(oid) = blob_import_mem(mondbg, 0, "MSGARRAY.xml",
-                                         "application/xml", 0, buf, size);
+    id = monblob_import_mem(mondbg, NULL, 0, "MSGARRAY.xml", "application/xml", 0, buf, size);
+    if (id != NULL) {
+      SetValueString(oid, id, NULL);
+      xfree(id);
+    }
     xmlFree(buf);
     break;
   case MODE_WRITE_JSON:
     mondbg = GetDBG_monsys();
     buf =
         (char *)json_object_to_json_string_ext(CTX.obj, JSON_C_TO_STRING_PLAIN);
-    ValueObjectId(oid) = blob_import_mem(
-        mondbg, 0, "MSGARRAY.json", "application/json", 0, buf, strlen(buf));
+    id = monblob_import_mem(mondbg, NULL, 0, "MSGARRAY.json", "application/json", 0, buf, strlen(buf));
+    if (id != NULL) {
+      SetValueString(oid, id, NULL);
+      xfree(id);
+    }
     break;
   }
   _ResetCTX();

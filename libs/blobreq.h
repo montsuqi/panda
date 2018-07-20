@@ -24,10 +24,10 @@
 #include	"net.h"
 #include	"sysdatacom.h"
 
-extern	Bool			RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname);
-extern	Bool			RequestExportBLOBMem(NETFILE *fp,MonObjectType obj,char **,size_t*);
-extern	MonObjectType	RequestImportBLOB(NETFILE *fp, const char *fname);
-extern	MonObjectType	RequestImportBLOBMem(NETFILE *fp,char *,size_t);
+extern	Bool			RequestExportBLOB(NETFILE *fp, const char *id, char *fname);
+extern	Bool			RequestExportBLOBMem(NETFILE *fp,const char *id,char **,size_t*);
+extern	char*	RequestImportBLOB(NETFILE *fp, const char *fname);
+extern	char*	RequestImportBLOBMem(NETFILE *fp,char *,size_t);
 
 #undef	GLOBAL
 #ifdef	MAIN

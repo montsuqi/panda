@@ -47,23 +47,22 @@ const char *KILLBATCH = "/usr/local/bin/push_kill_batch_queue";
 
 #include "directory.h"
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRedirect, int usage) {
+static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRedirect) {
   int rc;
 
   rc = MCP_OK;
   return (rc);
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
   return NULL;
 }
 
 static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   ENTER_FUNC;
   OpenDB_RedirectPort(dbg);
-  dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG) * sizeof(char *));
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-  dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+  dbg->conn = xmalloc((SIZE_ARG) * sizeof(char *));
+  dbg->dbstatus = DB_STATUS_CONNECT;
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
@@ -72,11 +71,10 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 }
 
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    xfree(dbg->process[PROCESS_UPDATE].conn);
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    xfree(dbg->conn);
     CloseDB_RedirectPort(dbg);
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+    dbg->dbstatus = DB_STATUS_DISCONNECT;
     if (ctrl != NULL) {
       ctrl->rc = MCP_OK;
     }
@@ -91,7 +89,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   while (waitpid(-1, NULL, WNOHANG) > 0)
     ;
   dbg->count = 0;
-  cmdv = dbg->process[PROCESS_UPDATE].conn;
+  cmdv = dbg->conn;
   cmdv[dbg->count] = NULL;
   unsetenv("MON_BATCH_ID");
   unsetenv("MON_BATCH_NAME");
@@ -167,7 +165,7 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   LBS_EmitEnd(dbg->checkData);
   setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->checkData), 1);
 
-  cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
+  cmdv = (char **)dbg->conn;
   rc = DoShell(cmdv);
   CommitDB_Redirect(dbg);
   for (i = 0; i < dbg->count; i++) {
@@ -199,14 +197,14 @@ static void InsertValue(DBG_Struct *dbg, LargeByteString *lbs,
       LBS_EmitChar(lbs, '"');
       break;
     case GL_TYPE_NUMBER:
-      nv = FixedToNumeric(&ValueFixed(val));
+      nv = FixedToNumeric(ValueFixed(val));
       str = NumericOutput(nv);
       LBS_EmitString(lbs, str);
       xfree(str);
       NumericFree(nv);
       break;
     case GL_TYPE_INT:
-      sprintf(buff, "%d", ValueInteger(val));
+      sprintf(buff, "%ld", ValueInteger(val));
       LBS_EmitString(lbs, buff);
       break;
     case GL_TYPE_FLOAT:
@@ -219,6 +217,7 @@ static void InsertValue(DBG_Struct *dbg, LargeByteString *lbs,
       break;
     case GL_TYPE_BYTE:
     case GL_TYPE_ARRAY:
+    case GL_TYPE_ROOT_RECORD:
     case GL_TYPE_RECORD:
       break;
     default:
@@ -313,7 +312,7 @@ static ValueStruct *RegistShell(DBCOMM_CTRL *ctrl, RecordStruct *rec,
   ENTER_FUNC;
   ret = NULL;
   dbg = rec->opt.db->dbg;
-  cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
+  cmdv = (char **)dbg->conn;
   if (src == NULL) {
     Error("function \"%s\" is not found.", ctrl->func);
   }
@@ -531,7 +530,7 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
            "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s ORDER BY groupname, "
            "starttime;",
            BATCH_TABLE, BATCH_TABLE, where);
-  ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+  ret = ExecDBQuery(mondbg, sql, FALSE);
   xfree(where);
   xfree(sql);
   return ret;
@@ -549,7 +548,7 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   mondbg = GetDBG_monsys();
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "FETCH 1 FROM %s_csr;", BATCH_TABLE);
-  mondbg_val = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+  mondbg_val = ExecDBQuery(mondbg, sql, FALSE);
   xfree(sql);
   if (mondbg_val) {
     ctrl->rc = MCP_OK;
@@ -629,7 +628,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "CLOSE %s_csr;", BATCH_TABLE);
-  ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
+  ExecDBOP(mondbg, sql, FALSE);
   xfree(sql);
 
   return (ret);

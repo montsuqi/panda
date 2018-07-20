@@ -139,8 +139,6 @@ typedef	struct {
 #define DB_STATUS_SYNC			0x07
 
 typedef	struct {
-	void		*conn;
-	int			dbstatus;
 }	DB_Process;
 
 #define	PROCESS_UPDATE		0
@@ -177,16 +175,17 @@ typedef	struct _DBG_Struct	{
 	int					sumcheck;
 	char				*appname;
 	DB_Server			*server;
-	DB_Process			process[2];
+	void		*conn;
+	int			dbstatus;
 	int					nServer;
 }	DBG_Struct;
 
 typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
 typedef struct	{
-	int		(*exec)(DBG_Struct *, char *, Bool, int);
+	int		(*exec)(DBG_Struct *, char *, Bool);
 	ValueStruct	*(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-	ValueStruct	*(*query)(DBG_Struct *, char *, Bool, int);
+	ValueStruct	*(*query)(DBG_Struct *, char *, Bool);
 	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 
