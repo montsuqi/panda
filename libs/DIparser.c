@@ -84,8 +84,8 @@
 #define T_WFCPATH (T_YYBASE + 33)
 #define T_REDPATH (T_YYBASE + 34)
 #define T_DBPATH (T_YYBASE + 35)
-#define T_UPDATE (T_YYBASE + 36)
-#define T_READONLY (T_YYBASE + 37)
+#define T_UPDATE (T_YYBASE + 36)   /*deprecated*/
+#define T_READONLY (T_YYBASE + 37) /*deprecated*/
 #define T_SSLMODE (T_YYBASE + 38)
 #define T_SSLCERT (T_YYBASE + 39)
 #define T_SSLKEY (T_YYBASE + 40)
@@ -640,25 +640,6 @@ static void ParDBD(CURFILE *in, char *dname) {
   LEAVE_FUNC;
 }
 
-static void AddDB_Server(DBG_Struct *dbg, DB_Server *server) {
-  DB_Server *tmp;
-
-  ENTER_FUNC;
-  tmp = (DB_Server *)xmalloc(sizeof(DB_Server) * (dbg->nServer + 1));
-  if (dbg->server != NULL) {
-    memcpy(tmp, dbg->server, (sizeof(DB_Server) * dbg->nServer));
-  }
-  if (server != NULL) {
-    memcpy(&tmp[dbg->nServer], server, sizeof(DB_Server));
-  } else {
-    memclear(&tmp[dbg->nServer], sizeof(DB_Server));
-  }
-  dbg->nServer++;
-  xfree(dbg->server);
-  dbg->server = tmp;
-  LEAVE_FUNC;
-}
-
 extern DBG_Struct *NewDBG_Struct(char *name) {
   DBG_Struct *dbg;
   char *env;
@@ -668,8 +649,7 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   dbg->id = 0;
   dbg->type = NULL;
   dbg->func = NULL;
-  dbg->nServer = 0;
-  dbg->server = NULL;
+  dbg->server = New(DB_Server);
   dbg->transaction_id = NULL;
   dbg->file = NULL;
   dbg->sumcheck = 1;
@@ -699,103 +679,34 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   return (dbg);
 }
 
+extern void FreeDB_Server(DB_Server *server)
+{
+  if (server == NULL) {
+    return;
+  }
+  DestroyPort(server->port);
+  xfree(server->dbname);
+  xfree(server->user);
+  xfree(server->pass);
+  xfree(server->sslmode);
+  xfree(server->sslcert);
+  xfree(server->sslkey);
+  xfree(server->sslrootcert);
+  xfree(server->sslcrl);
+
+  xfree(server);
+}
+
 extern void FreeDBG_Struct(DBG_Struct *dbg) {
   FreeLBS(dbg->checkData);
   FreeLBS(dbg->last_query);
+  FreeDB_Server(dbg->server);
   xfree(dbg->name);
   xfree(dbg);
 }
 
-static void ParDB_Server(int usage, DBG_Struct *dbg, CURFILE *in) {
-  DB_Server server;
-
-  server.usage = usage;
-  server.port = NULL;
-  server.dbname = NULL;
-  server.user = NULL;
-  server.pass = NULL;
-  server.sslmode = NULL;
-  server.sslcert = NULL;
-  server.sslkey = NULL;
-  server.sslrootcert = NULL;
-  server.sslcrl = NULL;
-  while (GetSymbol != '}') {
-    switch (ComToken) {
-    case T_PORT:
-      if (GetSymbol == T_SCONST) {
-        server.port = ParPort(ComSymbol, NULL);
-      } else {
-        ParError("invalid port");
-      }
-      break;
-    case T_NAME:
-      if (GetSymbol == T_SCONST) {
-        server.dbname = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB name");
-      }
-      break;
-    case T_USER:
-      if (GetSymbol == T_SCONST) {
-        server.user = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB user");
-      }
-      break;
-    case T_PASS:
-      if (GetSymbol == T_SCONST) {
-        server.pass = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB password");
-      }
-      break;
-    case T_SSLMODE:
-      if (GetSymbol == T_SCONST) {
-        server.sslmode = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB sslmode");
-      }
-      break;
-    case T_SSLCERT:
-      if (GetSymbol == T_SCONST) {
-        server.sslcert = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB sslcert");
-      }
-      break;
-    case T_SSLKEY:
-      if (GetSymbol == T_SCONST) {
-        server.sslkey = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB sslkey");
-      }
-      break;
-    case T_SSLROOTCERT:
-      if (GetSymbol == T_SCONST) {
-        server.sslrootcert = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB sslrootcert");
-      }
-      break;
-    case T_SSLCRL:
-      if (GetSymbol == T_SCONST) {
-        server.sslcrl = StrDup(ComSymbol);
-      } else {
-        ParError("invalid DB sslcrl");
-      }
-      break;
-    }
-    if (GetSymbol != ';') {
-      ParError("; not found in db_group");
-    }
-    ERROR_BREAK;
-  }
-  AddDB_Server(dbg, &server);
-}
-
 static void ParDBGROUP(CURFILE *in, char *name) {
   DBG_Struct *dbg;
-  DB_Server server;
   int i;
 
   ENTER_FUNC;
@@ -803,24 +714,8 @@ static void ParDBGROUP(CURFILE *in, char *name) {
     ParError("DB group name duplicate");
   }
   dbg = NewDBG_Struct(name);
-  memclear(&server, sizeof(server));
-  server.usage = DB_UPDATE;
   while (GetSymbol != '}') {
     switch (ComToken) {
-    case T_UPDATE:
-      if (GetSymbol == '{') {
-        ParDB_Server(DB_UPDATE, dbg, in);
-      } else {
-        ParError("{ not found");
-      }
-      break;
-    case T_READONLY:
-      if (GetSymbol == '{') {
-        ParDB_Server(DB_READONLY, dbg, in);
-      } else {
-        ParError("{ not found");
-      }
-      break;
     case T_TYPE:
       GetSymbol;
       if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
@@ -875,63 +770,63 @@ static void ParDBGROUP(CURFILE *in, char *name) {
       break;
     case T_PORT:
       if (GetSymbol == T_SCONST) {
-        server.port = ParPort(ComSymbol, NULL);
+        dbg->server->port = ParPort(ComSymbol, NULL);
       } else {
         ParError("invalid port");
       }
       break;
     case T_NAME:
       if (GetSymbol == T_SCONST) {
-        server.dbname = StrDup(ComSymbol);
+        dbg->server->dbname = StrDup(ComSymbol);
       } else {
         ParError("invalid DB name");
       }
       break;
     case T_USER:
       if (GetSymbol == T_SCONST) {
-        server.user = StrDup(ComSymbol);
+        dbg->server->user = StrDup(ComSymbol);
       } else {
         ParError("invalid DB user");
       }
       break;
     case T_PASS:
       if (GetSymbol == T_SCONST) {
-        server.pass = StrDup(ComSymbol);
+        dbg->server->pass = StrDup(ComSymbol);
       } else {
         ParError("invalid DB password");
       }
       break;
     case T_SSLMODE:
       if (GetSymbol == T_SCONST) {
-        server.sslmode = StrDup(ComSymbol);
+        dbg->server->sslmode = StrDup(ComSymbol);
       } else {
         ParError("invalid DB sslmode");
       }
       break;
     case T_SSLCERT:
       if (GetSymbol == T_SCONST) {
-        server.sslcert = StrDup(ComSymbol);
+        dbg->server->sslcert = StrDup(ComSymbol);
       } else {
         ParError("invalid DB sslcert");
       }
       break;
     case T_SSLKEY:
       if (GetSymbol == T_SCONST) {
-        server.sslkey = StrDup(ComSymbol);
+        dbg->server->sslkey = StrDup(ComSymbol);
       } else {
         ParError("invalid DB sslkey");
       }
       break;
     case T_SSLROOTCERT:
       if (GetSymbol == T_SCONST) {
-        server.sslrootcert = StrDup(ComSymbol);
+        dbg->server->sslrootcert = StrDup(ComSymbol);
       } else {
         ParError("invalid DB sslrootcert");
       }
       break;
     case T_SSLCRL:
       if (GetSymbol == T_SCONST) {
-        server.sslcrl = StrDup(ComSymbol);
+        dbg->server->sslcrl = StrDup(ComSymbol);
       } else {
         ParError("invalid DB sslcrl");
       }
@@ -981,17 +876,6 @@ static void ParDBGROUP(CURFILE *in, char *name) {
       ParError("; not found in db_group");
     }
     ERROR_BREAK;
-  }
-  if (server.dbname != NULL) {
-    if (dbg->server == NULL) {
-      AddDB_Server(dbg, &server);
-    } else {
-      AddDB_Server(dbg, NULL);
-      for (i = dbg->nServer - 1; i > 0; i--) {
-        dbg->server[i] = dbg->server[i - 1];
-      }
-      dbg->server[0] = server;
-    }
   }
   RegistDBG(dbg);
   LEAVE_FUNC;

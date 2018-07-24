@@ -116,8 +116,6 @@ typedef	struct {
 }	DBCOMM_CTRL;
 
 typedef	struct {
-	int			usage;
-	/*	DB depend	*/
 	Port		*port;
 	char		*dbname;
 	char		*user;
@@ -177,7 +175,6 @@ typedef	struct _DBG_Struct	{
 	DB_Server			*server;
 	void		*conn;
 	int			dbstatus;
-	int					nServer;
 }	DBG_Struct;
 
 typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
