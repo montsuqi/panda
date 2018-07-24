@@ -76,8 +76,7 @@ extern gboolean CheckSession(const char *term) {
   PacketClass rc;
   NETFILE *fp;
   gboolean ret;
-  ENTER_FUNC;
-  ret = FALSE;
+
   fp = ConnectSysData();
   if (fp != NULL && CheckNetFile(fp)) {
     if (val == NULL) {
@@ -92,7 +91,6 @@ extern gboolean CheckSession(const char *term) {
     Error("GetSessionMessage failure");
   }
   DisconnectSysData(fp);
-  LEAVE_FUNC;
   return ret;
 }
 

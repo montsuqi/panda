@@ -276,16 +276,18 @@ static void _DumpHandler(char *name, WindowBind *bind, void *dummy) {
     printf("\t\tlocale    \"%s\";\n", ConvCodeset(handler->conv));
     printf("\t\tstart     \"%s\";\n", handler->start);
     printf("\t\tencoding  ");
-    switch (handler->conv->encode) {
-    case STRING_ENCODING_URL:
-      printf("\"URL\";\n");
-      break;
-    case STRING_ENCODING_BASE64:
-      printf("\"BASE64\";\n");
-      break;
-    default:
-      printf("\"NULL\";\n");
-      break;
+    if (handler->conv != NULL) {
+      switch (handler->conv->encode) {
+      case STRING_ENCODING_URL:
+        printf("\"URL\";\n");
+        break;
+      case STRING_ENCODING_BASE64:
+        printf("\"BASE64\";\n");
+        break;
+      default:
+        printf("\"NULL\";\n");
+        break;
+      }
     }
 
     printf("\t};\n");
@@ -306,16 +308,18 @@ static void _DumpBatchHandler(char *name, BatchBind *bind, void *dummy) {
     printf("\t\tlocale    \"%s\";\n", ConvCodeset(handler->conv));
     printf("\t\tstart     \"%s\";\n", handler->start);
     printf("\t\tencoding  ");
-    switch (handler->conv->encode) {
-    case STRING_ENCODING_URL:
-      printf("\"URL\";\n");
-      break;
-    case STRING_ENCODING_BASE64:
-      printf("\"BASE64\";\n");
-      break;
-    default:
-      printf("\"NULL\";\n");
-      break;
+    if (handler->conv != NULL) {
+      switch (handler->conv->encode) {
+      case STRING_ENCODING_URL:
+        printf("\"URL\";\n");
+        break;
+      case STRING_ENCODING_BASE64:
+        printf("\"BASE64\";\n");
+        break;
+      default:
+        printf("\"NULL\";\n");
+        break;
+      }
     }
 
     printf("\t};\n");

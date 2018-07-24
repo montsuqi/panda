@@ -842,6 +842,7 @@ void GLP_SetSSLPKCS11(GLProtocol *ctx, const char *p11lib, const char *pin) {
   }
   fprintf(stderr, "%s\n", certid);
 
+  ncerts = 0;
   /* get all certs */
   if (slot != NULL) {
     rc = PKCS11_enumerate_certs(slot->token, &certs, &ncerts);
