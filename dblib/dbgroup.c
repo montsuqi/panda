@@ -382,7 +382,7 @@ static char *GetMONDB_ENV(DBG_Struct *dbg, char *itemname) {
 extern Port *GetDB_Port(DBG_Struct *dbg) {
   Port *port;
 
-  port = dbg->server[0].port;
+  port = dbg->server->port;
   return (port);
 }
 
@@ -445,7 +445,7 @@ extern char *GetDB_DBname(DBG_Struct *dbg) {
   if (name != NULL) {
     return DB_Name;
   }
-  return dbg->server[0].dbname;
+  return dbg->server->dbname;
 }
 
 extern char *GetDB_User(DBG_Struct *dbg) {
