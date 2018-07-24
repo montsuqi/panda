@@ -38,7 +38,6 @@ libpanda_la_SOURCES	=				\
 	SQLparser.c		SQLparser.h		\
 	auth.c			auth.h			\
 	authstub.c		authstub.h		\
-	blobreq.c		blobreq.h		\
 	comm.c			comm.h			\
 	comms.c			comms.h			\
 	debug.h							\
@@ -76,7 +75,6 @@ libpandainclude_HEADERS =	\
 	SQLparser.h			\
 	auth.h				\
 	authstub.h			\
-	blobreq.h			\
 	comm.h				\
 	comms.h				\
 	debug.h				\

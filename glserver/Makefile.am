@@ -22,18 +22,21 @@ sbin_PROGRAMS = glserver
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
 	-lm 								\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la	\
-	$(MAGIC_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
 glserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la
 AM_CPPFLAGS 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
+	-I$(top_srcdir)/dblib	\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
 	$(COMMON_CFLAGS)		\
@@ -44,4 +47,5 @@ glserver_SOURCES	=				\
 	http.c			http.h			\
 	wfcio.c			wfcio.h			\
 	sysdataio.c		sysdataio.h		\
-	blobapi.c		blobapi.h
+	blobapi.c		blobapi.h		\
+	glblob.c		glblob.h

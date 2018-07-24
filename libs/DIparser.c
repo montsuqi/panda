@@ -707,7 +707,6 @@ extern void FreeDBG_Struct(DBG_Struct *dbg) {
 
 static void ParDBGROUP(CURFILE *in, char *name) {
   DBG_Struct *dbg;
-  int i;
 
   ENTER_FUNC;
   if (g_hash_table_lookup(ThisEnv->DBG_Table, name) != NULL) {

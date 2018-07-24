@@ -416,6 +416,10 @@ static void InitGlserver(void) {
   } else {
     argv[argc++] = SERVER_DIR "/glserver";
   }
+  if (Directory != NULL) {
+    argv[argc++] = "-dir";
+    argv[argc++] = Directory;
+  }
   if (RecDir != NULL) {
     argv[argc++] = "-record";
     argv[argc++] = RecDir;

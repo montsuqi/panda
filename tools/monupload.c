@@ -38,23 +38,23 @@
 #include <pthread.h>
 #include <sys/file.h>
 #include <locale.h>
+#include <libmondai.h>
 
 #include "enum.h"
-#include "net.h"
-#include "comm.h"
-#include "comms.h"
 #include "const.h"
-#include "wfcdata.h"
+#include "directory.h"
 #include "dbgroup.h"
-#include "sysdatacom.h"
-#include "socket.h"
-#include "blobreq.h"
+#include "dbutils.h"
+#include "monsys.h"
+#include "bytea.h"
 #include "message.h"
 #include "debug.h"
 
 #define MAX_USER 100
 
-static gchar *SysDataPort = SYSDATA_PORT;
+static char *Directory;
+
+static gchar *SysDataPort = "";
 static gchar *Type = "misc";
 static gchar *Printer = NULL;
 static gchar *Title = NULL;
@@ -90,6 +90,7 @@ static void WriteMetaFile(const char *metafile, json_object *obj) {
   jsonstr = (char *)json_object_to_json_string_ext(obj, JSON_C_TO_STRING_PLAIN);
   if (!g_file_set_contents(metafile, jsonstr, strlen(jsonstr), NULL)) {
     g_warning("g_file_set_contents failure:%s", metafile);
+    exit(1);
   }
   json_object_put(obj);
 }
@@ -131,28 +132,31 @@ static void AddMetaData(char *oid, const char *metafile) {
 }
 
 static void _MonUpload(const char *file, const char *metafile) {
-  NETFILE *fp;
-  Port *port;
-  int fd;
-  char *id;
+  DBG_Struct *dbg;
+  char *id,*buf;
+  size_t size;
 
-  /* upload sysdata */
-  fp = NULL;
-  port = ParPort(SysDataPort, SYSDATA_PORT);
-  fd = ConnectSocket(port, SOCK_STREAM);
-  DestroyPort(port);
-  if (fd > 0) {
-    fp = SocketToNet(fd);
-  } else {
-    g_warning("cannot connect sysdata server");
-    return;
+  if (!g_file_get_contents(file, &buf, &size, NULL)) {
+    g_warning("cannot read file:%s",file);
+    exit(1);
   }
 
-  id = RequestImportBLOB(fp, file);
-  if (id == NULL) {
-    return;
+  dbg = GetDBG_monsys();
+  dbg->dbt = NewNameHash();
+
+  if (OpenDB(dbg) != MCP_OK) {
+    g_warning("OpenDB failure");
+    exit(1);
   }
-  CloseNet(fp);
+  monblob_setup(dbg, FALSE);
+
+  TransactionStart(dbg);
+
+  id = monblob_import_mem(dbg, NULL, 0, "monupload.bin", NULL, 0, buf, size);
+  g_free(buf);
+
+  TransactionEnd(dbg);
+  CloseDB(dbg);
 
   AddMetaData(id, metafile);
   xfree(id);
@@ -203,7 +207,7 @@ static GOptionEntry entries[] = {
     {"filename", 'f', 0, G_OPTION_ARG_STRING, &Filename, "filename", "F"},
     {"description", 'd', 0, G_OPTION_ARG_STRING, &Desc, "description for file",
      "D"},
-    {"port", 'P', 0, G_OPTION_ARG_STRING, &SysDataPort, "SystemDataThread port",
+    {"port", 'P', 0, G_OPTION_ARG_STRING, &SysDataPort, "deprecated option",
      "P"},
     {NULL}};
 
@@ -215,12 +219,26 @@ extern int main(int argc, char *argv[]) {
   context = g_option_context_new("file");
   g_option_context_add_main_entries(context, entries, NULL);
   if (!g_option_context_parse(context, &argc, &argv, &error)) {
-    g_print("option parsing failed: %s\n", error->message);
+    g_warning("option parsing failed: %s\n", error->message);
     exit(1);
   }
 
   if (argc < 2) {
-    g_print("$ monupload [options] file\n");
+    g_warning("$ monupload [options] file\n");
+    exit(1);
+  }
+
+  Directory = getenv("MON_DIRECTORY_PATH");
+  if (Directory == NULL) {
+    g_warning("Directory empty;set MON_DIRECTORY_PATH");
+    exit(1);
+  }
+
+  InitMessage("monupload",NULL);
+  InitDirectory();
+  SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
+  if (ThisEnv == NULL) {
+    g_warning("invalid Directory");
     exit(1);
   }
 

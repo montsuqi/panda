@@ -57,7 +57,7 @@
 #include "term.h"
 #include "http.h"
 #include "blobapi.h"
-#include "blobreq.h"
+#include "glblob.h"
 #include "sysdataio.h"
 #include "wfcio.h"
 #include "wfcdata.h"

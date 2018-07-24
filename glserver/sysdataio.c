@@ -38,7 +38,6 @@
 #include "socket.h"
 #include "wfcdata.h"
 #include "sysdatacom.h"
-#include "blobreq.h"
 #include "sysdbreq.h"
 #include "sysdataio.h"
 #include "enum.h"
@@ -68,24 +67,6 @@ static void DisconnectSysData(NETFILE *fp) {
   if (fp != NULL && CheckNetFile(fp)) {
     CloseNet(fp);
   }
-}
-
-void GLExportBLOB(char* id, char **out, size_t *size) {
-  NETFILE *fp;
-
-  fp = ConnectSysData();
-  RequestExportBLOBMem(fp, id, out, size);
-  DisconnectSysData(fp);
-}
-
-char* GLImportBLOB(char *in, size_t size) {
-  NETFILE *fp;
-  char *id;
-
-  fp = ConnectSysData();
-  id = RequestImportBLOBMem(fp, in, size);
-  DisconnectSysData(fp);
-  return id;
 }
 
 static ValueStruct *val = NULL;

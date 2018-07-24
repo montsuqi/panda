@@ -50,7 +50,6 @@ wfc_SOURCES	=							\
 	corethread.c	corethread.h		\
 	sysdatathread.c	sysdatathread.h		\
 	controlthread.c	controlthread.h		\
-	blobserv.c		blobserv.h			\
 	sysdbserv.c		sysdbserv.h			\
 	termthread.c	termthread.h		\
 	sessionctrl.c	sessionctrl.h

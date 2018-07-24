@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_BLOBSERV_H
-#define	_INC_BLOBSERV_H
+#ifndef	_GLBLOB_H
+#define	_GLBLOB_H
 
-#include	"libmondai.h"
-#include	"net.h"
-
-extern	void	InitServeBLOB();
-extern	void	ServeBLOB(NETFILE *fp);
-
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+void GLExportBLOB(char* id, char **out, size_t *size);
+char* GLImportBLOB(char *in, size_t size);
 
 #endif
