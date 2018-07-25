@@ -44,7 +44,6 @@
 #include "directory.h"
 #include "DDparser.h"
 #include "dbgroup.h"
-#include "blobreq.h"
 #include "debug.h"
 
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl) {

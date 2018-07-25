@@ -57,7 +57,7 @@
 #include "term.h"
 #include "http.h"
 #include "blobapi.h"
-#include "blobreq.h"
+#include "glblob.h"
 #include "sysdataio.h"
 #include "wfcio.h"
 #include "wfcdata.h"
@@ -229,7 +229,7 @@ void SendResponse(HTTP_REQUEST *req, int status, char *body, size_t body_size,
     Send(req->fp, (char *)str, strlen(str));
   }
 
-  va_start(ap, NULL);
+  va_start(ap, body_size);
   while (1) {
     h = va_arg(ap, char *);
     if (h == NULL) {

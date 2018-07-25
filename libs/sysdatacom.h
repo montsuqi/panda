@@ -24,17 +24,8 @@
 #include	"net.h"
 
 /*sysata*/
-#define SYSDATA_BLOB			(PacketClass)0x01
 #define SYSDATA_SYSDB			(PacketClass)0x02
 #define SYSDATA_END				(PacketClass)0xFF
-
-/*blob*/
-#define	BLOB_IMPORT			(PacketClass)0x03
-#define	BLOB_EXPORT			(PacketClass)0x04
-
-#define	BLOB_OK				(PacketClass)0xFE
-#define	BLOB_NOT			(PacketClass)0xF0
-#define	BLOB_END			(PacketClass)0xFF
 
 /*sysdb*/
 #define SYSDB_GET_DATA			(PacketClass)0x01
