@@ -360,7 +360,7 @@ static int write_tmpfile(int std_in) {
       if (write(STDOUT_FILENO, buff, len) < 0) {
         Warning("stdout write error");
         freopen("/dev/tty", "wb", stdout);
-        if (fwrite(buff, len, 1, stdout) < 0) {
+        if (fwrite(buff, len, 1, stdout) != len) {
           Warning("Erorr write %s", strerror(errno));
         }
       }

@@ -307,10 +307,9 @@ static void CallBefore(WindowBind *bind, ProcessNode *node) {
 }
 
 static void CallAfter(ProcessNode *node) {
-  int i, dc_sp, org_sp;
+  int i, sp;
   char *dc_puttype;
   char *dc_window;
-  gboolean has_window;
   ENTER_FUNC;
 #ifdef DEBUG
   fprintf(stderr, "---- callafter 1 ----\n");
@@ -343,48 +342,14 @@ static void CallAfter(ProcessNode *node) {
           strputtype(node->puttype));
 #endif
 
-  /* org window sp*/
-  org_sp = -1;
-  for (i = 0; i < node->w.sp; i++) {
-    if (!strcmp(node->window, node->w.s[i].window)) {
-      org_sp = i;
-      break;
-    }
-  }
-
-  /* windowがあるかどうかチェック */
-  has_window = FALSE;
-  for (i = 0; i < node->w.sp; i++) {
-    if (!strcmp(dc_window, node->w.s[i].window)) {
-      dc_sp = i;
-      has_window = TRUE;
-      node->w.s[i].puttype = node->puttype;
-      break;
-    }
-  }
-  if (!has_window) {
-    /* なければadd */
-    if (node->w.sp > WINDOW_STACK_SIZE) {
-      Warning("window stack size over[%d],can't add [%s]", WINDOW_STACK_SIZE,
-              dc_window);
-      Warning("---- window stack ----");
-      for (i = 0; i < node->w.sp; i++) {
-        Warning("[%02d] [%s] [%d]", i, node->w.s[i].window,
-                node->w.s[i].puttype);
-      }
-      Warning("---- window stack end ----");
-      return;
-    }
-    strncpy(node->w.s[node->w.sp].window, dc_window, SIZE_NAME);
-    node->w.s[node->w.sp].puttype = node->puttype;
-    dc_sp = node->w.sp;
-    node->w.sp++;
-  }
-
   switch (node->puttype) {
   case SCREEN_CLOSE_WINDOW:
     /* 前のリスト要素をCLOSEに  */
-    node->w.s[dc_sp].puttype = SCREEN_CLOSE_WINDOW;
+    for (i=0;i<node->w.sp;i++) {
+      if (!strcmp(node->window,node->w.s[i].window)) {
+        node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
+      }
+    }
     break;
   case SCREEN_CURRENT_WINDOW:
   case SCREEN_NEW_WINDOW:
@@ -392,23 +357,31 @@ static void CallAfter(ProcessNode *node) {
     break;
   case SCREEN_CHANGE_WINDOW:
     /* ひとつ前のウィンドウをCLOSE  */
-    if (org_sp != -1) {
-      node->w.s[org_sp].puttype = SCREEN_CLOSE_WINDOW;
+    if (node->w.sp != -1) {
+      node->w.s[node->w.sp-1].puttype = SCREEN_CLOSE_WINDOW;
     }
-    node->w.s[dc_sp].puttype = SCREEN_CURRENT_WINDOW;
     break;
   case SCREEN_JOIN_WINDOW:
-    if (has_window) {
-      for (i = dc_sp + 1; i < node->w.sp; i++) {
+    /* windowがあるかどうかチェック */
+    sp = -1;
+    for (i=0;i<node->w.sp;i++) {
+      if (!strcmp(dc_window,node->w.s[i].window)) {
+        sp = i;
+        break;
+      }
+    }
+    if (sp == -1) {
+    /* なければ全CLOSE  */
+      for (i=0;i<node->w.sp;i++) {
         node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
       }
     } else {
-      for (i = 0; i < dc_sp; i++) {
+    /* あればそれ以降をCLOSE  */
+      for (i=sp+1;i<node->w.sp;i++) {
         node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
       }
     }
-    node->w.s[dc_sp].puttype = SCREEN_CURRENT_WINDOW;
-    break;
+  break;
   }
 #ifdef DEBUG
   fprintf(stderr, "---- callafter 2 ----\n");
