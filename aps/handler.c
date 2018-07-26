@@ -353,7 +353,20 @@ static void CallAfter(ProcessNode *node) {
     break;
   case SCREEN_CURRENT_WINDOW:
   case SCREEN_NEW_WINDOW:
-    /* do nothing  */
+    /* windowがあるかどうかチェック */
+    sp = -1;
+    for (i=0;i<node->w.sp;i++) {
+      if (!strcmp(dc_window,node->w.s[i].window)) {
+        sp = i;
+        break;
+      }
+    }
+    if (sp == -1) {
+    /* なければadd  */
+      strncpy(node->w.s[node->w.sp].window, dc_window, SIZE_NAME);
+      node->w.s[node->w.sp].puttype = node->puttype;
+      node->w.sp++;
+    }
     break;
   case SCREEN_CHANGE_WINDOW:
     if (node->w.sp >= 1) {
