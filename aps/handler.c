@@ -357,6 +357,7 @@ static void CallAfter(ProcessNode *node) {
     sp = -1;
     for (i=0;i<node->w.sp;i++) {
       if (!strcmp(dc_window,node->w.s[i].window)) {
+        node->w.s[i].puttype = node->puttype;
         sp = i;
         break;
       }
