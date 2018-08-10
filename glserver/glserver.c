@@ -101,7 +101,8 @@ static void SetDefault(void) {
 }
 
 static void StopProcess(int ec) {
-  exit(ec);
+  //kill process group
+  kill(0,SIGINT);
 }
 
 static void ExecuteServer(void) {
@@ -185,6 +186,9 @@ static void InitSystem(void) {
 extern int main(int argc, char **argv) {
   struct sigaction sa;
 
+  // PGID変更
+  setsid();
+
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;
   sa.sa_flags |= SA_RESTART;
@@ -197,7 +201,7 @@ extern int main(int argc, char **argv) {
   sa.sa_handler = (void *)StopProcess;
   sa.sa_flags |= SA_RESTART;
   sigemptyset(&sa.sa_mask);
-  if (sigaction(SIGPIPE, &sa, NULL) != 0) {
+  if (sigaction(SIGHUP, &sa, NULL) != 0) {
     Error("sigaction(2) failure");
   }
 
