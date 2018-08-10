@@ -149,9 +149,10 @@ size_t HeaderPostBLOB(void *ptr, size_t size, size_t nmemb, void *userdata) {
   }
   for (p = ptr + strlen(target); isspace(*p); p++);
   left = all - (p - (char*)ptr);
-  if (left >= SIZE_UUID) {
-    memcpy(oid,p,SIZE_UUID);
+  if (left > SIZE_UUID) {
+    left = SIZE_UUID;
   }
+  memcpy(oid,p,left);
 
   return all;
 }
