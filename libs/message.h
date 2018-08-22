@@ -43,6 +43,7 @@ extern	void			SetMessageFunction(void (*func)(int level, char *file, int line, c
 extern	unsigned long	GetNowTime(void);
 extern	void			TimerPrintf(long start, long end, char *format, ...);
 extern	void			Time(char*);
+extern	long			GetMaxRSS(void);
 
 #ifndef Bool
 #define Bool            int

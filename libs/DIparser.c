@@ -1417,6 +1417,9 @@ extern DI_Struct *DI_Parser(char *name, char *ld, char *bd, char *db,
   struct stat stbuf;
   DI_Struct *ret;
   CURFILE *in, root;
+long rss,st,ed;
+st = GetNowTime();
+rss = GetMaxRSS();
 
   ENTER_FUNC;
   ret = NULL;
@@ -1430,6 +1433,11 @@ extern DI_Struct *DI_Parser(char *name, char *ld, char *bd, char *db,
   } else {
     Error("DI file not found %s\n", name);
   }
+rss = GetMaxRSS() - rss;
+Warning("DI_Parser rss:%ld",rss);
+ed = GetNowTime();
+TimerPrintf(st,ed,"DI_Parser");
+
   LEAVE_FUNC;
   return (ret);
 }

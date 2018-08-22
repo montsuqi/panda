@@ -457,6 +457,9 @@ extern LD_Struct *LD_Parser(char *name, int parse_type) {
   LD_Struct *ret;
   struct stat stbuf;
   CURFILE *in, root;
+long rss,st,ed;
+st = GetNowTime();
+rss = GetMaxRSS();
 
   ENTER_FUNC;
   dbgmsg(name);
@@ -473,6 +476,10 @@ extern LD_Struct *LD_Parser(char *name, int parse_type) {
   } else {
     ret = NULL;
   }
+rss = GetMaxRSS() - rss;
+Warning("%s rss:%ld",name,rss);
+ed = GetNowTime();
+TimerPrintf(st,ed,"%s",name);
   LEAVE_FUNC;
   return (ret);
 }

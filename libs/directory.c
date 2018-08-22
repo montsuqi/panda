@@ -240,14 +240,19 @@ static void RequiredDBGROUP(void) {
 extern void SetUpDirectory(char *name, char *ld, char *bd, char *db,
                            int parse_type) {
   DI_Struct *di;
-  ENTER_FUNC;
+long rss,st,ed;
+st = GetNowTime();
+rss = GetMaxRSS();
   InitDBG();
   di = DI_Parser(name, ld, bd, db, parse_type);
   RequiredDBGROUP();
   if ((parse_type >= P_ALL) && di) {
     AssignDBG(di);
   }
-  LEAVE_FUNC;
+rss = GetMaxRSS() - rss;
+Warning("SetupDirectory rss:%ld",rss);
+ed = GetNowTime();
+TimerPrintf(st,ed,"SetupDirectory");
 }
 
 extern LD_Struct *GetLD(char *name) {

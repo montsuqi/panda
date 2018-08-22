@@ -31,6 +31,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
@@ -47,6 +48,7 @@
 #include "net.h"
 #endif
 #include "message.h"
+#include "debug.h"
 
 #ifndef SIZE_LOG
 #define SIZE_LOG 8192
@@ -312,7 +314,7 @@ extern void TimerPrintf(long start, long end, char *format, ...) {
     va_start(va, format);
     vsnprintf(buff, sizeof(buff), format, va);
     va_end(va);
-    printf(" %6ld(ms) %s", (end - start), buff);
+    Warning(" %6ld(ms) %s", (end - start), buff);
   }
 }
 
@@ -323,4 +325,13 @@ extern void Time(char *str) {
   now = GetNowTime();
   fprintf(stderr, "%6ld(ms) %s\n", now - last, str);
   last = now;
+}
+
+extern long GetMaxRSS(void) {
+  struct rusage r;
+
+  if (getrusage(RUSAGE_SELF, &r) == 0) {
+    return r.ru_maxrss;
+  }
+  return 0;
 }
