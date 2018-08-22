@@ -310,12 +310,10 @@ extern void TimerPrintf(long start, long end, char *format, ...) {
   char buff[SIZE_LOG - SIZE_FORMAT];
   va_list va;
 
-  if (fTimer) {
     va_start(va, format);
     vsnprintf(buff, sizeof(buff), format, va);
     va_end(va);
     Warning(" %6ld(ms) %s", (end - start), buff);
-  }
 }
 
 extern void Time(char *str) {
