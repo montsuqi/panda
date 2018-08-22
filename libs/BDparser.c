@@ -48,6 +48,7 @@
 #include "directory.h"
 #include "Dlex.h"
 #include "dirs.h"
+#include "message.h"
 #include "debug.h"
 
 static TokenTable tokentable[] = {{"data", T_DATA},
@@ -292,6 +293,9 @@ extern BD_Struct *BD_Parser(char *name) {
   BD_Struct *ret;
   struct stat stbuf;
   CURFILE *in, root;
+  long rss,st,ed;
+  st = GetNowTime();
+  rss = GetMaxRSS();
 
   ENTER_FUNC;
   root.next = NULL;
@@ -311,6 +315,11 @@ extern BD_Struct *BD_Parser(char *name) {
   } else {
     ret = NULL;
   }
+
+  rss = GetMaxRSS() - rss;
+  Warning("BD_Parser %s rss:%ld",name,rss);
+  ed = GetNowTime();
+  TimerPrintf(st,ed,"BD_Parser %s",name);
   LEAVE_FUNC;
   return (ret);
 }

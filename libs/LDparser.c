@@ -477,9 +477,9 @@ rss = GetMaxRSS();
     ret = NULL;
   }
 rss = GetMaxRSS() - rss;
-Warning("%s rss:%ld",name,rss);
+Warning("LD_Parser %s rss:%ld",name,rss);
 ed = GetNowTime();
-TimerPrintf(st,ed,"%s",name);
+TimerPrintf(st,ed,"LD_Parser %s",name);
   LEAVE_FUNC;
   return (ret);
 }
