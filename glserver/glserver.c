@@ -93,9 +93,8 @@ static void SetDefault(void) {
 }
 
 static void StopProcess(int ec) {
-  dbgmsg(">StopProcess");
-  dbgmsg("<StopProcess");
-  exit(ec);
+  /* kill process group  */
+  kill(0,SIGINT);
 }
 
 static void ExecuteServer(void) {
@@ -179,7 +178,7 @@ extern int main(int argc, char **argv) {
   sa.sa_handler = (void *)StopProcess;
   sa.sa_flags |= SA_RESTART;
   sigemptyset(&sa.sa_mask);
-  if (sigaction(SIGPIPE, &sa, NULL) != 0) {
+  if (sigaction(SIGHUP, &sa, NULL) != 0) {
     Error("sigaction(2) failure");
   }
 
