@@ -166,6 +166,7 @@ static void ExecuteServer(void) {
 extern int main(int argc, char **argv) {
   struct sigaction sa;
 
+  setsid();
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;
   sa.sa_flags |= SA_RESTART;
