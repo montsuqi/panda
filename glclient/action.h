@@ -2,78 +2,79 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_ACTION_H
-#define	_INC_ACTION_H
+#ifndef _INC_ACTION_H
+#define _INC_ACTION_H
 
-#define	ORIGIN_WINDOW_WIDTH		1024
-#define	ORIGIN_WINDOW_HEIGHT	744
-#define	DEFAULT_WINDOW_WIDTH	1000
-#define	DEFAULT_WINDOW_HEIGHT	720
+#define ORIGIN_WINDOW_WIDTH 1024
+#define ORIGIN_WINDOW_HEIGHT 744
+#define DEFAULT_WINDOW_WIDTH 1000
+#define DEFAULT_WINDOW_HEIGHT 720
 
-#define DEFAULT_PING_TIMER_PERIOD     (7   * 1000) //7sec
-#define PUSH_CLIENT_PING_TIMER_PERIOD (180 * 1000) //180sec
+#define DEFAULT_PING_TIMER_PERIOD (7 * 1000)       // 7sec
+#define PUSH_CLIENT_PING_TIMER_PERIOD (180 * 1000) // 180sec
 
-#undef	GLOBAL
-#ifdef	ACTION_MAIN
-#define	GLOBAL		/*	*/
+#undef GLOBAL
+#ifdef ACTION_MAIN
+#define GLOBAL /*	*/
 #else
-#define	GLOBAL		extern
+#define GLOBAL extern
 #endif
 
 typedef struct {
-	float v;
-	float h;
+  float v;
+  float h;
 } WindowScale;
 
-GLOBAL	GtkWidget	*TopWindow;
-GLOBAL	GList		*DialogStack;
-GLOBAL	WindowScale	TopWindowScale;
+GLOBAL GtkWidget *TopWindow;
+GLOBAL GList *DialogStack;
+GLOBAL WindowScale TopWindowScale;
 
-extern	void		RegisterChangedHandler(GObject *object,GCallback func, gpointer data);
-extern	void		BlockChangedHandlers(void);
-extern	void		UnblockChangedHandlers(void);
-extern	GtkWidget	*GetWindow(	GtkWidget	*widget);
-extern	char		*GetWindowName(	GtkWidget	*widget);
-extern	void		ClearKeyBuffer(void);
-extern	void		ResetTimers(char *wname);
-extern	void		_AddChangedWidget(GtkWidget *widget);
-extern	void		AddChangedWidget(GtkWidget *widget);
-extern	void		ShowBusyCursor(GtkWidget *widget);
-extern	void		StopTimersAll(void);
-extern	void		HideBusyCursor(GtkWidget *widget);
-extern  void		SetTitle(GtkWidget *window);
-extern  void		SetBGColor(GtkWidget *window);
-extern	GtkWidget	*GetWidgetByLongName(const char *longName);
-extern	GtkWidget	*GetWidgetByName(const char *dataName);
-extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, gpointer data);
-extern	void		InitTopWindow(void);
-extern	gboolean	IsDialog(GtkWidget *widget);
-extern  gboolean    IsWidgetName(char *name);
-extern  gboolean    IsWidgetName2(char *name);
+extern void RegisterChangedHandler(GObject *object, GCallback func,
+                                   gpointer data);
+extern void BlockChangedHandlers(void);
+extern void UnblockChangedHandlers(void);
+extern GtkWidget *GetWindow(GtkWidget *widget);
+extern char *GetWindowName(GtkWidget *widget);
+extern void ClearKeyBuffer(void);
+extern void ResetTimers(char *wname);
+extern void _AddChangedWidget(GtkWidget *widget);
+extern void AddChangedWidget(GtkWidget *widget);
+extern void ShowBusyCursor(GtkWidget *widget);
+extern void StopTimersAll(void);
+extern void HideBusyCursor(GtkWidget *widget);
+extern void SetTitle(GtkWidget *window);
+extern void SetBGColor(GtkWidget *window);
+extern GtkWidget *GetWidgetByLongName(const char *longName);
+extern GtkWidget *GetWidgetByName(const char *dataName);
+extern void ConfigureWindow(GtkWidget *widget, GdkEventConfigure *ev,
+                            gpointer data);
+extern void InitTopWindow(void);
+extern gboolean IsDialog(GtkWidget *widget);
+extern gboolean IsWidgetName(char *name);
+extern gboolean IsWidgetName2(char *name);
 
-extern  void        UI_Init(int argc, char **argv);
-extern	void		UI_Main(void);
-extern	void		InitStyle(void);
-extern	int			AskPass(char *buf, size_t buflen,const char	*prompt);
-extern	void		SetPingTimerFunc();
-extern	WindowData	*GetWindowData(const char *wname);
-extern	void		UpdateScreen();
-extern	void		TimeSet(const char*);
+extern void UI_Init(int argc, char **argv);
+extern void UI_Main(void);
+extern void InitStyle(void);
+extern int AskPass(char *buf, size_t buflen, const char *prompt);
+extern void SetPingTimerFunc();
+extern WindowData *GetWindowData(const char *wname);
+extern void UpdateScreen();
+extern void TimeSet(const char *);
 #endif
-

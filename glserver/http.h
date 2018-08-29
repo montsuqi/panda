@@ -1,32 +1,32 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2009 JMA (Japan Medical Association).
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_HTTP_H
-#define	_HTTP_H
-#include	"port.h"
-#include	"net.h"
+#ifndef _HTTP_H
+#define _HTTP_H
+#include "port.h"
+#include "net.h"
 
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
+#undef GLOBAL
+#ifdef MAIN
+#define GLOBAL /*	*/
 #else
-#define	GLOBAL		extern
+#define GLOBAL extern
 #endif
 
 #define HTTP_CONTINUE 100
@@ -88,36 +88,35 @@
 #define HTTP_NOT_EXTENDED 510
 
 typedef struct {
-	NETFILE			*fp;
-	int 			type;
-	char			host[SIZE_HOST+1];
-	char			*agent;
-	char			*server_host;
-	PacketClass		method;
-	size_t			buf_size;
-	char			*buf;
-	char			*head;
-	char			*arguments;
-	int				body_size;
-	char			*body;
-	GHashTable		*header_hash;
-	char			*user;
-	char			*pass;
-	char			*ld;
-	char			*window;
-	char			*session_id;
-	char			*oid;
-	gboolean		require_auth;
-	int				status;
+  NETFILE *fp;
+  int type;
+  char host[SIZE_HOST + 1];
+  char *agent;
+  char *server_host;
+  PacketClass method;
+  size_t buf_size;
+  char *buf;
+  char *head;
+  char *arguments;
+  int body_size;
+  char *body;
+  GHashTable *header_hash;
+  char *user;
+  char *pass;
+  char *ld;
+  char *window;
+  char *session_id;
+  char *oid;
+  gboolean require_auth;
+  int status;
 } HTTP_REQUEST;
 
-
 typedef struct {
-	int				body_size;
-	char			*body;
-	char			*content_type;
-	char			*filename;
-	int				status;
+  int body_size;
+  char *body;
+  char *content_type;
+  char *filename;
+  int status;
 } HTTP_RESPONSE;
 
 void HTTP_Method(NETFILE *fpComm);
