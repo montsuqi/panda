@@ -1,17 +1,17 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2004-2008 Kouji TAKAO & JMA (Japan Medical Association).
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -21,7 +21,7 @@
 #define __BDCOMPONENT_H_INCLUDED__
 
 #ifdef HAVE_CONFIG_H
-#  include "config.h"
+#include "config.h"
 #endif
 
 #include <stdio.h>
@@ -30,13 +30,13 @@
 
 typedef struct _BDComponent BDComponent;
 struct _BDComponent {
-// basic
+  // basic
   GtkWidget *basictable;
   GtkWidget *authuri;
   GtkWidget *user;
   GtkWidget *password;
   GtkWidget *savepassword;
-// other 
+  // other
   GtkWidget *othertable;
   GtkWidget *debug;
   GtkWidget *style;
@@ -48,7 +48,7 @@ struct _BDComponent {
   GtkWidget *timerperiod;
   GtkWidget *timer_container;
   GtkWidget *startup_message;
-// ssl
+  // ssl
   GtkWidget *ssltable;
   GtkWidget *ssl_container;
   GtkWidget *ssl;
@@ -58,26 +58,24 @@ struct _BDComponent {
   GtkWidget *ciphers;
   GtkWidget *certpass;
   GtkWidget *savecertpass;
-// pkcs11
+  // pkcs11
   GtkWidget *pkcs11_container;
   GtkWidget *pkcs11;
   GtkWidget *pkcs11lib;
-//
+  //
   GtkWidget *printertable;
   GList *printer_entry_list;
   GList *printer_combo_list;
-// info 
+  // info
   GtkWidget *infotable;
 };
 
-typedef struct {
-  GtkWidget *entry, *filesel;
-} file_selection_data;
+typedef struct { GtkWidget *entry, *filesel; } file_selection_data;
 
-void bd_component_set_value(BDComponent *self,int n);
-void bd_component_value_to_config(BDComponent *self,int n);
+void bd_component_set_value(BDComponent *self, int n);
+void bd_component_value_to_config(BDComponent *self, int n);
 
-BDComponent * bd_component_new();
+BDComponent *bd_component_new();
 
 #endif /* #ifndef __BDCOMPONENT_H_INCLUDED__ */
 

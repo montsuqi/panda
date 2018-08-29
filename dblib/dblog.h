@@ -25,39 +25,39 @@
 #include <inttypes.h>
 #include <pthread.h>
 
-#define IS_DB_STATUS_CONNECT(dbg) ((dbg)->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT)
+#define IS_DB_STATUS_CONNECT(dbg)                                              \
+  ((dbg)->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT)
 #define DBG_INSTANCE DBG_Struct
 
-typedef uint64_t  DBLogNo; 
-#define DBLOG_DEFAULT_NO     ((DBLogNo)-1)
+typedef uint64_t DBLogNo;
+#define DBLOG_DEFAULT_NO ((DBLogNo)-1)
 #define DBLOG_APPLYDATE_ZERO ((time_t)0)
 
 typedef struct {
-	DBG_INSTANCE *dbg;
-	char *tablename;
-	pthread_mutex_t mutex;
+  DBG_INSTANCE *dbg;
+  char *tablename;
+  pthread_mutex_t mutex;
 } DBLogCtx;
 
 typedef struct {
-	DBLogNo no;
-	LargeByteString *data;
-	LargeByteString *checkdata;
-	time_t  applydate;
+  DBLogNo no;
+  LargeByteString *data;
+  LargeByteString *checkdata;
+  time_t applydate;
 } DBLogRecord;
 
 typedef Bool (*DBLogForeachFunc)(void *userdata, DBLogRecord *rec);
 
 extern DBLogCtx *Open_DBLog(DBG_INSTANCE *dbg, char *tablename);
-extern void	Close_DBLog(DBLogCtx **log);
-extern Bool	Put_DBLog(DBLogCtx *log, char *data, char *checkdata);
-extern Bool	PutNo_DBLog(DBLogCtx *log, DBLogNo no, char *data, char *checkdata);
-extern Bool	GetLatestNo_DBLog(DBLogCtx *log, DBLogNo *no);
-extern Bool	Foreach_DBLog(DBLogCtx *log,
-			      DBLogNo start_no, DBLogNo end_no,
-			      DBLogForeachFunc func, void *userdata);
-extern Bool	ForeachUnapplied_DBLog(DBLogCtx *log,
-				       DBLogForeachFunc func, void *userdata);
-extern Bool     UpdateApplyDate_DBLog(DBLogCtx *log, DBLogNo no);
-extern Bool	Truncate_DBLog(DBLogCtx *log, time_t expire_log_sec);
+extern void Close_DBLog(DBLogCtx **log);
+extern Bool Put_DBLog(DBLogCtx *log, char *data, char *checkdata);
+extern Bool PutNo_DBLog(DBLogCtx *log, DBLogNo no, char *data, char *checkdata);
+extern Bool GetLatestNo_DBLog(DBLogCtx *log, DBLogNo *no);
+extern Bool Foreach_DBLog(DBLogCtx *log, DBLogNo start_no, DBLogNo end_no,
+                          DBLogForeachFunc func, void *userdata);
+extern Bool ForeachUnapplied_DBLog(DBLogCtx *log, DBLogForeachFunc func,
+                                   void *userdata);
+extern Bool UpdateApplyDate_DBLog(DBLogCtx *log, DBLogNo no);
+extern Bool Truncate_DBLog(DBLogCtx *log, time_t expire_log_sec);
 
 #endif
