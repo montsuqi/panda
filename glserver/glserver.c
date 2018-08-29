@@ -93,7 +93,7 @@ static void SetDefault(void) {
 }
 
 static void StopProcess(int ec) {
-  /* kill process group  */
+  // kill process group
   kill(0,SIGINT);
 }
 
@@ -166,6 +166,7 @@ static void ExecuteServer(void) {
 extern int main(int argc, char **argv) {
   struct sigaction sa;
 
+  // PGIDの変更
   setsid();
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;
