@@ -95,8 +95,7 @@ extern gboolean CheckSession(const char *term) {
   PacketClass rc;
   NETFILE *fp;
   gboolean ret;
-  ENTER_FUNC;
-  ret = FALSE;
+
   fp = ConnectSysData();
   if (fp != NULL && CheckNetFile(fp)) {
     if (val == NULL) {
@@ -111,7 +110,7 @@ extern gboolean CheckSession(const char *term) {
     Error("GetSessionMessage failure");
   }
   DisconnectSysData(fp);
-  LEAVE_FUNC;
+
   return ret;
 }
 
@@ -120,7 +119,7 @@ extern void GetSessionMessage(const char *term, char **popup, char **dialog,
   ValueStruct *v;
   PacketClass rc;
   NETFILE *fp;
-  ENTER_FUNC;
+
   fp = ConnectSysData();
   if (fp != NULL && CheckNetFile(fp)) {
     if (val == NULL) {
@@ -143,7 +142,6 @@ extern void GetSessionMessage(const char *term, char **popup, char **dialog,
     Error("GetSessionMessage failure");
   }
   DisconnectSysData(fp);
-  LEAVE_FUNC;
 }
 
 extern void ResetSessionMessage(const char *term) {
