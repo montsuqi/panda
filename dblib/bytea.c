@@ -305,7 +305,7 @@ extern size_t file_to_bytea(DBG_Struct *dbg, char *filename,
 
   fp = fopen(filename, "rb");
   if (fp == NULL) {
-    Warning("fopenerror %s:%s",strerror(errno),filename);
+    Warning("fopen error %s:%s",strerror(errno),filename);
     return 0;
   }
   left = fsize;
@@ -479,17 +479,20 @@ extern Bool monblob_insert(DBG_Struct *dbg, monblob_struct *monblob,
 
 extern char *value_to_file(char *filename, ValueStruct *value) {
   FILE *fp;
-  size_t nmemb;
+  size_t s1,s2;
 
   if ((fp = fopen(filename, "wb")) == NULL) {
     Warning("fopen: %s: %s", strerror(errno), filename);
     return NULL;
   }
-  nmemb = fwrite(ValueByte(value), ValueByteLength(value), 1, fp);
-  if (nmemb < 1 && ferror(fp)) {
-    Warning("fwrite error: %s: %s", strerror(errno), filename);
-    fclose(fp);
-    return NULL;
+  s1 = ValueByteLength(value);
+  if (s1 > 0) {
+    s2 = fwrite(ValueByte(value), 1, s1, fp);
+    if (s1 != s2) {
+      Warning("fwrite error: %s: %s", strerror(errno), filename);
+      fclose(fp);
+      return NULL;
+    }
   }
   if (fclose(fp) != 0) {
     Warning("fclose: %s: %s", strerror(errno), filename);
