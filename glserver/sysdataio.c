@@ -99,7 +99,7 @@ extern void GetSessionMessage(const char *term, char **popup, char **dialog,
   ValueStruct *v;
   PacketClass rc;
   NETFILE *fp;
-  ENTER_FUNC;
+
   fp = ConnectSysData();
   if (fp != NULL && CheckNetFile(fp)) {
     if (val == NULL) {
@@ -122,7 +122,6 @@ extern void GetSessionMessage(const char *term, char **popup, char **dialog,
     Error("GetSessionMessage failure");
   }
   DisconnectSysData(fp);
-  LEAVE_FUNC;
 }
 
 extern void ResetSessionMessage(const char *term) {

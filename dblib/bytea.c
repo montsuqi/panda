@@ -304,20 +304,30 @@ extern size_t file_to_bytea(DBG_Struct *dbg, char *filename,
   src_p = src;
 
   fp = fopen(filename, "rb");
+  if (fp == NULL) {
+    Warning("fopenerror %s:%s",strerror(errno),filename);
+    return 0;
+  }
   left = fsize;
-  do {
+  while (left > 0) {
     if (left > SIZE_BUFF) {
       bsize = SIZE_BUFF;
     } else {
       bsize = left;
     }
     bsize = fread(buff, 1, bsize, fp);
+    if (ferror(fp)) {
+      fclose(fp);
+      xfree(src);
+      Warning("fread error %s:%s",strerror(errno),filename);
+      return 0;
+    }
     memcpy(src_p, buff, bsize);
     src_p = src_p + bsize;
     if (bsize > 0) {
       left -= bsize;
     }
-  } while (left > 0);
+  }
   fclose(fp);
   *value = escape_bytea(dbg, src, fsize);
   xfree(src);
@@ -469,19 +479,20 @@ extern Bool monblob_insert(DBG_Struct *dbg, monblob_struct *monblob,
 
 extern char *value_to_file(char *filename, ValueStruct *value) {
   FILE *fp;
-  size_t size;
+  size_t nmemb;
 
   if ((fp = fopen(filename, "wb")) == NULL) {
-    Warning("fopen: %s: %s\n", strerror(errno), filename);
+    Warning("fopen: %s: %s", strerror(errno), filename);
     return NULL;
   }
-  size = fwrite(ValueByte(value), ValueByteLength(value), 1, fp);
-  if (size < 1) {
-    Warning("write error: %s\n", filename);
+  nmemb = fwrite(ValueByte(value), ValueByteLength(value), 1, fp);
+  if (nmemb < 1 && ferror(fp)) {
+    Warning("fwrite error: %s: %s", strerror(errno), filename);
+    fclose(fp);
     return NULL;
   }
   if (fclose(fp) != 0) {
-    Warning("fclose: %s: %s\n", strerror(errno), filename);
+    Warning("fclose: %s: %s", strerror(errno), filename);
     return NULL;
   }
   return filename;
