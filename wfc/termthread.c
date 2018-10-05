@@ -218,10 +218,13 @@ static void DeregisterSession(SessionData *data) {
 static void UpdateSession(SessionData *data) {
   SessionCtrl *ctrl;
   ENTER_FUNC;
+
+  gettimeofday(&(data->access_time), NULL);
   ctrl = NewSessionCtrl(SESSION_CONTROL_UPDATE);
   ctrl->session = data;
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
+
   LEAVE_FUNC;
 }
 
