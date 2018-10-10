@@ -164,7 +164,6 @@ static int _ReadJSON(ValueStruct *ret) {
 static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
   ValueStruct *ret, *data;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
 
@@ -194,7 +193,6 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     return NULL;
     break;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -253,7 +251,6 @@ static int _WriteJSON(ValueStruct *ret) {
 static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                            RecordStruct *rec, ValueStruct *args) {
   ValueStruct *data, *ret;
-  ENTER_FUNC;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
@@ -283,7 +280,6 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     break;
   }
   InitializeValue(data);
-  LEAVE_FUNC;
   return ret;
 }
 

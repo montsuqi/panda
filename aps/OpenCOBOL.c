@@ -61,7 +61,6 @@ static void PutApplication(ProcessNode *node) {
   size_t size;
   long start, end;
 
-  ENTER_FUNC;
   start = GetNowTime();
   if (node->mcprec != NULL) {
     OpenCOBOL_PackValue(OpenCOBOL_Conv, McpData, node->mcprec->value);
@@ -80,7 +79,6 @@ static void PutApplication(ProcessNode *node) {
   }
   end = GetNowTime();
   TimerPrintf(start, end, "PutApplication\n");
-  LEAVE_FUNC;
 }
 
 static void GetApplication(ProcessNode *node) {
@@ -88,7 +86,6 @@ static void GetApplication(ProcessNode *node) {
   int i;
   long start, end;
 
-  ENTER_FUNC;
   start = GetNowTime();
   if (node->mcprec != NULL) {
     OpenCOBOL_UnPackValue(OpenCOBOL_Conv, McpData, node->mcprec->value);
@@ -106,7 +103,6 @@ static void GetApplication(ProcessNode *node) {
   }
   end = GetNowTime();
   TimerPrintf(start, end, "GetApplication\n");
-  LEAVE_FUNC;
 }
 
 static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
@@ -115,7 +111,6 @@ static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
   long start, end;
   Bool rc;
 
-  ENTER_FUNC;
   module =
       ValueStringPointer(GetItemLongName(node->mcprec->value, "dc.module"));
   if ((apl = cob_resolve(module)) != NULL) {
@@ -137,7 +132,6 @@ static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
     Warning("%s - %s is not found.", cob_resolve_error(), module);
     rc = FALSE;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
@@ -145,7 +139,6 @@ static void _ReadyDC(MessageHandler *handler) {
   int i;
   size_t scrsize;
 
-  ENTER_FUNC;
   OpenCOBOL_Conv = NewConvOpt();
   ConvSetSize(OpenCOBOL_Conv, ThisLD->textsize, ThisLD->arraysize);
   ConvSetCodeset(OpenCOBOL_Conv, ConvCodeset(handler->conv));
@@ -182,7 +175,6 @@ static void _ReadyDC(MessageHandler *handler) {
     }
   }
   ScrData = xmalloc(scrsize);
-  LEAVE_FUNC;
 }
 
 static void _StopDC(MessageHandler *handler) {
@@ -193,13 +185,9 @@ static void _StopDC(MessageHandler *handler) {
 }
 
 static void _StopDB(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static void _ReadyDB(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static int _StartBatch(MessageHandler *handler, char *name, char *param) {
@@ -208,7 +196,6 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
   ValueStruct *val;
   char *arg;
 
-  ENTER_FUNC;
   OpenCOBOL_Conv = NewConvOpt();
   ConvSetSize(OpenCOBOL_Conv, ThisBD->textsize, ThisBD->arraysize);
   ConvSetCodeset(OpenCOBOL_Conv, ConvCodeset(handler->conv));
@@ -236,12 +223,10 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
     Warning("%s - %s is not found.", cob_resolve_error(), name);
     rc = -1;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
 static void _ReadyExecute(MessageHandler *handler, char *loadpath) {
-  ENTER_FUNC;
 
   if (LibPath == NULL) {
     if ((ModuleLoadPath = getenv("COB_LIBRARY_PATH")) == NULL) {
@@ -258,7 +243,6 @@ static void _ReadyExecute(MessageHandler *handler, char *loadpath) {
     handler->loadpath = ModuleLoadPath;
   }
   cob_init(0, NULL);
-  LEAVE_FUNC;
 }
 
 static MessageHandlerClass Handler = {
@@ -266,8 +250,6 @@ static MessageHandlerClass Handler = {
     _StopDC,     NULL,          _ReadyDB,        _StopDB,     NULL};
 
 extern MessageHandlerClass *OpenCOBOL(void) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
   return (&Handler);
 }
 #endif

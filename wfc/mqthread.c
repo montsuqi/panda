@@ -81,10 +81,8 @@ static void ClearAPS_Node(LD_Node *ld, int ix) {
 }
 
 static void ActivateAPS_Node(APS_Node *aps, NETFILE *fp) {
-  ENTER_FUNC;
   aps->count = 0;
   aps->fp = fp;
-  LEAVE_FUNC;
 }
 
 static Bool CheckAPS(PacketClass klass, LD_Node *ld, int ix) {
@@ -102,13 +100,11 @@ badio:
 }
 
 static void WaitConnect(LD_Node *ld, int ix) {
-  ENTER_FUNC;
   pthread_mutex_lock(&ld->lock);
   if (ld->aps[ix].fp == NULL) {
     pthread_cond_wait(&ld->conn, &ld->lock);
   }
   pthread_mutex_unlock(&ld->lock);
-  LEAVE_FUNC;
 }
 
 static Bool PutAPS(LD_Node *ld, int ix, SessionData *data) {
@@ -116,7 +112,6 @@ static Bool PutAPS(LD_Node *ld, int ix, SessionData *data) {
   int i;
   NETFILE *fp;
 
-  ENTER_FUNC;
 #ifdef DEBUG
   printf("uuid = [%s]\n", data->hdr->uuid);
   printf("user = [%s]\n", data->hdr->user);
@@ -202,10 +197,8 @@ static Bool PutAPS(LD_Node *ld, int ix, SessionData *data) {
   ON_IO_ERROR(fp, badio);
 
   aps->count++;
-  LEAVE_FUNC;
   return TRUE;
 badio:
-  LEAVE_FUNC;
   return FALSE;
 }
 
@@ -214,7 +207,6 @@ static Bool GetAPS_Control(LD_Node *ld, int ix, SessionData *data) {
   PacketClass c;
   NETFILE *fp;
 
-  ENTER_FUNC;
   aps = &ld->aps[ix];
   fp = aps->fp;
 
@@ -238,17 +230,14 @@ static Bool GetAPS_Control(LD_Node *ld, int ix, SessionData *data) {
 
   dbgprintf("hdr->window  = [%s]", data->hdr->window);
   dbgprintf("hdr->puttype = %02X", (int)data->hdr->puttype);
-  LEAVE_FUNC;
   return TRUE;
 badio:
-  LEAVE_FUNC;
   return FALSE;
 }
 
 static Bool GetAPS_Value(NETFILE *fpLD, SessionData *data) {
   int i;
 
-  ENTER_FUNC;
   dbgmsg("WINDOW_STACK");
   SendPacketClass(fpLD, APS_WINDOW_STACK);
   ON_IO_ERROR(fpLD, badio);
@@ -285,18 +274,14 @@ static Bool GetAPS_Value(NETFILE *fpLD, SessionData *data) {
   dbgmsg("END");
   SendPacketClass(fpLD, APS_END);
   ON_IO_ERROR(fpLD, badio);
-  LEAVE_FUNC;
   return TRUE;
 badio:
   Warning("badio");
-  LEAVE_FUNC;
   return FALSE;
 }
 
 extern void MessageEnqueue(MQ_Node *mq, SessionData *data) {
-  ENTER_FUNC;
   EnQueue(mq->que, data);
-  LEAVE_FUNC;
 }
 
 typedef struct {
@@ -310,7 +295,6 @@ static SessionData *SelectData(Queue *que, int ix) {
   LD_Node *ld;
 #endif
 
-  ENTER_FUNC;
 #ifndef APS_STICK
   data = DeQueue(que);
 #else
@@ -346,7 +330,6 @@ static SessionData *SelectData(Queue *que, int ix) {
   }
   CloseQueue(que);
 #endif
-  LEAVE_FUNC;
   return (data);
 }
 
@@ -481,7 +464,6 @@ static void MessageThread(APS_Start *aps) {
   int ix;
   MQ_Node *mq;
 
-  ENTER_FUNC;
   mq = aps->mq;
   ix = aps->no;
   dbgprintf("start %s(%d)\n", mq->name, ix);
@@ -504,7 +486,6 @@ static void MessageThread(APS_Start *aps) {
       sched_yield();
     }
   } while (TRUE);
-  LEAVE_FUNC;
 }
 
 static void StartMessageThread(char *name, MQ_Node *mq, void *dummy) {
@@ -512,7 +493,6 @@ static void StartMessageThread(char *name, MQ_Node *mq, void *dummy) {
   int i;
   LD_Struct *ld;
 
-  ENTER_FUNC;
 #ifdef TRACE
   printf("start thread for %s\n", name);
 #endif
@@ -536,7 +516,6 @@ static void StartMessageThread(char *name, MQ_Node *mq, void *dummy) {
     }
     break;
   }
-  LEAVE_FUNC;
 }
 
 static GHashTable *mqs;
@@ -544,7 +523,6 @@ extern void SetupMessageQueue(void) {
   int i;
   MQ_Node *mq;
 
-  ENTER_FUNC;
   MQ_Hash = NewNameHash();
   mqs = NewNameHash();
   switch (ThisEnv->mlevel) {
@@ -594,7 +572,6 @@ extern void SetupMessageQueue(void) {
     break;
   }
   g_hash_table_foreach(mqs, (GHFunc)StartMessageThread, NULL);
-  LEAVE_FUNC;
 }
 
 static int ApsId;
@@ -608,7 +585,6 @@ extern void ReadyAPS(void) {
   LD_Struct *info;
   LD_Node *ld;
   char *cname;
-  ENTER_FUNC;
   k = 0;
   for (i = 0; i < ThisEnv->cLD; i++) {
     info = ThisEnv->ld[i];
@@ -650,7 +626,6 @@ extern void ReadyAPS(void) {
     printf("[%s]\n", BindTable[i]);
   }
 #endif
-  LEAVE_FUNC;
 }
 
 extern void ConnectAPS(int _fhAps) {
@@ -660,7 +635,6 @@ extern void ConnectAPS(int _fhAps) {
   int i;
   LD_Node *ld;
 
-  ENTER_FUNC;
   if ((fhAps = accept(_fhAps, 0, 0)) < 0) {
     Error("accept(2) failure:%s", strerror(errno));
   }
@@ -696,7 +670,6 @@ extern void ConnectAPS(int _fhAps) {
   } else {
     SendPacketClass(fp, APS_OK);
   }
-  LEAVE_FUNC;
 }
 
 extern void InitMessageQueue(void) {

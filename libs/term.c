@@ -60,7 +60,6 @@ extern char *RemoteIP(int sock, char *remote, size_t size) {
     struct sockaddr_storage sa_stor;
   } u;
 
-  ENTER_FUNC;
   memclear(remote, size);
   if (sock == 0) {
     snprintf(remote, size, "something wrong;sock = 0");
@@ -90,6 +89,5 @@ extern char *RemoteIP(int sock, char *remote, size_t size) {
 #ifdef DEBUG
   fprintf(STDERR, "remote ip = [%s]\n", remote);
 #endif
-  LEAVE_FUNC;
   return remote;
 }

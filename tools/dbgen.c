@@ -65,7 +65,6 @@ static void PutTab(int n) {
 static void PutDim(void) {
   int i;
 
-  ENTER_FUNC;
   for (i = alevel - 1; i >= 0; i--) {
     if (Dim[i] == 0) {
       printf("[]");
@@ -73,13 +72,11 @@ static void PutDim(void) {
       printf("[%d]", Dim[i]);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void PutItemName(void) {
   int j;
 
-  ENTER_FUNC;
   PutTab(1);
   if (level > 1) {
     for (j = 0; j < level - 1; j++) {
@@ -88,13 +85,11 @@ static void PutItemName(void) {
   }
   printf("%s", rname[level - 1]);
   printf("\t");
-  LEAVE_FUNC;
 }
 
 static void PutItemNameEx(void) {
   int j;
 
-  ENTER_FUNC;
   PutTab(1);
   if (level > 1) {
     for (j = 0; j < level - 1; j++) {
@@ -102,7 +97,6 @@ static void PutItemNameEx(void) {
     }
   }
   printf("%s", rname[level - 1]);
-  LEAVE_FUNC;
 }
 
 static void TableBody(ValueStruct *val, size_t arraysize, size_t textsize) {
@@ -113,7 +107,6 @@ static void TableBody(ValueStruct *val, size_t arraysize, size_t textsize) {
   if (val == NULL)
     return;
 
-  ENTER_FUNC;
   switch (ValueType(val)) {
   case GL_TYPE_INT:
     PutItemName();
@@ -200,14 +193,12 @@ static void TableBody(ValueStruct *val, size_t arraysize, size_t textsize) {
   default:
     break;
   }
-  LEAVE_FUNC;
 }
 
 static void MakeCreate(RecordStruct *rec) {
   char ***item, **pk;
   KeyStruct *key;
 
-  ENTER_FUNC;
   if ((ValueAttribute(rec->value) & GL_ATTR_VIRTUAL) == 0) {
     printf("create\ttable\t%s\t(\n", rec->name);
     level = 0;
@@ -237,15 +228,12 @@ static void MakeCreate(RecordStruct *rec) {
       printf("\n);\n");
     }
   }
-  LEAVE_FUNC;
 }
 
 static void MakeDrop(RecordStruct *rec) {
-  ENTER_FUNC;
   if ((ValueAttribute(rec->value) & GL_ATTR_VIRTUAL) == 0) {
     printf("drop\ttable\t%s;\n", rec->name);
   }
-  LEAVE_FUNC;
 }
 
 static void TableInsert(ValueStruct *val, size_t arraysize, size_t textsize,

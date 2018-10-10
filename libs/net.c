@@ -97,7 +97,6 @@ static Bool _Flush(NETFILE *fp) {
   unsigned char *p = fp->buff;
   ssize_t count;
 
-  ENTER_FUNC;
   while ((fp->fOK) && (fp->ptr > 0)) {
     if ((count = fp->write(fp, p, fp->ptr)) > 0) {
       fp->ptr -= count;
@@ -107,7 +106,6 @@ static Bool _Flush(NETFILE *fp) {
       break;
     }
   }
-  LEAVE_FUNC;
   return (fp->fOK);
 }
 
@@ -234,7 +232,6 @@ extern void FreeNet(NETFILE *fp) {
 }
 
 extern void CloseNet(NETFILE *fp) {
-  ENTER_FUNC;
   if (fp != NULL) {
     if (fp->fOK) {
       _Flush(fp);
@@ -242,7 +239,6 @@ extern void CloseNet(NETFILE *fp) {
     fp->close(fp);
     FreeNet(fp);
   }
-  LEAVE_FUNC;
 }
 
 extern void NetSetFD(NETFILE *fp, int fd) {
@@ -1304,13 +1300,11 @@ extern NETFILE *OpenPort(char *url, char *defport) {
 extern int InitServerPort(Port *port, int back) {
   int fd;
 
-  ENTER_FUNC;
   fd = BindSocket(port, SOCK_STREAM);
   if (listen(fd, back) < 0) {
     shutdown(fd, 2);
     Error("INET Domain listen");
   }
-  LEAVE_FUNC;
   return (fd);
 }
 

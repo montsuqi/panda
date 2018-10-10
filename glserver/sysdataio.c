@@ -49,7 +49,6 @@ static NETFILE *ConnectSysData() {
   NETFILE *fp;
   Port *port;
   int fd;
-  ENTER_FUNC;
   fp = NULL;
   port = ParPort(PortSysData, SYSDATA_PORT);
   fd = ConnectSocket(port, SOCK_STREAM);
@@ -59,7 +58,6 @@ static NETFILE *ConnectSysData() {
   } else {
     Error("cannot connect sysdata server");
   }
-  LEAVE_FUNC;
   return fp;
 }
 
@@ -128,7 +126,6 @@ extern void ResetSessionMessage(const char *term) {
   ValueStruct *v;
   PacketClass rc;
   NETFILE *fp;
-  ENTER_FUNC;
   fp = ConnectSysData();
   if (fp != NULL && CheckNetFile(fp)) {
     if (val == NULL) {
@@ -145,5 +142,4 @@ extern void ResetSessionMessage(const char *term) {
     Error("ResetSessionMessage failure");
   }
   DisconnectSysData(fp);
-  LEAVE_FUNC;
 }

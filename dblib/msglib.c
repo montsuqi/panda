@@ -58,7 +58,6 @@ int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
   char *type;
   char *buf;
 
-  ENTER_FUNC;
   if (val == NULL || root == NULL) {
     Warning("XMLNode2Value val = NULL || root = NULL");
     return MCP_BAD_OTHER;
@@ -154,7 +153,6 @@ int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
   if (type != NULL) {
     xmlFree(type);
   }
-  LEAVE_FUNC;
   return MCP_OK;
 }
 
@@ -202,7 +200,6 @@ xmlNodePtr Value2XMLNode(char *name, ValueStruct *val) {
   int i;
   gboolean have_data;
 
-  ENTER_FUNC;
   if (val == NULL || name == NULL) {
     Warning("val or name = null,val:%p name:%p", val, name);
     return NULL;

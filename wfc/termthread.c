@@ -70,7 +70,6 @@ extern void TermEnqueue(TermNode *term, SessionData *data) {
 static SessionData *NewSessionData(void) {
   SessionData *data;
 
-  ENTER_FUNC;
   data = New(SessionData);
   memclear(data, sizeof(SessionData));
   data->type = SESSION_TYPE_TERM;
@@ -94,7 +93,6 @@ static SessionData *NewSessionData(void) {
   InitializeValue(data->sysdbval);
   data->count = 0;
   data->w.sp = 0;
-  LEAVE_FUNC;
   return (data);
 }
 
@@ -126,7 +124,6 @@ static guint FreeWindowTable(char *name, void *data, void *dummy) {
 }
 
 static void FreeSessionData(SessionData *data) {
-  ENTER_FUNC;
   if (data->type != SESSION_TYPE_API) {
     MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
                      data->hdr->user, data->hdr->host, data->agent);
@@ -150,7 +147,6 @@ static void FreeSessionData(SessionData *data) {
   xfree(data->apidata);
   FreeValueStruct(data->sysdbval);
   xfree(data);
-  LEAVE_FUNC;
 }
 
 static LargeByteString *NewLinkData(void) {
@@ -170,7 +166,6 @@ static LargeByteString *NewLinkData(void) {
 
 static void RegisterSession(SessionData *data) {
   SessionCtrl *ctrl;
-  ENTER_FUNC;
   snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
            data->hdr->uuid);
   if (!MakeDir(data->hdr->tempdir, 0700)) {
@@ -181,25 +176,21 @@ static void RegisterSession(SessionData *data) {
   ctrl->session = data;
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
-  LEAVE_FUNC;
 }
 
 static SessionData *LookupSession(const char *term) {
   SessionData *data;
   SessionCtrl *ctrl;
-  ENTER_FUNC;
   ctrl = NewSessionCtrl(SESSION_CONTROL_LOOKUP);
   strcpy(ctrl->id, term);
   ctrl = ExecSessionCtrl(ctrl);
   data = ctrl->session;
   FreeSessionCtrl(ctrl);
-  LEAVE_FUNC;
   return (data);
 }
 
 static void DeregisterSession(SessionData *data) {
   SessionCtrl *ctrl;
-  ENTER_FUNC;
 #if 0
 	if (!getenv("WFC_KEEP_TEMPDIR")) {
 		if (!rm_r(data->hdr->tempdir)) {
@@ -212,12 +203,10 @@ static void DeregisterSession(SessionData *data) {
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
   FreeSessionData(data);
-  LEAVE_FUNC;
 }
 
 static void UpdateSession(SessionData *data) {
   SessionCtrl *ctrl;
-  ENTER_FUNC;
 
   gettimeofday(&(data->access_time), NULL);
   ctrl = NewSessionCtrl(SESSION_CONTROL_UPDATE);
@@ -225,18 +214,15 @@ static void UpdateSession(SessionData *data) {
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
 
-  LEAVE_FUNC;
 }
 
 static unsigned int GetSessionNum() {
   SessionCtrl *ctrl;
   unsigned int size;
-  ENTER_FUNC;
   ctrl = NewSessionCtrl(SESSION_CONTROL_GET_SESSION_NUM);
   ctrl = ExecSessionCtrl(ctrl);
   size = ctrl->size;
   FreeSessionCtrl(ctrl);
-  LEAVE_FUNC;
   return size;
 }
 
@@ -246,7 +232,6 @@ static SessionData *InitAPISession(const char *user, const char *wname,
   LD_Node *ld;
   uuid_t u;
 
-  ENTER_FUNC;
   data = NewSessionData();
   data->type = SESSION_TYPE_API;
   uuid_generate(u);
@@ -265,14 +250,12 @@ static SessionData *InitAPISession(const char *user, const char *wname,
     Warning("[%s] session fail Window [%s] not found.", data->hdr->uuid, wname);
     data = NULL;
   }
-  LEAVE_FUNC;
   return (data);
 }
 
 static SessionData *Process(SessionData *data) {
   struct timeval tv1;
   struct timeval tv2;
-  ENTER_FUNC;
   data->fInProcess = TRUE;
   gettimeofday(&tv1, NULL);
   CoreEnqueue(data);
@@ -283,7 +266,6 @@ static SessionData *Process(SessionData *data) {
   timeradd(&(data->total_process_time), &(data->process_time), &tv1);
   data->total_process_time = tv1;
   data->fInProcess = FALSE;
-  LEAVE_FUNC;
   return data;
 }
 
@@ -330,7 +312,6 @@ static void RPC_StartSession(TermNode *term, json_object *obj) {
   uuid_t u;
   int sesnum;
   gchar *prefix, *rpcuri, *resturi;
-  ENTER_FUNC;
   if (!json_object_object_get_ex(obj, "params", &params)) {
     Warning("request have not params");
     JSONRPC_Error(term, obj, -32600, "Invalid Request");
@@ -425,7 +406,6 @@ static void RPC_StartSession(TermNode *term, json_object *obj) {
     DeregisterSession(data);
   }
   json_object_put(res);
-  LEAVE_FUNC;
 }
 
 static void RPC_EndSession(TermNode *term, json_object *obj) {
@@ -433,7 +413,6 @@ static void RPC_EndSession(TermNode *term, json_object *obj) {
   SessionData *data;
   LD_Node *ld;
   const char *session_id;
-  ENTER_FUNC;
   if (!json_object_object_get_ex(obj, "params", &params)) {
     Warning("request have not params");
     JSONRPC_Error(term, obj, -32600, "Invalid Request");
@@ -480,7 +459,6 @@ static void RPC_EndSession(TermNode *term, json_object *obj) {
   json_object_put(res);
 
   CloseNet(term->fp);
-  LEAVE_FUNC;
 }
 
 static void MakeErrorLog(const char *buf) {
@@ -591,7 +569,6 @@ static void RPC_GetWindow(TermNode *term, json_object *obj) {
   LD_Node *ld;
   const char *session_id;
   int i;
-  ENTER_FUNC;
   if (!json_object_object_get_ex(obj, "params", &params)) {
     Warning("request have not params");
     JSONRPC_Error(term, obj, -32600, "Invalid Request");
@@ -666,7 +643,6 @@ static void RPC_GetWindow(TermNode *term, json_object *obj) {
     DeregisterSession(data);
   }
   json_object_put(res);
-  LEAVE_FUNC;
 }
 
 static void RPC_SendEvent(TermNode *term, json_object *obj) {
@@ -680,7 +656,6 @@ static void RPC_SendEvent(TermNode *term, json_object *obj) {
   size_t size;
   int i;
   unsigned long t1, t2, t3, t4;
-  ENTER_FUNC;
   t1 = GetNowTime();
 
   if (!json_object_object_get_ex(obj, "params", &params)) {
@@ -816,7 +791,6 @@ static void RPC_SendEvent(TermNode *term, json_object *obj) {
     DeregisterSession(data);
   }
   json_object_put(res);
-  LEAVE_FUNC;
 }
 
 static void RPC_PandaAPI(TermNode *term, json_object *obj) {
@@ -828,7 +802,6 @@ static void RPC_PandaAPI(TermNode *term, json_object *obj) {
   const char *user, *host, *ld, *window;
   char *buf;
   size_t size;
-  ENTER_FUNC;
   if (!json_object_object_get_ex(obj, "params", &params)) {
     Warning("request have not params");
     JSONRPC_Error(term, obj, -32600, "Invalid Request");
@@ -911,7 +884,6 @@ static void RPC_PandaAPI(TermNode *term, json_object *obj) {
   }
   FreeSessionData(data);
   json_object_put(res);
-  LEAVE_FUNC;
 }
 
 static json_object *ReadDownloadMetaFile(const char *metafile) {
@@ -989,7 +961,6 @@ static void RPC_ListDownloads(TermNode *term, json_object *obj) {
   json_object *params, *meta, *child, *res;
   SessionData *data;
   const char *session_id;
-  ENTER_FUNC;
   if (!json_object_object_get_ex(obj, "params", &params)) {
     Warning("request have not params");
     JSONRPC_Error(term, obj, -32600, "Invalid Request");
@@ -1019,13 +990,11 @@ static void RPC_ListDownloads(TermNode *term, json_object *obj) {
     CloseNet(term->fp);
   }
   json_object_put(res);
-  LEAVE_FUNC;
 }
 
 static void JSONRPCHandler(TermNode *term) {
   char *reqjson, *method;
   json_object *obj, *child;
-  ENTER_FUNC;
   reqjson = RecvStringNew(term->fp);
   ON_IO_ERROR(term->fp, badio);
   obj = json_tokener_parse(reqjson);
@@ -1084,15 +1053,13 @@ static void JSONRPCHandler(TermNode *term) {
   }
   json_object_put(obj);
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 static void TermThread(TermNode *term) {
-  ENTER_FUNC;
   JSONRPCHandler(term);
   FreeQueue(term->que);
   xfree(term);
-  LEAVE_FUNC;
 }
 
 extern int ConnectTerm(int _fhTerm) {
@@ -1101,7 +1068,6 @@ extern int ConnectTerm(int _fhTerm) {
   pthread_attr_t attr;
   TermNode *term;
 
-  ENTER_FUNC;
   pthread_attr_init(&attr);
   pthread_attr_setstacksize(&attr, 256 * 1024);
   if ((fhTerm = accept(_fhTerm, 0, 0)) < 0) {
@@ -1112,15 +1078,12 @@ extern int ConnectTerm(int _fhTerm) {
   term->fp = SocketToNet(fhTerm);
   pthread_create(&thr, &attr, (void *(*)(void *))TermThread, (void *)term);
   pthread_detach(thr);
-  LEAVE_FUNC;
   return (fhTerm);
 }
 
 extern void InitTerm(void) {
-  ENTER_FUNC;
   RecParserInit();
   if (ThisEnv->linkrec != NULL) {
     InitializeValue(ThisEnv->linkrec->value);
   }
-  LEAVE_FUNC;
 }

@@ -56,7 +56,6 @@ static void Session(NETFILE *fp) {
   char user[SIZE_USER + 1], pass[SIZE_PASS + 1];
   PassWord *pw;
 
-  ENTER_FUNC;
   if (Recv(fp, &size, sizeof(size)) > 0) {
     Recv(fp, user, size);
     user[size] = 0;
@@ -73,25 +72,19 @@ static void Session(NETFILE *fp) {
     }
   }
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 static void InitData(void) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static void InitPasswd(void) {
-  ENTER_FUNC;
   AuthLoadPasswd(PasswordFile);
-  LEAVE_FUNC;
 }
 
 static void InitSystem(void) {
-  ENTER_FUNC;
   InitPasswd();
   InitData();
-  LEAVE_FUNC;
 }
 
 static Bool CheckPassword(void) {
@@ -119,11 +112,9 @@ static void _InitPasswd(int dummy) {
 }
 
 static void OnChildExit(int ec) {
-  ENTER_FUNC;
   while (waitpid(-1, NULL, WNOHANG) > 0)
     ;
   (void)signal(SIGCHLD, (void *)OnChildExit);
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE option[] = {
@@ -145,7 +136,6 @@ extern void ExecuteServer(void) {
   NETFILE *fp;
   Port *port;
 
-  ENTER_FUNC;
   port = ParPortName(PortNumber);
   _fd = InitServerPort(port, Back);
   CheckPassword();
@@ -168,7 +158,6 @@ extern void ExecuteServer(void) {
       exit(1);
     }
   }
-  LEAVE_FUNC;
 }
 
 extern int main(int argc, char **argv) {

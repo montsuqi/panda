@@ -71,18 +71,15 @@ static ValueStruct *_PushEvent(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 }
 
 extern ValueStruct *_PushEventStart(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   if (PushData != NULL) {
     json_object_put(PushData);
     PushData = NULL;
   }
   PushData = json_object_new_array();
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *_PushEventCommit(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   DBG_Struct *mondbg;
   json_object *obj, *body, *event;
   int i, len;
@@ -113,7 +110,6 @@ extern ValueStruct *_PushEventCommit(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 
   json_object_put(PushData);
   PushData = NULL;
-  LEAVE_FUNC;
   return (NULL);
 }
 

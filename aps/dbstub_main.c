@@ -57,16 +57,13 @@ static char *BD_Name;
 static BatchBind *Bind;
 
 static void InitData(char *name) {
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, "", name, "", P_ALL);
-  LEAVE_FUNC;
 }
 
 extern void InitSystem(char *name) {
   char *user = NULL;
   char *term = NULL;
-  ENTER_FUNC;
   InitData(BD_Name);
   if ((ThisBD = GetBD(BD_Name)) == NULL) {
     Error("BD file not found.");
@@ -102,23 +99,18 @@ extern void InitSystem(char *name) {
   }
   InitDB_Process(AppName);
   ReadyHandlerDB(Bind->handler);
-  LEAVE_FUNC;
 }
 
 static int ExecuteSubProcess(char *name) {
   int rc;
-  ENTER_FUNC;
   dbgprintf("[%s][%s]\n", name, CommandParameter);
   rc = StartBatch(name, CommandParameter);
-  LEAVE_FUNC;
   return (rc);
 }
 
 static void StopProcess(int ec) {
-  ENTER_FUNC;
   StopHandlerDB(Bind->handler);
   CleanUpHandlerDB(Bind->handler);
-  LEAVE_FUNC;
   exit(ec);
 }
 
@@ -195,7 +187,6 @@ extern int main(int argc, char **argv) {
   FILE_LIST *fl;
   int rc;
 
-  ENTER_FUNC;
   InitNET();
 
   memset(&sa_segv, 0, sizeof(struct sigaction));

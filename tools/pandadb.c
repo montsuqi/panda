@@ -207,7 +207,6 @@ static void MakeCreate(DBG_Struct *dbg, RecordStruct *rec) {
   KeyStruct *key;
   LargeByteString *lbs;
 
-  ENTER_FUNC;
   if ((ValueAttribute(rec->value) & GL_ATTR_VIRTUAL) == 0) {
     lbs = NewLBS();
     LBS_EmitString(lbs, "create table ");
@@ -248,7 +247,6 @@ static void MakeCreate(DBG_Struct *dbg, RecordStruct *rec) {
     }
     FreeLBS(lbs);
   }
-  LEAVE_FUNC;
 }
 
 static void _MakeCreate(char *name, RecordStruct *rec, DBG_Struct *dbg) {
@@ -259,7 +257,6 @@ static void CreateTables(char *gname, char *tname) {
   DBG_Struct *dbg;
   RecordStruct *rec;
 
-  ENTER_FUNC;
   if ((dbg = GetDBG(gname)) != NULL) {
     OpenDB(dbg);
     if ((tname != NULL) && ((rec = GetTableDBG(gname, tname)) != NULL)) {
@@ -275,7 +272,6 @@ static void CreateTables(char *gname, char *tname) {
   } else {
     fprintf(stderr, N_("db group %s not found.\n"), gname);
   }
-  LEAVE_FUNC;
 }
 
 static void Insert(char *gname, char *rname, char *pname) {
@@ -289,7 +285,6 @@ static void Insert(char *gname, char *rname, char *pname) {
   DBG_Struct *dbg;
   DBCOMM_CTRL ctrl;
 
-  ENTER_FUNC;
   type = 0;
   if (!strlicmp(InLang, "xml")) {
     if (!strlicmp(InLang, "xml2")) {
@@ -345,7 +340,6 @@ static void Insert(char *gname, char *rname, char *pname) {
   } else {
     fprintf(stderr, N_("db group %s not found.\n"), gname);
   }
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE option[] = {

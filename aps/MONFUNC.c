@@ -100,20 +100,17 @@ static void MCPtoCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp) {
 
 static int MonDBOperation(ValueStruct *mcp, char *func) {
   DBCOMM_CTRL ctrl;
-  ENTER_FUNC;
   InitializeCTRL(&ctrl);
   MCPtoCTRL(&ctrl, mcp);
   ctrl.fDBOperation = TRUE;
   ExecDB_Process(&ctrl, ctrl.rec, ctrl.value);
   CTRLtoMCP(mcp, &ctrl);
-  LEAVE_FUNC;
   return ctrl.rc;
 }
 
 static int MonDBFunc(ValueStruct *mcp, char *func, char *data,
                      ValueStruct **retval) {
   DBCOMM_CTRL ctrl;
-  ENTER_FUNC;
   *retval = NULL;
   InitializeCTRL(&ctrl);
 
@@ -123,22 +120,17 @@ static int MonDBFunc(ValueStruct *mcp, char *func, char *data,
   }
   *retval = ExecDB_Process(&ctrl, ctrl.rec, ctrl.value);
   CTRLtoMCP(mcp, &ctrl);
-  LEAVE_FUNC;
   return ctrl.rc;
 }
 
 static int MonLOGFunc(ValueStruct *mcp) {
-  ENTER_FUNC;
   SetValueInteger(GetItemLongName(mcp, "rc"), 0);
-  LEAVE_FUNC;
   return 0;
 }
 
 static int MonGLFunc(ValueStruct *mcp) {
-  ENTER_FUNC;
   strcpy(ValueStringPointer(GetItemLongName(mcp, "dc.status")), "PUTG");
   SetValueInteger(GetItemLongName(mcp, "rc"), 0);
-  LEAVE_FUNC;
   return 0;
 }
 
@@ -148,7 +140,6 @@ static int _MONFUNC(char *mcpdata, char *data, ValueStruct **retval) {
   char *func;
   int ret;
 
-  ENTER_FUNC;
   *retval = NULL;
   mcp = UnPackMCP(mcpdata);
 
@@ -171,7 +162,6 @@ static int _MONFUNC(char *mcpdata, char *data, ValueStruct **retval) {
 #ifdef DEBUG
   DumpValueStruct(mcp);
 #endif
-  LEAVE_FUNC;
   return ret;
 }
 

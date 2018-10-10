@@ -51,7 +51,6 @@ extern ValueStruct *SYSDATA_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int fh, rc;
   NETFILE *fp;
 
-  ENTER_FUNC;
   fp = NULL;
   rc = MCP_BAD_OTHER;
   if (ThisEnv->sysdata != NULL && ThisEnv->sysdata->port != NULL &&
@@ -67,12 +66,10 @@ extern ValueStruct *SYSDATA_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *SYSDATA_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     SendPacketClass(NBCONN(dbg), SYSDATA_END);
     CloseNet(NBCONN(dbg));
@@ -82,27 +79,22 @@ extern ValueStruct *SYSDATA_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
       ctrl->rc = MCP_OK;
     }
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *SYSDATA_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   BeginDB_Redirect(dbg);
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *SYSDATA_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   CheckDB_Redirect(dbg);
   CommitDB_Redirect(dbg);
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
-  LEAVE_FUNC;
   return (NULL);
 }

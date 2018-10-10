@@ -42,32 +42,24 @@
 #include "debug.h"
 
 extern ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   dbg->dbstatus = DB_STATUS_CONNECT;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   dbg->dbstatus = DB_STATUS_DISCONNECT;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -83,13 +75,11 @@ extern ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                               RecordStruct *rec, ValueStruct *args) {
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
   } else {
     ctrl->rc = MCP_OK;
   }
-  LEAVE_FUNC;
   return (ret);
 }
