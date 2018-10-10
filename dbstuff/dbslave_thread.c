@@ -74,7 +74,6 @@ extern DBSlaveThread *NewDBSlaveThread(DBG_INSTANCE *dbg, DBG_INSTANCE *log_dbg,
   DBLogCtx *log;
   int rc;
 
-  ENTER_FUNC;
   memset(ctx, 0, sizeof(*ctx));
 
   /* check db */
@@ -108,12 +107,10 @@ extern DBSlaveThread *NewDBSlaveThread(DBG_INSTANCE *dbg, DBG_INSTANCE *log_dbg,
 
   pthread_cond_init(&ctx->timer, NULL);
   pthread_mutex_init(&ctx->mutex, NULL);
-  LEAVE_FUNC;
   return ctx;
 }
 
 extern void DestroyDBSlaveThread(DBSlaveThread **ctx) {
-  ENTER_FUNC;
   if (*ctx == NULL) {
     return;
   }
@@ -137,12 +134,10 @@ extern void DestroyDBSlaveThread(DBSlaveThread **ctx) {
   }
   xfree(*ctx);
   *ctx = NULL;
-  LEAVE_FUNC;
 }
 
 static void UnsetActiveFlagMain(void *userdata) {
   DBSlaveThread *ctx = (DBSlaveThread *)userdata;
-  ENTER_FUNC;
   ctx->main_thread_active = FALSE;
 }
 
@@ -151,7 +146,6 @@ static Bool Authentication(DBSlaveThread *ctx, NETFILE *server) {
   LargeByteString *user;
   LargeByteString *pass;
   Bool ret = TRUE;
-  ENTER_FUNC;
 
   user = NewLBS();
   LBS_EmitString(user, ctx->user);
@@ -171,15 +165,12 @@ static Bool Authentication(DBSlaveThread *ctx, NETFILE *server) {
   }
   FreeLBS(user);
   FreeLBS(pass);
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool SendLogRequest(DBLogNo latest_no, NETFILE *server) {
-  ENTER_FUNC;
   SendPacketClass(server, DBREPLICATION_COMMAND_REQ);
   SendUInt64(server, latest_no);
-  LEAVE_FUNC;
   if (!server->fOK) {
     Warning("server socket error");
     return FALSE;
@@ -188,7 +179,6 @@ static Bool SendLogRequest(DBLogNo latest_no, NETFILE *server) {
 }
 
 static void FreeRecordData(DBLogRecord *rec) {
-  ENTER_FUNC;
   if (rec->data) {
     FreeLBS(rec->data);
   }
@@ -196,12 +186,10 @@ static void FreeRecordData(DBLogRecord *rec) {
     FreeLBS(rec->checkdata);
   }
   memset(rec, 0, sizeof(*rec));
-  LEAVE_FUNC;
 }
 
 static Bool RecvRecordData(NETFILE *server, DBLogRecord *rec) {
   PacketClass cmd;
-  ENTER_FUNC;
   FreeRecordData(rec);
   rec->data = NewLBS();
   rec->checkdata = NewLBS();
@@ -218,15 +206,12 @@ static Bool RecvRecordData(NETFILE *server, DBLogRecord *rec) {
     return FALSE;
   }
 
-  LEAVE_FUNC;
   return TRUE;
 }
 
 static Bool CheckRedirectData(LargeByteString *a, LargeByteString *b) {
   Bool ret;
-  ENTER_FUNC;
   ret = strcmp(LBS_Body(a), LBS_Body(b)) == 0 ? TRUE : FALSE;
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -238,7 +223,6 @@ static Bool PatchLogRecord(void *userdata, DBLogRecord *rec) {
   Bool ret;
   Bool update_ok = TRUE;
 
-  ENTER_FUNC;
   rc = ExecRedirectDBOP(ctx->dbg, LBS_Body(rec->data), TRUE, DB_UPDATE);
   if (rc == MCP_OK) {
     if ((!ctx->no_checksum) && (LBS_Size(rec->checkdata) > 0)) {
@@ -263,7 +247,6 @@ static Bool PatchLogRecord(void *userdata, DBLogRecord *rec) {
     }
   }
 
-  LEAVE_FUNC;
   return update_ok;
 }
 
@@ -271,7 +254,6 @@ static Bool RecvLogs(DBSlaveThread *ctx, DBLogCtx *log, NETFILE *server) {
   Bool ret;
   Bool update_ok = TRUE;
   DBLogRecord rec = {0};
-  ENTER_FUNC;
 
   while (TRUE) {
     ret = RecvRecordData(server, &rec);
@@ -289,7 +271,6 @@ static Bool RecvLogs(DBSlaveThread *ctx, DBLogCtx *log, NETFILE *server) {
     }
   }
   FreeRecordData(&rec);
-  LEAVE_FUNC;
   return update_ok;
 }
 
@@ -300,7 +281,6 @@ static Bool CopyLog(DBSlaveThread *ctx) {
   DBLogCtx *log;
   int rc;
   Bool ret = TRUE;
-  ENTER_FUNC;
 
   log = Open_DBLog(ctx->log, ctx->log->logTableName);
   if (log == NULL) {
@@ -363,7 +343,6 @@ end_tran:
     }
   }
   Close_DBLog(&log);
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -373,7 +352,6 @@ static Bool PatchLog(DBSlaveThread *ctx) {
   Bool ret;
   PatchFuncArg arg;
 
-  ENTER_FUNC;
   ret = FALSE;
   log = Open_DBLog(ctx->log, ctx->log->logTableName);
   if (log == NULL) {
@@ -417,18 +395,15 @@ _end_tran:
   }
   Close_DBLog(&log);
 
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool TruncateLog(DBSlaveThread *ctx) {
   DBLogCtx *log;
   Bool ret = TRUE;
-  ENTER_FUNC;
 
   if (ctx->expire_log_sec == 0) {
     /* no truncate */
-    LEAVE_FUNC;
     return TRUE;
   }
 
@@ -444,7 +419,6 @@ static Bool TruncateLog(DBSlaveThread *ctx) {
   }
 end_tran:
   Close_DBLog(&log);
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -453,7 +427,6 @@ static void *DBSlaveThreadMain(void *userdata) {
   struct timespec interval;
   Bool processing = TRUE;
   Bool ret;
-  ENTER_FUNC;
   pthread_cleanup_push(UnsetActiveFlagMain, ctx);
   ctx->main_thread_active = TRUE;
   do {
@@ -481,31 +454,24 @@ static void *DBSlaveThreadMain(void *userdata) {
     pthread_mutex_unlock(&ctx->mutex);
   } while (processing);
   pthread_cleanup_pop(1);
-  LEAVE_FUNC;
   return NULL;
 }
 
 extern void StartDBSlave(DBSlaveThread *ctx) {
-  ENTER_FUNC;
   if (!ctx->main_thread_active) {
     ctx->shutdown = FALSE;
     pthread_create(&ctx->main_thread, NULL, DBSlaveThreadMain, ctx);
   }
-  LEAVE_FUNC;
 }
 
 extern void JoinDBSlave(DBSlaveThread *ctx) {
-  ENTER_FUNC;
   pthread_join(ctx->main_thread, NULL);
-  LEAVE_FUNC;
 }
 
 extern void StopDBSlave(DBSlaveThread *ctx) {
-  ENTER_FUNC;
   pthread_mutex_lock(&ctx->mutex);
   ctx->shutdown = TRUE;
   pthread_cond_signal(&ctx->timer);
   pthread_mutex_unlock(&ctx->mutex);
   pthread_join(ctx->main_thread, NULL);
-  LEAVE_FUNC;
 }

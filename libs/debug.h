@@ -31,14 +31,10 @@
 #define dbgmsg(s) MessageDebug(s)
 #define dbgprintf(fmt, ...) MessageDebugPrintf((fmt), __VA_ARGS__)
 #define PASS(s) MessageDebug(s)
-#define ENTER_FUNC MessageDebugPrintf("<-- %s start", __func__)
-#define LEAVE_FUNC MessageDebugPrintf("    %s end -->", __func__)
 #else
 #define dbgmsg(s)           /*	*/
 #define dbgprintf(fmt, ...) /*	*/
 #define PASS(s)             /*	*/
-#define ENTER_FUNC          /*	*/
-#define LEAVE_FUNC          /*	*/
 #endif
 
 #define EXIT(c)                                                                \

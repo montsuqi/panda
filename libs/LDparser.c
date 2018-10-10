@@ -84,7 +84,6 @@ extern RecordStruct *GetWindow(char *name) {
   char fname[SIZE_LONGNAME + 1], buff[SIZE_LONGNAME + 1];
   char *p, *iname, *wname;
 
-  ENTER_FUNC;
   dbgprintf("GetWindow(%s)", name);
   strcpy(buff, name);
   if ((p = strchr(buff, '.')) != NULL) {
@@ -126,7 +125,6 @@ extern RecordStruct *GetWindow(char *name) {
     rec = NULL;
     Warning("window name is null.");
   }
-  LEAVE_FUNC;
   return (rec);
 }
 
@@ -135,7 +133,6 @@ static void ParWindow(CURFILE *in, LD_Struct *ld) {
   RecordStruct **wn;
   char wname[SIZE_NAME + 1];
 
-  ENTER_FUNC;
   window = NULL;
   if (GetSymbol != '{') {
     ParError("syntax error");
@@ -170,7 +167,6 @@ static void ParWindow(CURFILE *in, LD_Struct *ld) {
       }
     }
   }
-  LEAVE_FUNC;
 }
 
 static void _ParDB(CURFILE *in, LD_Struct *ld, char *dbgname,
@@ -218,7 +214,6 @@ static void _ParDB(CURFILE *in, LD_Struct *ld, char *dbgname,
 }
 
 static void ParDB(CURFILE *in, LD_Struct *ld, char *dbgname, int parse_type) {
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
       if (parse_type >= P_ALL) {
@@ -231,13 +226,11 @@ static void ParDB(CURFILE *in, LD_Struct *ld, char *dbgname, int parse_type) {
     ERROR_BREAK;
   }
   xfree(dbgname);
-  LEAVE_FUNC;
 }
 
 static void ParDATA(CURFILE *in, LD_Struct *ld) {
   char buff[SIZE_LONGNAME + 1];
 
-  ENTER_FUNC;
   if (GetSymbol == '{') {
     while (GetSymbol != '}') {
       switch (ComToken) {
@@ -267,14 +260,12 @@ static void ParDATA(CURFILE *in, LD_Struct *ld) {
   } else {
     ParError("DATA syntax error");
   }
-  LEAVE_FUNC;
 }
 
 static void ParBIND(CURFILE *in, LD_Struct *ret, Bool fAPI) {
   WindowBind *bind, **binds;
   char *name;
 
-  ENTER_FUNC;
   if ((GetSymbol == T_SCONST) || (ComToken == T_SYMBOL)) {
     name = ComSymbol;
     if ((bind = g_hash_table_lookup(ret->bhash, name)) == NULL) {
@@ -309,12 +300,10 @@ static void ParBIND(CURFILE *in, LD_Struct *ret, Bool fAPI) {
   } else {
     ParError("window name error");
   }
-  LEAVE_FUNC;
 }
 
 static LD_Struct *NewLD(void) {
   LD_Struct *ld;
-  ENTER_FUNC;
   ld = New(LD_Struct);
   ld->name = NULL;
   ld->group = "";
@@ -340,7 +329,6 @@ static LD_Struct *LD_Par(CURFILE *in, int parse_type) {
   LD_Struct *ret;
   char *gname;
 
-  ENTER_FUNC;
   ret = NewLD();
   while (GetSymbol != T_EOF) {
     switch (ComToken) {
@@ -439,7 +427,6 @@ static LD_Struct *LD_Par(CURFILE *in, int parse_type) {
   if (ret->name == NULL) {
     ParError("name directive is required");
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -448,9 +435,7 @@ static void _BindHandler(char *name, WindowBind *bind, void *dummy) {
 }
 
 static void BindHandler(LD_Struct *ld) {
-  ENTER_FUNC;
   g_hash_table_foreach(ld->bhash, (GHFunc)_BindHandler, NULL);
-  LEAVE_FUNC;
 }
 
 extern LD_Struct *LD_Parser(char *name, int parse_type) {
@@ -458,7 +443,6 @@ extern LD_Struct *LD_Parser(char *name, int parse_type) {
   struct stat stbuf;
   CURFILE *in, root;
 
-  ENTER_FUNC;
   dbgmsg(name);
   root.next = NULL;
   if (stat(name, &stbuf) == 0) {
@@ -473,7 +457,6 @@ extern LD_Struct *LD_Parser(char *name, int parse_type) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 

@@ -71,7 +71,6 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
   char *type;
   char *buf;
 
-  ENTER_FUNC;
   if (val == NULL || root == NULL) {
     Warning("XMLNode2Value val = NULL || root = NULL");
     return MCP_BAD_OTHER;
@@ -166,7 +165,6 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
   if (type != NULL) {
     xmlFree(type);
   }
-  LEAVE_FUNC;
   return MCP_OK;
 }
 
@@ -213,7 +211,6 @@ static xmlNodePtr Value2XMLNode(char *name, ValueStruct *val) {
   int i;
   gboolean have_data;
 
-  ENTER_FUNC;
   if (val == NULL || name == NULL) {
     Warning("val or name = null,val:%p name:%p", val, name);
     return NULL;
@@ -370,7 +367,6 @@ static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   size_t size;
   DBG_Struct *mondbg;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
 
@@ -418,7 +414,6 @@ static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     Warning("RequestReadBLOB failure");
     ret = NULL;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -488,7 +483,6 @@ static ValueStruct *_WriteMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                               RecordStruct *rec, ValueStruct *args) {
   ValueStruct *ctype, *obj, *data, *ret;
   MSGTYPE type;
-  ENTER_FUNC;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
@@ -529,7 +523,6 @@ static ValueStruct *_WriteMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     break;
   }
   InitializeValue(data);
-  LEAVE_FUNC;
   return ret;
 }
 

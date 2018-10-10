@@ -51,7 +51,6 @@ static ValueStruct *TraceAlias(RecordStruct *rec, ValueStruct *val) {
   char *p;
   RecordStruct *use;
 
-  ENTER_FUNC;
   if (val != NULL) {
     if (ValueType(val) == GL_TYPE_ALIAS) {
       name = ValueAliasName(val);
@@ -68,18 +67,15 @@ static ValueStruct *TraceAlias(RecordStruct *rec, ValueStruct *val) {
       }
     }
   }
-  LEAVE_FUNC;
   return (val);
 }
 
 static ValueStruct *TraceArray(ValueStruct *val, int n) {
-  ENTER_FUNC;
   if (val != NULL) {
     if (ValueType(val) == GL_TYPE_ARRAY) {
       val = GetArrayItem(val, n);
     }
   }
-  LEAVE_FUNC;
   return (val);
 }
 
@@ -97,7 +93,6 @@ extern LargeByteString *ParSQL(CURFILE *in, RecordStruct *rec,
 #define PRED_SELECT 2
 #define PRED_SELECT_CURSOR 3
 
-  ENTER_FUNC;
   sql = NewLBS();
   GetSymbol;
   fInto = FALSE;
@@ -324,7 +319,6 @@ extern LargeByteString *ParSQL(CURFILE *in, RecordStruct *rec,
   }
   LBS_EmitEnd(sql);
   LBS_EmitFix(sql);
-  LEAVE_FUNC;
   return (sql);
 }
 

@@ -56,7 +56,6 @@ extern void SendLargeString(NETFILE *fp, LargeByteString *lbs) {
   size_t size;
   char *str;
 
-  ENTER_FUNC;
   str = LBS_Body(lbs);
   if (str != NULL) {
     size = strlen(str);
@@ -66,7 +65,6 @@ extern void SendLargeString(NETFILE *fp, LargeByteString *lbs) {
   if (size > 0) {
     Send(fp, str, size);
   }
-  LEAVE_FUNC;
 }
 
 extern Bool RecvStringDelim(NETFILE *fp, size_t size, char *str) {
@@ -95,7 +93,6 @@ extern Bool RecvLargeString(NETFILE *fp, LargeByteString *lbs) {
   Bool rc;
   int c;
 
-  ENTER_FUNC;
   LBS_Clear(lbs);
   while (((c = RecvChar(fp)) >= 0) && (c != '\n')) {
     LBS_EmitChar(lbs, c);
@@ -106,7 +103,6 @@ extern Bool RecvLargeString(NETFILE *fp, LargeByteString *lbs) {
   } else {
     rc = FALSE;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
@@ -119,7 +115,6 @@ extern void SendValueString(NETFILE *fpComm, ValueStruct *value, char *name,
   char buff[SIZE_BUFF + 1];
   int i;
 
-  ENTER_FUNC;
   if (value == NULL) {
     Error("value is null");
   }
@@ -188,5 +183,4 @@ extern void SendValueString(NETFILE *fpComm, ValueStruct *value, char *name,
     SendStringDelim(fpComm, "\n");
     break;
   }
-  LEAVE_FUNC;
 }

@@ -76,7 +76,6 @@ static void DBD_Par(CURFILE *in, DBD_Struct *dbd, char *gname) {
   char buff[SIZE_BUFF];
   char *p, *q;
 
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
       if (stricmp(ComSymbol, "metadb")) {
@@ -117,12 +116,10 @@ static void DBD_Par(CURFILE *in, DBD_Struct *dbd, char *gname) {
     ERROR_BREAK;
   }
   xfree(gname);
-  LEAVE_FUNC;
 }
 
 static DBD_Struct *NewDBD(void) {
   DBD_Struct *dbd;
-  ENTER_FUNC;
   dbd = New(DBD_Struct);
   dbd->name = NULL;
   dbd->cDB = 1;
@@ -131,7 +128,6 @@ static DBD_Struct *NewDBD(void) {
   dbd->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
   dbd->textsize = SIZE_DEFAULT_TEXT_SIZE;
   dbd->DBD_Table = NewNameHash();
-  LEAVE_FUNC;
   return (dbd);
 }
 
@@ -139,7 +135,6 @@ static DBD_Struct *ParDB(CURFILE *in) {
   DBD_Struct *ret;
   char *gname;
 
-  ENTER_FUNC;
   ret = NULL;
   while (GetSymbol != T_EOF) {
     switch (ComToken) {
@@ -196,7 +191,6 @@ static DBD_Struct *ParDB(CURFILE *in) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -205,7 +199,6 @@ extern DBD_Struct *DBD_Parser(char *name) {
   struct stat stbuf;
   CURFILE *in, root;
 
-  ENTER_FUNC;
   root.next = NULL;
   if (stat(name, &stbuf) == 0) {
     if ((in = PushLexInfo(&root, name, D_Dir, Reserved)) != NULL) {
@@ -222,7 +215,6 @@ extern DBD_Struct *DBD_Parser(char *name) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 

@@ -43,7 +43,6 @@
 static Bool RequestBLOB(NETFILE *fp, PacketClass op) {
   Bool rc;
 
-  ENTER_FUNC;
   rc = FALSE;
   SendPacketClass(fp, SYSDATA_BLOB);
   ON_IO_ERROR(fp, badio);
@@ -51,14 +50,12 @@ static Bool RequestBLOB(NETFILE *fp, PacketClass op) {
   ON_IO_ERROR(fp, badio);
   rc = TRUE;
 badio:
-  LEAVE_FUNC;
   return (rc);
 }
 
 extern Bool RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname) {
   char *buff;
   size_t size;
-  ENTER_FUNC;
   if (RequestExportBLOBMem(fp, obj, &buff, &size)) {
     if (buff != NULL) {
       return g_file_set_contents(fname, buff, size, NULL);
@@ -68,7 +65,6 @@ extern Bool RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname) {
   } else {
     return FALSE;
   }
-  LEAVE_FUNC;
   return FALSE;
 }
 
@@ -76,7 +72,6 @@ extern Bool RequestExportBLOBMem(NETFILE *fp, MonObjectType obj, char **out,
                                  size_t *size) {
   char *p;
 
-  ENTER_FUNC;
   p = NULL;
   *out = NULL;
   RequestBLOB(fp, BLOB_EXPORT);
@@ -90,7 +85,6 @@ extern Bool RequestExportBLOBMem(NETFILE *fp, MonObjectType obj, char **out,
     ON_IO_ERROR(fp, badio);
     *out = p;
   }
-  LEAVE_FUNC;
   return (p != NULL);
 badio:
   if (p != NULL) {
@@ -102,19 +96,17 @@ badio:
 extern MonObjectType RequestImportBLOB(NETFILE *fp, const char *fname) {
   MonObjectType obj;
   char *buff;
-  size_t size ENTER_FUNC;
   obj = GL_OBJ_NULL;
+  size_t size;
   if (g_file_get_contents(fname, &buff, &size, NULL)) {
     obj = RequestImportBLOBMem(fp, buff, size);
   }
-  LEAVE_FUNC;
   return (obj);
 }
 
 extern MonObjectType RequestImportBLOBMem(NETFILE *fp, char *in, size_t size) {
   MonObjectType obj;
 
-  ENTER_FUNC;
   obj = GL_OBJ_NULL;
   RequestBLOB(fp, BLOB_IMPORT);
   ON_IO_ERROR(fp, badio);
@@ -124,6 +116,5 @@ extern MonObjectType RequestImportBLOBMem(NETFILE *fp, char *in, size_t size) {
   obj = RecvObject(fp);
   ON_IO_ERROR(fp, badio);
 badio:
-  LEAVE_FUNC;
   return (obj);
 }

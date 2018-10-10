@@ -106,7 +106,6 @@ extern void OpenDB_RedirectPort(DBG_Struct *dbg) {
   int fh;
   DBG_Struct *rdbg;
 
-  ENTER_FUNC;
   dbgprintf("dbg [%s]\n", dbg->name);
   if ((fNoRedirect) || (dbg->redirect == NULL)) {
     dbg->fpLog = NULL;
@@ -129,11 +128,9 @@ extern void OpenDB_RedirectPort(DBG_Struct *dbg) {
       }
     }
   }
-  LEAVE_FUNC;
 }
 
 extern void CloseDB_RedirectPort(DBG_Struct *dbg) {
-  ENTER_FUNC;
   if (dbg->redirect == NULL)
     return;
   if (dbg->fpLog != NULL) {
@@ -145,48 +142,36 @@ extern void CloseDB_RedirectPort(DBG_Struct *dbg) {
     FreeLBS(dbg->redirectData);
     dbg->redirectData = NULL;
   }
-  LEAVE_FUNC;
 }
 
 extern void PutDB_Redirect(DBG_Struct *dbg, char *data) {
-  ENTER_FUNC;
   if (dbg->redirectData != NULL) {
     LBS_EmitString(dbg->redirectData, data);
   }
-  LEAVE_FUNC;
 }
 
 extern void PutCheckDataDB_Redirect(DBG_Struct *dbg, char *data) {
-  ENTER_FUNC;
   LBS_EmitString(dbg->checkData, ":");
   LBS_EmitString(dbg->checkData, data);
-  LEAVE_FUNC;
 }
 
 extern void CopyCheckDataDB_Redirect(DBG_Struct *dbg, char *data) {
-  ENTER_FUNC;
   LBS_EmitString(dbg->checkData, data);
-  LEAVE_FUNC;
 }
 
 extern void LockDB_Redirect(DBG_Struct *dbg) {
-  ENTER_FUNC;
   if ((dbg->redirect != NULL) && (dbg->fpLog != NULL)) {
     SendPacketClass(dbg->fpLog, RED_LOCK);
   }
-  LEAVE_FUNC;
 }
 
 extern void UnLockDB_Redirect(DBG_Struct *dbg) {
-  ENTER_FUNC;
   if ((dbg->redirect != NULL) && (dbg->fpLog != NULL)) {
     SendPacketClass(dbg->fpLog, RED_UNLOCK);
   }
-  LEAVE_FUNC;
 }
 
 extern void BeginDB_Redirect(DBG_Struct *dbg) {
-  ENTER_FUNC;
   if (dbg->redirect == NULL)
     return;
 
@@ -204,7 +189,6 @@ extern void BeginDB_Redirect(DBG_Struct *dbg) {
     LBS_EmitStart(dbg->redirectData);
     LBS_EmitStart(dbg->checkData);
   }
-  LEAVE_FUNC;
   return;
 badio:
   Warning("dbredirector connection is lost.");
@@ -213,7 +197,6 @@ badio:
 
 extern Bool CheckDB_Redirect(DBG_Struct *dbg) {
   Bool rc = TRUE;
-  ENTER_FUNC;
   if (dbg->redirect == NULL)
     return rc;
   if (dbg->redirectData != NULL) {
@@ -229,12 +212,10 @@ extern Bool CheckDB_Redirect(DBG_Struct *dbg) {
       }
     }
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
 extern void AbortDB_Redirect(DBG_Struct *dbg) {
-  ENTER_FUNC;
   if (dbg->redirect == NULL)
     return;
 
@@ -249,13 +230,12 @@ extern void AbortDB_Redirect(DBG_Struct *dbg) {
     LBS_EmitStart(dbg->checkData);
   }
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 extern void CommitDB_Redirect(DBG_Struct *dbg) {
   Bool rc = TRUE;
 
-  ENTER_FUNC;
   if (dbg->redirect == NULL)
     return;
   rc = SendVeryfyData_Redirect(dbg);
@@ -265,11 +245,9 @@ extern void CommitDB_Redirect(DBG_Struct *dbg) {
   if (!rc) {
     CloseDB_RedirectPort(dbg);
   }
-  LEAVE_FUNC;
 }
 
 extern void PutDB_AuditLog(DBG_Struct *dbg, LargeByteString *lbs) {
-  ENTER_FUNC;
   if (dbg->fpLog != NULL) {
     SendPacketClass(dbg->fpLog, RED_AUDIT);
     ON_IO_ERROR(dbg->fpLog, badio);
@@ -277,5 +255,5 @@ extern void PutDB_AuditLog(DBG_Struct *dbg, LargeByteString *lbs) {
     ON_IO_ERROR(dbg->fpLog, badio);
   }
 badio:
-  LEAVE_FUNC;
+  return;
 }

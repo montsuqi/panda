@@ -55,7 +55,6 @@ static ValueStruct *_NewBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   size_t sql_len = SIZE_SQL;
   DBG_Struct *mondbg;
   monblob_struct *monblob;
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   monblob = new_monblob_struct(mondbg, NULL, 0);
   sql = xmalloc(sql_len);
@@ -74,7 +73,6 @@ static ValueStruct *_NewBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   ret = DuplicateValue(args, TRUE);
   return (ret);
 }
@@ -91,7 +89,6 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *content_type = NULL;
   int rc;
 
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   if ((val = GetItemLongName(args, "id")) != NULL) {
     id = ValueToString(val, dbg->coding);
@@ -116,7 +113,6 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   ret = DuplicateValue(args, TRUE);
   return (ret);
 }
@@ -130,7 +126,6 @@ static ValueStruct *_ExportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *filename = NULL;
   int rc;
 
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   if ((val = GetItemLongName(args, "id")) != NULL) {
     id = ValueToString(val, dbg->coding);
@@ -146,7 +141,6 @@ static ValueStruct *_ExportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   ret = DuplicateValue(args, TRUE);
   return (ret);
 }
@@ -161,7 +155,6 @@ static ValueStruct *_PersistBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *content_type = NULL;
   int rc;
 
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   rc = MCP_BAD_ARG;
   if ((val = GetItemLongName(args, "id")) != NULL) {
@@ -181,7 +174,6 @@ static ValueStruct *_PersistBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   ret = DuplicateValue(args, TRUE);
   return (ret);
 }
@@ -195,7 +187,6 @@ static ValueStruct *_GETID(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   int blobid;
   char *id = NULL;
 
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   ret = NULL;
   if (rec->type != RECORD_DB) {
@@ -219,7 +210,6 @@ static ValueStruct *_GETID(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -232,7 +222,6 @@ static ValueStruct *_GETBLOBID(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *id = NULL;
   int oid;
 
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   ret = NULL;
   if (rec->type != RECORD_DB) {
@@ -252,7 +241,6 @@ static ValueStruct *_GETBLOBID(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -264,7 +252,6 @@ static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *id;
   int rc;
 
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   rc = MCP_BAD_ARG;
   if ((val = GetItemLongName(args, "id")) != NULL) {
@@ -279,7 +266,6 @@ static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     ctrl->rc = rc;
   }
   ret = NULL;
-  LEAVE_FUNC;
   return (ret);
 }
 

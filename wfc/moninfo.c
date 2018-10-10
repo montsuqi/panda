@@ -91,7 +91,6 @@ static NETFILE *ConnectSysData() {
   int fd;
   NETFILE *fp;
   Port *port;
-  ENTER_FUNC;
   fp = NULL;
   port = ParPort(SysDataPort, PORT_WFC);
   fd = ConnectSocket(port, SOCK_STREAM);
@@ -103,7 +102,6 @@ static NETFILE *ConnectSysData() {
     printf("[ERROR] cannot connect sysdata thread\n");
     exit(1);
   }
-  LEAVE_FUNC;
   return fp;
 }
 
@@ -118,7 +116,6 @@ static void Dump() {
       "create_time", "access_time", "process_time", "total_process_time",
       "count",       "popup",       "dialog",       "abort",
       NULL};
-  ENTER_FUNC;
   printf("---\n");
   fp = ConnectSysData();
   vals = RecParseValueMem(SYSDBVALS_DEF, NULL);
@@ -142,7 +139,6 @@ static void Dump() {
   CloseNet(fp);
   FreeValueStruct(vals);
   exit(0);
-  LEAVE_FUNC;
 }
 
 extern void Who(void) {
@@ -150,7 +146,6 @@ extern void Who(void) {
   int i, n;
   ValueStruct *vals, *a, *v;
   PacketClass rc;
-  ENTER_FUNC;
   fp = ConnectSysData();
   vals = RecParseValueMem(SYSDBVALS_DEF, NULL);
   InitializeValue(vals);
@@ -175,13 +170,11 @@ extern void Who(void) {
   CloseNet(fp);
   FreeValueStruct(vals);
   exit(0);
-  LEAVE_FUNC;
 }
 
 static void SendMessage(char *key, char *termid, char *message) {
   NETFILE *fp;
   ValueStruct *val, *v;
-  ENTER_FUNC;
   fp = ConnectSysData();
   val = RecParseValueMem(SYSDBVAL_DEF, NULL);
   InitializeValue(val);
@@ -194,13 +187,11 @@ static void SendMessage(char *key, char *termid, char *message) {
   CloseNet(fp);
   FreeValueStruct(val);
   exit(0);
-  LEAVE_FUNC;
 }
 
 static void SendMessageAll(char *key, char *message) {
   NETFILE *fp;
   ValueStruct *val, *v;
-  ENTER_FUNC;
   fp = ConnectSysData();
   val = RecParseValueMem(SYSDBVAL_DEF, NULL);
   InitializeValue(val);
@@ -211,7 +202,6 @@ static void SendMessageAll(char *key, char *message) {
   CloseNet(fp);
   FreeValueStruct(val);
   exit(0);
-  LEAVE_FUNC;
 }
 
 static void print_usage() {

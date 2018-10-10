@@ -47,7 +47,6 @@ static GHashTable *Handler;
 static MessageHandler *NewMessageHandler(char *name, char *klass) {
   MessageHandler *handler;
 
-  ENTER_FUNC;
   handler = New(MessageHandler);
   handler->name = StrDup(name);
   handler->klass = (MessageHandlerClass *)klass;
@@ -60,14 +59,12 @@ static MessageHandler *NewMessageHandler(char *name, char *klass) {
   handler->loadpath = NULL;
   handler->private = NULL;
   g_hash_table_insert(Handler, handler->name, handler);
-  LEAVE_FUNC;
   return (handler);
 }
 
 extern void ParHANDLER(CURFILE *in) {
   MessageHandler *handler;
 
-  ENTER_FUNC;
   GetSymbol;
   if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
     if ((handler = (MessageHandler *)g_hash_table_lookup(Handler, ComSymbol)) ==
@@ -152,13 +149,11 @@ extern void ParHANDLER(CURFILE *in) {
   } else {
     Error("invalid handler name");
   }
-  LEAVE_FUNC;
 }
 
 extern void BindMessageHandlerCommon(MessageHandler **handler) {
   MessageHandler *h;
 
-  ENTER_FUNC;
   if ((h = (MessageHandler *)g_hash_table_lookup(Handler, *(char **)handler)) !=
       NULL) {
     xfree(*(char **)handler);
@@ -166,13 +161,11 @@ extern void BindMessageHandlerCommon(MessageHandler **handler) {
   } else {
     Error("invalid handler name: %s", *(char **)handler);
   }
-  LEAVE_FUNC;
 }
 
 static void EnterDefaultHandler(void) {
   MessageHandler *handler;
 
-  ENTER_FUNC;
 #ifdef HAVE_OPENCOBOL
   handler = NewMessageHandler("OpenCOBOL", "OpenCOBOL");
   handler->serialize = (ConvFuncs *)"OpenCOBOL";
@@ -196,12 +189,9 @@ static void EnterDefaultHandler(void) {
   handler->serialize = (ConvFuncs *)"CGI";
   ConvSetCodeset(handler->conv, "euc-jisx0213");
   handler->start = "%m";
-  LEAVE_FUNC;
 }
 
 extern void MessageHandlerInit(void) {
-  ENTER_FUNC;
   Handler = NewNameHash();
   EnterDefaultHandler();
-  LEAVE_FUNC;
 }

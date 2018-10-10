@@ -136,7 +136,6 @@ static Bool Authentication(DBMasterThread *ctx, NETFILE *client, int *ver) {
   Bool ret = FALSE;
   LargeByteString *user;
   LargeByteString *pass;
-  ENTER_FUNC;
 
   user = NewLBS();
   pass = NewLBS();
@@ -176,7 +175,6 @@ static Bool Authentication(DBMasterThread *ctx, NETFILE *client, int *ver) {
 _io_error:
   FreeLBS(user);
   FreeLBS(pass);
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -184,7 +182,6 @@ static Bool RecvRequest(int ver, DBMasterThread *ctx, NETFILE *client,
                         DBLogNo *no) {
   PacketClass cmd;
   Bool ret = FALSE;
-  ENTER_FUNC;
 
   cmd = RecvPacketClass(client);
   ON_IO_ERROR(client, io_error);
@@ -197,17 +194,14 @@ static Bool RecvRequest(int ver, DBMasterThread *ctx, NETFILE *client,
   ret = TRUE;
 
 io_error:
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool SendLogs(int ver, DBMasterThread *ctx, NETFILE *client,
                      DBLogNo no) {
   Bool ret;
-  ENTER_FUNC;
   ret =
       Foreach_DBLog(ctx->log, no + 1LL, DBLOG_DEFAULT_NO, SendLogFunc, client);
-  LEAVE_FUNC;
   return ret;
 }
 

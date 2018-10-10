@@ -387,7 +387,6 @@ static void SIZE(CONVOPT *conv, ValueStruct *val) {
 static void MakeFromRecord(char *name) {
   RecordStruct *rec;
 
-  ENTER_FUNC;
   level = Top;
   RecParserInit();
   DB_ParserInit();
@@ -406,7 +405,6 @@ static void MakeFromRecord(char *name) {
     }
     printf(".\n");
   }
-  LEAVE_FUNC;
 }
 
 static void MakeLD(void) {
@@ -417,7 +415,6 @@ static void MakeLD(void) {
   size_t size, num, spasize, linksize, mcpsize;
   int base;
 
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, LD_Name, "", "", P_LD);
   if ((ld = GetLD(LD_Name)) == NULL) {
@@ -564,7 +561,6 @@ static void MakeLD(void) {
     PutTab(8);
     printf("PIC S9(9)   BINARY  VALUE   %d.\n", (int)num);
   }
-  LEAVE_FUNC;
 }
 
 static void MakeLinkage(void) {
@@ -572,7 +568,6 @@ static void MakeLinkage(void) {
   char *_prefix;
   size_t size;
 
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, LD_Name, "", "", P_LD);
   if ((ld = GetLD(LD_Name)) == NULL) {
@@ -613,7 +608,6 @@ static void MakeLinkage(void) {
   level = Top + 2;
   COBOL(Conv, ThisEnv->linkrec->value);
   printf(".\n");
-  LEAVE_FUNC;
 }
 
 static void MakeDB(void) {
@@ -670,7 +664,6 @@ static void PutDBREC(ValueStruct *value, char *rname, size_t msize) {
   char *_prefix;
   char prefix[SIZE_LONGNAME + 1];
 
-  ENTER_FUNC;
   level = Top;
   PutLevel(level, TRUE);
   if (fRecordPrefix) {
@@ -693,7 +686,6 @@ static void PutDBREC(ValueStruct *value, char *rname, size_t msize) {
       printf("PIC X(%d).\n", (int)(msize - size));
     }
   }
-  LEAVE_FUNC;
 }
 
 static void MakeDBREC(char *name) {
@@ -711,7 +703,6 @@ static void MakeDBREC(char *name) {
   char *p;
   int rno;
 
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, NULL, NULL, NULL, P_ALL);
   if (LD_Name != NULL) {
@@ -792,7 +783,6 @@ static void MakeDBREC(char *name) {
       }
     }
   }
-  LEAVE_FUNC;
 }
 
 static void MakeDBCOMM(void) {
@@ -804,7 +794,6 @@ static void MakeDBCOMM(void) {
   size_t arraysize, textsize;
   size_t cDB;
 
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, NULL, NULL, NULL, P_ALL);
   if (LD_Name != NULL) {
@@ -904,7 +893,6 @@ static void MakeDBCOMM(void) {
   PutName("filler");
   PutTab(12);
   printf("PIC X(%d).\n", (int)msize);
-  LEAVE_FUNC;
 }
 
 static void MakeDBPATH(void) {
@@ -918,7 +906,6 @@ static void MakeDBPATH(void) {
   size_t arraysize, textsize;
   size_t cDB;
 
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, NULL, NULL, NULL, P_ALL);
   if (LD_Name != NULL) {
@@ -978,11 +965,9 @@ static void MakeDBPATH(void) {
       printf("PIC S9(9)   BINARY  VALUE %d.\n", j);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void MakeMCPAREA(void) {
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, "", "", "", P_NONE);
 
@@ -993,7 +978,6 @@ static void MakeMCPAREA(void) {
   level = Top;
   COBOL(Conv, ThisEnv->mcprec->value);
   printf(".\n");
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE option[] = {

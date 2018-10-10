@@ -556,7 +556,6 @@ static json_object *ParseReqArguments(char *args) {
   json_object *obj;
   gchar **kvs, **kv;
   int i;
-  ENTER_FUNC;
   obj = json_object_new_object();
   if (args != NULL && strlen(args) > 0) {
     kvs = g_strsplit(args, "&", 128);
@@ -569,7 +568,6 @@ static json_object *ParseReqArguments(char *args) {
     }
     g_strfreev(kvs);
   }
-  LEAVE_FUNC;
   return obj;
 }
 
@@ -788,7 +786,6 @@ static json_object *MakeJSONResponseTemplate(json_object *obj) {
 
 static json_object *GetServerInfo(json_object *obj) {
   json_object *result, *res;
-  ENTER_FUNC;
   res = MakeJSONResponseTemplate(obj);
 
   result = json_object_new_object();
@@ -799,7 +796,6 @@ static json_object *GetServerInfo(json_object *obj) {
   json_object_object_add(result, "server_type",
                          json_object_new_string("glserver"));
   json_object_object_add(res, "result", result);
-  LEAVE_FUNC;
   return res;
 }
 
@@ -808,7 +804,6 @@ static char *_GetScreenDefine(const char *wname) {
   gchar *fname, *ret, *buff;
   size_t size;
   int i;
-  ENTER_FUNC;
   ret = NULL;
   if (dirs == NULL) {
     dirs = g_strsplit_set(ScreenDir, ":", -1);
@@ -824,13 +819,11 @@ static char *_GetScreenDefine(const char *wname) {
     g_free(fname);
   }
   return ret;
-  LEAVE_FUNC;
 }
 
 static json_object *GetScreenDefine(json_object *obj) {
   json_object *params, *child, *result, *res, *error;
   char *scrdef, *window;
-  ENTER_FUNC;
   json_object_object_get_ex(obj, "params", &params);
   json_object_object_get_ex(params, "window", &child);
   if (CheckJSONObject(child, json_type_string)) {
@@ -854,14 +847,12 @@ static json_object *GetScreenDefine(json_object *obj) {
                            json_object_new_string("invalid window"));
     json_object_object_add(res, "error", error);
   }
-  LEAVE_FUNC;
   return res;
 }
 
 static json_object *GetMessage(json_object *obj) {
   json_object *params, *meta, *child, *result, *res, *error;
   char *session_id, *popup, *dialog, *abort;
-  ENTER_FUNC;
   json_object_object_get_ex(obj, "params", &params);
   json_object_object_get_ex(params, "meta", &meta);
   session_id = NULL;
@@ -889,7 +880,6 @@ static json_object *GetMessage(json_object *obj) {
                            json_object_new_string("invalid session"));
     json_object_object_add(res, "error", error);
   }
-  LEAVE_FUNC;
   return res;
 }
 

@@ -52,7 +52,6 @@ static void CoreThread(void *para) {
   SessionData *data;
   MQ_Node *mq;
 
-  ENTER_FUNC;
   mq = NULL;
   CoreQueue = NewQueue();
   do {
@@ -72,12 +71,9 @@ static void CoreThread(void *para) {
     }
   } while (mq != NULL);
   pthread_exit(NULL);
-  LEAVE_FUNC;
 }
 
 extern void StartCoreThread(void) {
   static pthread_t core;
-  ENTER_FUNC;
   pthread_create(&core, NULL, (void *(*)(void *))CoreThread, NULL);
-  LEAVE_FUNC;
 }

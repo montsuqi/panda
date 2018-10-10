@@ -60,7 +60,6 @@ static char *Directory;
 static Bool Auth(NETFILE *fp) {
   Bool ret;
 
-  ENTER_FUNC;
   SendStringDelim(fp, ThisEnv->name);
   SendStringDelim(fp, "\n");
   dbgprintf("name = [%s]\n", ThisEnv->name);
@@ -72,14 +71,12 @@ static Bool Auth(NETFILE *fp) {
     ret = FALSE;
     break;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
 static void MainProc(char *comm) {
   NETFILE *fp;
 
-  ENTER_FUNC;
   if ((fp = OpenPort(ControlPort, 0)) != NULL) {
     if (Auth(fp)) {
       if (stricmp(comm, "stop") == 0) {
@@ -94,15 +91,12 @@ static void MainProc(char *comm) {
   } else {
     fprintf(stderr, "invalid control port\n");
   }
-  LEAVE_FUNC;
 }
 
 static void InitSystem(void) {
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, NULL, "", "", P_NONE);
   InitNET();
-  LEAVE_FUNC;
 }
 
 static void CleanUp(void) {}

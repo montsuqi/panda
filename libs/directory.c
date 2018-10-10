@@ -73,7 +73,6 @@ extern DB_Func *EnterDB_Function(char *name, DB_OPS *ops, int type,
   DB_Func *func;
   int i;
 
-  ENTER_FUNC;
   dbgprintf("Enter [%s]\n", name);
   if ((func = (DB_Func *)g_hash_table_lookup(DBMS_Table, name)) == NULL) {
     func = NewDB_Func();
@@ -87,12 +86,10 @@ extern DB_Func *EnterDB_Function(char *name, DB_OPS *ops, int type,
       }
     }
   }
-  LEAVE_FUNC;
   return (func);
 }
 
 extern void InitDirectory(void) {
-  ENTER_FUNC;
   InitPool();
   RecParserInit();
   DB_ParserInit();
@@ -100,7 +97,6 @@ extern void InitDirectory(void) {
   BD_ParserInit();
   DBD_ParserInit();
   DI_ParserInit();
-  LEAVE_FUNC;
 }
 
 extern DBG_Struct *GetDBG(char *name) {
@@ -116,7 +112,6 @@ extern void LoadDBG(DBG_Struct *dbg) {
   void *handle;
   DB_Func *(*f_init)(void);
 
-  ENTER_FUNC;
   dbgprintf("Entering [%s]\n", dbg->type);
   if (dbg->func == NULL) {
     if ((func = (DB_Func *)g_hash_table_lookup(DBMS_Table, dbg->type)) ==
@@ -139,13 +134,11 @@ extern void LoadDBG(DBG_Struct *dbg) {
     }
     dbg->func = func;
   }
-  LEAVE_FUNC;
 }
 
 extern void RegistDBG(DBG_Struct *dbg) {
   DBG_Struct **dbga;
 
-  ENTER_FUNC;
   dbga = (DBG_Struct **)xmalloc(sizeof(DBG_Struct *) * (ThisEnv->cDBG + 1));
   if (ThisEnv->cDBG > 0) {
     memcpy(dbga, ThisEnv->DBG, sizeof(DBG_Struct *) * ThisEnv->cDBG);
@@ -158,7 +151,6 @@ extern void RegistDBG(DBG_Struct *dbg) {
   dbgprintf("dbg = [%s]\n", dbg->name);
   LoadDBG(dbg);
   g_hash_table_insert(ThisEnv->DBG_Table, dbg->name, dbg);
-  LEAVE_FUNC;
 }
 
 static void _AssignDBG(RecordStruct **db, int n) {
@@ -166,7 +158,6 @@ static void _AssignDBG(RecordStruct **db, int n) {
   char *gname;
   DBG_Struct *dbg;
 
-  ENTER_FUNC;
   for (i = 1; i < n; i++) {
     if ((gname = RecordDB(db[i])->gname) != NULL) {
       if ((dbg = GetDBG(gname)) == NULL) {
@@ -185,13 +176,11 @@ static void _AssignDBG(RecordStruct **db, int n) {
       g_hash_table_insert(dbg->dbt, db[i]->name, db[i]);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void AssignDBG(DI_Struct *di) {
   int i;
 
-  ENTER_FUNC;
   if (di->DBG_Table != NULL) {
     for (i = 0; i < di->cLD; i++) {
       if (di->ld[i]->db != NULL) {
@@ -209,24 +198,20 @@ static void AssignDBG(DI_Struct *di) {
       }
     }
   }
-  LEAVE_FUNC;
 }
 
 extern void SetDBGPath(char *path) { MONDB_LoadPath = path; }
 
 extern void InitDBG(void) {
-  ENTER_FUNC;
   DBMS_Table = NewNameHash();
   if ((MONDB_LoadPath = getenv("MONDB_LOAD_PATH")) == NULL) {
     MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
   }
-  LEAVE_FUNC;
 }
 
 static void RequiredDBGROUP(void) {
   int i;
   DBG_Struct *dbg;
-  ENTER_FUNC;
   for (i = 0; RDBG[i].name != NULL; i++) {
     if (g_hash_table_lookup(ThisEnv->DBG_Table, RDBG[i].name) == NULL) {
       dbg = NewDBG_Struct(RDBG[i].name);
@@ -234,20 +219,17 @@ static void RequiredDBGROUP(void) {
       RegistDBG(dbg);
     }
   }
-  LEAVE_FUNC;
 }
 
 extern void SetUpDirectory(char *name, char *ld, char *bd, char *db,
                            int parse_type) {
   DI_Struct *di;
-  ENTER_FUNC;
   InitDBG();
   di = DI_Parser(name, ld, bd, db, parse_type);
   RequiredDBGROUP();
   if ((parse_type >= P_ALL) && di) {
     AssignDBG(di);
   }
-  LEAVE_FUNC;
 }
 
 extern LD_Struct *GetLD(char *name) {

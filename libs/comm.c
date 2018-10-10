@@ -73,7 +73,6 @@ extern size_t RecvLength(NETFILE *fp) {
 extern void SendString(NETFILE *fp, char *str) {
   size_t size;
 
-  ENTER_FUNC;
   if (str != NULL) {
     size = strlen(str);
   } else {
@@ -83,22 +82,18 @@ extern void SendString(NETFILE *fp, char *str) {
   if (size > 0) {
     Send(fp, str, size);
   }
-  LEAVE_FUNC;
 }
 
 extern void RecvString(NETFILE *fp, char *str) {
   size_t size;
 
-  ENTER_FUNC;
   size = RecvLength(fp);
   Recv(fp, str, size);
   str[size] = 0;
-  LEAVE_FUNC;
 }
 
 extern void RecvnString(NETFILE *fp, size_t size, char *str) {
   size_t lsize;
-  ENTER_FUNC;
   lsize = RecvLength(fp);
   if (size >= lsize) {
     size = lsize;
@@ -108,7 +103,6 @@ extern void RecvnString(NETFILE *fp, size_t size, char *str) {
     CloseNet(fp);
     Message("error size mismatch !");
   }
-  LEAVE_FUNC;
 }
 
 extern char *RecvStringNew(NETFILE *fp) {

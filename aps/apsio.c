@@ -103,7 +103,6 @@ static Bool GetWFCTerm(NETFILE *fp, ProcessNode *node) {
   PacketClass c;
   ValueStruct *e;
 
-  ENTER_FUNC;
   while (1) {
     c = RecvPacketClass(fp);
     ON_IO_ERROR(fp, badio);
@@ -188,13 +187,11 @@ static Bool GetWFCTerm(NETFILE *fp, ProcessNode *node) {
       return FALSE;
     }
   }
-  LEAVE_FUNC;
   Warning("does not reach");
   return TRUE;
 }
 
 static Bool GetWFCAPI(NETFILE *fp, ProcessNode *node) {
-  ENTER_FUNC;
   ValueStruct *e;
   WindowBind *bind;
   int i;
@@ -251,10 +248,8 @@ static Bool GetWFCAPI(NETFILE *fp, ProcessNode *node) {
     }
     NativeUnPackValue(NULL, LBS_Body(buff), e);
   }
-  LEAVE_FUNC;
   return TRUE;
 badio:
-  LEAVE_FUNC;
   return FALSE;
 }
 
@@ -262,7 +257,6 @@ extern Bool GetWFC(NETFILE *fp, ProcessNode *node) {
   PacketClass c;
   Bool ret;
 
-  ENTER_FUNC;
   ret = FALSE;
 
   c = RecvPacketClass(fp);
@@ -283,7 +277,6 @@ extern Bool GetWFC(NETFILE *fp, ProcessNode *node) {
     Warning("Invalid PacketClass in GetWFC(%02X)", c);
     break;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -292,7 +285,6 @@ static void PutWFCTerm(NETFILE *fp, ProcessNode *node) {
   PacketClass c;
   ValueStruct *e;
 
-  ENTER_FUNC;
   e = node->mcprec->value;
   SendPacketClass(fp, APS_CTRLDATA);
   ON_IO_ERROR(fp, badio);
@@ -350,12 +342,10 @@ static void PutWFCTerm(NETFILE *fp, ProcessNode *node) {
       return;
     }
   }
-  LEAVE_FUNC;
 }
 
 static void PutWFCAPI(NETFILE *fp, ProcessNode *node) {
   int i;
-  ENTER_FUNC;
   for (i = 0; i < node->cWindow; i++) {
     if (node->scrrec[i] != NULL &&
         !strcmp(node->scrrec[i]->name, node->window)) {
@@ -365,15 +355,13 @@ static void PutWFCAPI(NETFILE *fp, ProcessNode *node) {
     }
   }
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 extern void PutWFC(NETFILE *fp, ProcessNode *node) {
-  ENTER_FUNC;
   if (node->messageType == MESSAGE_TYPE_API) {
     PutWFCAPI(fp, node);
   } else {
     PutWFCTerm(fp, node);
   }
-  LEAVE_FUNC;
 }

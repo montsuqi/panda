@@ -57,7 +57,6 @@ static ValueStruct *GETDATA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                             RecordStruct *rec, ValueStruct *args) {
   ValueStruct *ret;
   PacketClass rc;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -71,7 +70,6 @@ static ValueStruct *GETDATA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ctrl->rc = MCP_BAD_OTHER;
     }
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -79,7 +77,6 @@ static ValueStruct *SETMESSAGE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                RecordStruct *rec, ValueStruct *args) {
   ValueStruct *ret;
   PacketClass rc;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -88,7 +85,6 @@ static ValueStruct *SETMESSAGE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     rc = SYSDB_SetMessage(NBCONN(dbg), args);
     ctrl->rc = rc == SESSION_CONTROL_OK ? MCP_OK : MCP_BAD_OTHER;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -96,7 +92,6 @@ static ValueStruct *SETMESSAGEALL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                   RecordStruct *rec, ValueStruct *args) {
   ValueStruct *ret;
   PacketClass rc;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -105,7 +100,6 @@ static ValueStruct *SETMESSAGEALL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     rc = SYSDB_SetMessageAll(NBCONN(dbg), args);
     ctrl->rc = rc == SESSION_CONTROL_OK ? MCP_OK : MCP_BAD_OTHER;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -118,7 +112,6 @@ static ValueStruct *SELECTALL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                               RecordStruct *rec, ValueStruct *args) {
   ValueStruct *ret;
   PacketClass rc;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -138,7 +131,6 @@ static ValueStruct *SELECTALL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ctrl->rc = MCP_BAD_OTHER;
     }
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -146,7 +138,6 @@ static ValueStruct *FETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
   ValueStruct *ret, *v;
   char vname[256];
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB || !hasData) {
@@ -168,16 +159,13 @@ static ValueStruct *FETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   }
   idx += 1;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return ret;
 }
 
 static ValueStruct *DUMMY_OP(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                              RecordStruct *rec, ValueStruct *args) {
-  ENTER_FUNC;
   Warning("not implement");
   ctrl->rc = MCP_BAD_OTHER;
-  LEAVE_FUNC;
   return NULL;
 }
 

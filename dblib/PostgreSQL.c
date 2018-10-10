@@ -286,14 +286,12 @@ static void KeyValue(DBG_Struct *dbg, LargeByteString *lbs, ValueStruct *args,
                      char **pk) {
   ValueStruct *val;
 
-  ENTER_FUNC;
   val = args;
   while (*pk != NULL) {
     val = GetRecordItem(args, *pk);
     pk++;
   }
   ValueToSQL(dbg, lbs, val);
-  LEAVE_FUNC;
 }
 
 static char *ItemName(void) {
@@ -534,7 +532,6 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
   char buff[SIZE_OTHER];
   char *str;
 
-  ENTER_FUNC;
   if (val == NULL)
     return;
 
@@ -680,7 +677,6 @@ static void GetTable(DBG_Struct *dbg, PGresult *res, int ix, ValueStruct *val) {
   default:
     break;
   }
-  LEAVE_FUNC;
 }
 
 static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
@@ -692,7 +688,6 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
   if (val == NULL)
     return;
 
-  ENTER_FUNC;
   if (PQgetisnull(res, tnum, fnum) == 1) { /*	null	*/
     ValueIsNil(val);
   } else {
@@ -747,7 +742,6 @@ static void GetValue(DBG_Struct *dbg, PGresult *res, int tnum, int fnum,
       break;
     }
   }
-  LEAVE_FUNC;
 }
 
 static char *PutDim(void) {
@@ -1052,7 +1046,6 @@ static Bool IsRedirectQuery(PGresult *res) {
 static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   PGresult *res;
 
-  ENTER_FUNC;
   dbgprintf("%s", sql);
   res = PQexecParams(PGCONN(dbg, usage), sql, 0, NULL, NULL, NULL, NULL, 0);
   if (res != NULL) {
@@ -1065,7 +1058,6 @@ static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   if (sql) {
     LBS_String(dbg->last_query, sql);
   }
-  LEAVE_FUNC;
   return (res);
 }
 
@@ -1113,7 +1105,6 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   Bool fIntoAster, fDot;
   char buff[SIZE_LONGNAME + 1], *p, *q;
 
-  ENTER_FUNC;
   sql = NewLBS();
   if (src == NULL) {
     Error("function \"%s\" is not found.", ctrl->func);
@@ -1265,7 +1256,6 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     xfree(tuple);
   }
   FreeLBS(sql);
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1273,7 +1263,6 @@ static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   PGresult *res;
   int rc = MCP_OK;
 
-  ENTER_FUNC;
   if (_PQsendQuery(dbg, sql, usage) == TRUE) {
     while ((res = _PQgetResult(dbg, usage)) != NULL) {
       rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
@@ -1289,7 +1278,6 @@ static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
     Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, usage)));
     rc = MCP_BAD_OTHER;
   }
-  LEAVE_FUNC;
   return rc;
 }
 
@@ -1298,7 +1286,6 @@ static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
   ValueStruct *ret;
   ExecStatusType status;
 
-  ENTER_FUNC;
   res = _PQexec(dbg, sql, fRed, usage);
   if (!CheckConnect(dbg, usage)) {
     ret = NULL;
@@ -1312,7 +1299,6 @@ static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
     ret = PGresToValue2(dbg, res);
   }
   _PQclear(res);
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -1322,7 +1308,6 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   int i;
 
-  ENTER_FUNC;
   rc = 0;
   if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
     Warning("database is already *UPDATE* connected.");
@@ -1401,13 +1386,11 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     ctrl->rc = rc;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   PGconn *conn;
-  ENTER_FUNC;
   if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg, DB_UPDATE);
     PQfinish(PGCONN(dbg, DB_UPDATE));
@@ -1426,7 +1409,6 @@ static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     ctrl->rc = MCP_OK;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -1435,7 +1417,6 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   PGconn *conn;
 
-  ENTER_FUNC;
   rc = 0;
   if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg, DB_UPDATE);
@@ -1461,7 +1442,6 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     ctrl->rc = rc;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -1470,7 +1450,6 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   PGconn *conn;
   Bool fCommit;
-  ENTER_FUNC;
   rc = 0;
   if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg, DB_UPDATE);
@@ -1502,7 +1481,6 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     ctrl->rc = rc;
     ctrl->rcount = 0;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -1513,7 +1491,6 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *src;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
@@ -1525,7 +1502,6 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     src = path->ops[DBOP_SELECT]->proc;
     ret = ExecPGSQL(dbg, ctrl, src, args, ctrl->usage);
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1538,7 +1514,6 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *ret;
   LargeByteString *src;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
@@ -1560,7 +1535,6 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       _PQclear(res);
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1573,7 +1547,6 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *src;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
@@ -1593,7 +1566,6 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       _PQclear(res);
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1607,7 +1579,6 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *src;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
@@ -1657,7 +1628,6 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       FreeLBS(sql);
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1671,7 +1641,6 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *src;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
@@ -1716,7 +1685,6 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       FreeLBS(sql);
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1729,7 +1697,6 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *src;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
@@ -1760,7 +1727,6 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       FreeLBS(sql);
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1769,7 +1735,6 @@ static ValueStruct *_DBESCAPE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *lbs;
   ValueStruct *ret;
   ValueStruct *val;
-  ENTER_FUNC;
   if ((val = GetItemLongName(args, "dbescapestring")) == NULL) {
     Warning("dbescapestring is not found.");
     return DuplicateValue(args, TRUE);
@@ -1781,7 +1746,6 @@ static ValueStruct *_DBESCAPE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   SetValueString(val, LBS_Body(lbs), dbg->coding);
   FreeLBS(lbs);
   ret = DuplicateValue(args, TRUE);
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1790,7 +1754,6 @@ static ValueStruct *_DBESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *lbs;
   ValueStruct *ret, *bytea;
   ValueStruct *val;
-  ENTER_FUNC;
   if (ValueType(args) == GL_TYPE_RECORD) {
     if ((val = GetItemLongName(args, "dbescapebytea")) == NULL) {
       Warning("dbescapebytea is not found.");
@@ -1812,14 +1775,12 @@ static ValueStruct *_DBESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     SetValueString(ret, LBS_Body(lbs), dbg->coding);
     FreeLBS(lbs);
   }
-  LEAVE_FUNC;
   return ret;
 }
 
 static ValueStruct *_DBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                      RecordStruct *rec, ValueStruct *args) {
   ValueStruct *bin, *val, *ret;
-  ENTER_FUNC;
   if (ValueType(args) == GL_TYPE_RECORD) {
     if ((val = GetItemLongName(args, "dbunescapebytea")) == NULL) {
       Warning("dbunescapebytea is not found.");
@@ -1831,7 +1792,6 @@ static ValueStruct *_DBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   } else {
     ret = UnEscapeBytea(ValueStringPointer(args));
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -1840,7 +1800,6 @@ static ValueStruct *_DBLOCK(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LargeByteString *sql;
   PGresult *res;
   ValueStruct *ret;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   if (rec == NULL) {
@@ -1855,7 +1814,6 @@ static ValueStruct *_DBLOCK(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     _PQclear(res);
     FreeLBS(sql);
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1863,7 +1821,6 @@ static ValueStruct *_DBAUDITLOG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                 RecordStruct *rec, ValueStruct *args) {
   LargeByteString *sql;
   ValueStruct *ret;
-  ENTER_FUNC;
   ret = NULL;
   sql = NewLBS();
   LBS_EmitString(sql, "INSERT INTO ");
@@ -1880,7 +1837,6 @@ static ValueStruct *_DBAUDITLOG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   LBS_EmitEnd(sql);
   PutDB_AuditLog(dbg, sql);
   FreeLBS(sql);
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -1892,7 +1848,6 @@ static ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   int ix;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rcount = 0;
   dbgprintf("[%s]", ctrl->func);
@@ -1913,7 +1868,6 @@ static ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       }
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 

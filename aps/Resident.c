@@ -69,10 +69,8 @@ static LargeByteString *dbbuff;
 
 static void DumpNode(ProcessNode *node) {
 #ifdef DEBUG
-  ENTER_FUNC;
   printf("node = %p\n", node);
   //	DumpValueStruct(node->mcprec->value);
-  LEAVE_FUNC;
 #endif
 }
 
@@ -87,7 +85,6 @@ static void ExecuteDB_Server(MessageHandler *handler) {
   char *rname, *pname, *func;
   ConvFuncs *conv;
 
-  ENTER_FUNC;
   InitializeCTRL(&ctrl);
   conv = handler->serialize;
   while (TRUE) {
@@ -171,23 +168,19 @@ static void ExecuteDB_Server(MessageHandler *handler) {
     ON_IO_ERROR(fpDBW, badio);
   }
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 static void StartDB(MessageHandler *handler) {
-  ENTER_FUNC;
   pthread_create(&_DB_Thread, NULL, (void *(*)(void *))ExecuteDB_Server,
                  handler);
-  LEAVE_FUNC;
 }
 
 static void CancelDB(void) {
-  ENTER_FUNC;
   if (pthread_kill(_DB_Thread, 0) == 0) {
     pthread_cancel(_DB_Thread);
     pthread_join(_DB_Thread, NULL);
   }
-  LEAVE_FUNC;
 }
 
 static void PutApplication(MessageHandler *handler, NETFILE *fp,
@@ -196,7 +189,6 @@ static void PutApplication(MessageHandler *handler, NETFILE *fp,
   size_t size;
   ConvFuncs *conv;
 
-  ENTER_FUNC;
   DumpNode(node);
   conv = handler->serialize;
 
@@ -254,7 +246,7 @@ static void PutApplication(MessageHandler *handler, NETFILE *fp,
   Send(fp, conv->bsep, strlen(conv->bsep));
   ON_IO_ERROR(fp, badio);
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 static void GetApplication(MessageHandler *handler, NETFILE *fp,
@@ -262,7 +254,6 @@ static void GetApplication(MessageHandler *handler, NETFILE *fp,
   int i;
   ConvFuncs *conv;
 
-  ENTER_FUNC;
   conv = handler->serialize;
 
   LBS_EmitStart(iobuff);
@@ -289,7 +280,7 @@ static void GetApplication(MessageHandler *handler, NETFILE *fp,
   }
   DumpNode(node);
 badio:
-  LEAVE_FUNC;
+  return;
 }
 
 static jmp_buf SubError;
@@ -304,7 +295,6 @@ static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
   NETFILE *fpAPR, *fpAPW;
   char line[SIZE_BUFF], **cmd;
 
-  ENTER_FUNC;
   if (handler->loadpath == NULL) {
     handler->loadpath = ExecPath;
   }
@@ -369,29 +359,20 @@ static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
   } else {
     rc = FALSE;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
 static void _StopDB(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static void _StopDC(MessageHandler *handler) {
-  ENTER_FUNC;
   _StopDB(handler);
-  LEAVE_FUNC;
 }
 
 static void _ReadyDC(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static void _ReadyDB(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static int _StartBatch(MessageHandler *handler, char *name, char *param) {
@@ -401,7 +382,6 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
   int rc;
   int pAPR[2], pAPW[2];
 
-  ENTER_FUNC;
   if (handler->loadpath == NULL) {
     handler->loadpath = ExecPath;
   }
@@ -462,7 +442,6 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
   } else {
     rc = FALSE;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 

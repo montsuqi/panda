@@ -52,7 +52,6 @@
 
 static PGconn *db_connect(DBG_INSTANCE *dbg, Bool *connected) {
   PGconn *conn;
-  ENTER_FUNC;
   *connected = FALSE;
   if (IS_DB_STATUS_CONNECT(dbg)) {
     conn = PGCONN(dbg, DB_UPDATE);
@@ -62,14 +61,12 @@ static PGconn *db_connect(DBG_INSTANCE *dbg, Bool *connected) {
     dbgmsg("pg_connect new connection");
     conn = pg_connect(dbg);
   }
-  LEAVE_FUNC;
   return conn;
 }
 
 static Bool db_transaction(PGconn *conn, char *cmd) {
   PGresult *res = db_exec(conn, cmd);
   Bool ret = TRUE;
-  ENTER_FUNC;
 
   if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
     ret = FALSE;
@@ -78,31 +75,24 @@ static Bool db_transaction(PGconn *conn, char *cmd) {
     PQclear(res);
   }
 
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool db_begin(PGconn *conn) {
   Bool ret;
-  ENTER_FUNC;
   ret = db_transaction(conn, "BEGIN");
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool db_commit(PGconn *conn) {
   Bool ret;
-  ENTER_FUNC;
   ret = db_transaction(conn, "COMMIT");
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool db_rollback(PGconn *conn) {
   Bool ret;
-  ENTER_FUNC;
   ret = db_transaction(conn, "ROLLBACK");
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -116,7 +106,6 @@ static Bool CreateLogTable(DBLogCtx *log) {
   Bool functran = FALSE;
   Bool ret = TRUE;
 
-  ENTER_FUNC;
   if (!conn) {
     return FALSE;
   }
@@ -194,7 +183,6 @@ _disconnect:
   if (!connected) {
     pg_disconnect(log->dbg);
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -211,7 +199,6 @@ static Bool AppendRecord(DBLogCtx *log, DBLogNo no, char *data,
   Bool ret = TRUE;
   int error;
 
-  ENTER_FUNC;
   PQescapeStringConn(conn, esc_data, data, data_len, &error);
   PQescapeStringConn(conn, esc_checkdata, checkdata, checkdata_len, &error);
 
@@ -240,7 +227,6 @@ static Bool AppendRecord(DBLogCtx *log, DBLogNo no, char *data,
   xfree(esc_data);
   xfree(esc_checkdata);
   xfree(sql);
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -248,7 +234,6 @@ extern DBLogCtx *Open_DBLog(DBG_INSTANCE *dbg, char *tablename) {
   DBLogCtx *log;
   pthread_mutexattr_t attr;
   Bool ret;
-  ENTER_FUNC;
   if (!IS_DB_STATUS_CONNECT(dbg)) {
     if (OpenRedirectDB(dbg) == MCP_OK) {
       Message("connect to database successed");
@@ -274,14 +259,12 @@ extern DBLogCtx *Open_DBLog(DBG_INSTANCE *dbg, char *tablename) {
     }
     return NULL;
   }
-  LEAVE_FUNC;
   return log;
 }
 
 extern void Close_DBLog(DBLogCtx **plog) {
   DBLogCtx *log;
 
-  ENTER_FUNC;
   if (*plog == NULL) {
     return;
   }
@@ -297,19 +280,16 @@ extern void Close_DBLog(DBLogCtx **plog) {
   xfree(log);
 
   *plog = NULL;
-  LEAVE_FUNC;
 }
 
 extern Bool Put_DBLog(DBLogCtx *log, char *data, char *checkdata) {
   Bool ret;
 
-  ENTER_FUNC;
   ret = AppendRecord(log, DBLOG_DEFAULT_NO, data, checkdata);
   if (!ret) {
     Error("dblog insert error");
   }
 
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -317,18 +297,15 @@ extern Bool PutNo_DBLog(DBLogCtx *log, DBLogNo no, char *data,
                         char *checkdata) {
   Bool ret;
 
-  ENTER_FUNC;
   ret = AppendRecord(log, no, data, checkdata);
   if (!ret) {
     Error("dblog insert error");
   }
 
-  LEAVE_FUNC;
   return ret;
 }
 
 static void ClearRecord(DBLogRecord *rec) {
-  ENTER_FUNC;
   if (rec->data) {
     FreeLBS(rec->data);
   }
@@ -336,7 +313,6 @@ static void ClearRecord(DBLogRecord *rec) {
     FreeLBS(rec->checkdata);
   }
   memset(rec, 0, sizeof(DBLogRecord));
-  LEAVE_FUNC;
 }
 
 extern Bool GetLatestNo_DBLog(DBLogCtx *log, DBLogNo *no) {
@@ -345,7 +321,6 @@ extern Bool GetLatestNo_DBLog(DBLogCtx *log, DBLogNo *no) {
   PGresult *res;
   char sql[SIZE_BUFF];
   Bool ret = TRUE;
-  ENTER_FUNC;
 
   *no = DBLOG_DEFAULT_NO;
   pthread_mutex_lock(&log->mutex);
@@ -375,14 +350,12 @@ extern Bool GetLatestNo_DBLog(DBLogCtx *log, DBLogNo *no) {
   if (!connected) {
     pg_disconnect(log->dbg);
   }
-  LEAVE_FUNC;
   return ret;
 }
 
 static Bool SetRecord(const PGresult *res, DBLogRecord *rec, int i) {
   char *no, *data, *checkdata, *applydate;
 
-  ENTER_FUNC;
   no = PQgetvalue(res, i, 0);
   data = PQgetvalue(res, i, 1);
   checkdata = PQgetvalue(res, i, 2);
@@ -399,7 +372,6 @@ static Bool SetRecord(const PGresult *res, DBLogRecord *rec, int i) {
 
   rec->applydate = strtoll(applydate, NULL, 10);
 
-  LEAVE_FUNC;
   return TRUE;
 }
 
@@ -413,7 +385,6 @@ extern Bool Foreach_DBLog(DBLogCtx *log, DBLogNo start_no, DBLogNo end_no,
   char sql[SIZE_BUFF + 1];
   int i, ntuples;
 
-  ENTER_FUNC;
 
   if (start_no == DBLOG_DEFAULT_NO && end_no == DBLOG_DEFAULT_NO) {
     snprintf(
@@ -472,7 +443,6 @@ _end:
   if (!connected) {
     pg_disconnect(log->dbg);
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -485,7 +455,6 @@ extern Bool ForeachUnapplied_DBLog(DBLogCtx *log, DBLogForeachFunc func,
   DBLogRecord rec;
   char sql[SIZE_BUFF + 1];
   int i, ntuples;
-  ENTER_FUNC;
 
   pthread_mutex_lock(&log->mutex);
 
@@ -522,7 +491,6 @@ _end:
   if (!connected) {
     pg_disconnect(log->dbg);
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -532,7 +500,6 @@ extern Bool UpdateApplyDate_DBLog(DBLogCtx *log, DBLogNo no) {
   char sql[SIZE_BUFF + 1];
   Bool ret = TRUE;
 
-  ENTER_FUNC;
 
   snprintf(sql, SIZE_BUFF,
            "UPDATE \"%s\" SET applydate = NOW() WHERE no = %" PRIu64 ";",
@@ -546,7 +513,6 @@ extern Bool UpdateApplyDate_DBLog(DBLogCtx *log, DBLogNo no) {
   }
   pthread_mutex_unlock(&log->mutex);
 
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -557,7 +523,6 @@ extern Bool Truncate_DBLog(DBLogCtx *log, time_t expire_log_sec) {
   Bool ret = TRUE;
   uint64_t expire_log_sec64 = (uint64_t)expire_log_sec;
 
-  ENTER_FUNC;
   snprintf(sql, SIZE_BUFF,
            "DELETE FROM \"%s\" WHERE applydate < NOW() - INTERVAL '%" PRIu64
            " sec' AND no < (SELECT max(no) FROM \"%s\");",
@@ -569,7 +534,6 @@ extern Bool Truncate_DBLog(DBLogCtx *log, time_t expire_log_sec) {
     ret = FALSE;
   }
   pthread_mutex_unlock(&log->mutex);
-  LEAVE_FUNC;
   return ret;
 }
 #endif /* #ifdef HAVE_POSTGRES */

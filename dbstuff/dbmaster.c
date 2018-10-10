@@ -70,10 +70,8 @@ static DBMasterThread *DBMasterServer;
 static char *AuthURL;
 
 extern void ExecuteServer(void) {
-  ENTER_FUNC;
   StartDBMaster(DBMasterServer);
   JoinDBMaster(DBMasterServer);
-  LEAVE_FUNC;
 }
 
 #ifdef DEBUG
@@ -101,7 +99,6 @@ static void _CheckDBG(char *name, DBG_Struct *dbg, char *red_name) {
   char *src_port, *dsc_port;
   char *dbg_dbname = "", *red_dbg_dbname = "";
   char *dbname;
-  ENTER_FUNC;
   if (dbg->redirect != NULL) {
     red_dbg = dbg->redirect;
     if (strcmp(red_dbg->name, red_name) == 0) {
@@ -122,7 +119,6 @@ static void _CheckDBG(char *name, DBG_Struct *dbg, char *red_name) {
       xfree(dsc_port);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void CheckDBG(char *name) {
@@ -143,7 +139,6 @@ void StopSystem(int no) {
 
 extern void InitSystem(char *name) {
   struct sigaction sa;
-  ENTER_FUNC;
   InitNET();
 
   memset(&sa, 0, sizeof(struct sigaction));
@@ -175,7 +170,6 @@ extern void InitSystem(char *name) {
   if (!DBMasterServer) {
     Error("start dbmaster thread failed");
   }
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE

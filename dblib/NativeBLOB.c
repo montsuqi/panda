@@ -51,7 +51,6 @@ static ValueStruct *_ExportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   int rc;
   char *filename;
 
-  ENTER_FUNC;
   ret = NULL;
   file = GetItemLongName(args, "file");
   obj = GetItemLongName(args, "object");
@@ -70,7 +69,6 @@ static ValueStruct *_ExportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -80,7 +78,6 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   DBG_Struct *mondbg;
   int rc;
   char *filename;
-  ENTER_FUNC;
   mondbg = GetDBG_monsys();
   file = GetItemLongName(args, "file");
   obj = GetItemLongName(args, "object");
@@ -94,7 +91,6 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return DuplicateValue(args, TRUE);
 }
 
@@ -104,7 +100,6 @@ static ValueStruct *_CheckBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *obj;
   DBG_Struct *mondbg;
   char *id;
-  ENTER_FUNC;
   if (rec->type != RECORD_DB) {
     rc = MCP_BAD_ARG;
   } else {
@@ -124,7 +119,6 @@ static ValueStruct *_CheckBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return NULL;
 }
 
@@ -133,7 +127,6 @@ static ValueStruct *_PersistBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   DBG_Struct *mondbg;
   ValueStruct *obj;
   int rc;
-  ENTER_FUNC;
   if (rec->type != RECORD_DB) {
     rc = MCP_BAD_ARG;
   } else {
@@ -149,7 +142,6 @@ static ValueStruct *_PersistBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return NULL;
 }
 
@@ -158,7 +150,6 @@ static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   DBG_Struct *mondbg;
   ValueStruct *obj;
   int rc;
-  ENTER_FUNC;
   if (rec->type != RECORD_DB) {
     rc = MCP_BAD_ARG;
   } else {
@@ -174,7 +165,6 @@ static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return NULL;
 }
 

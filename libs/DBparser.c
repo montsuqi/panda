@@ -77,7 +77,6 @@ static char ***ParKeyItem(CURFILE *in, ValueStruct *root) {
   char *elm;
   ValueStruct *value;
 
-  ENTER_FUNC;
   ret = NULL;
   rcount = 0;
   while (GetName == T_SYMBOL) {
@@ -123,7 +122,6 @@ static char ***ParKeyItem(CURFILE *in, ValueStruct *root) {
   if (ComToken != '}') {
     ParError("} not found");
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -131,18 +129,15 @@ static void ParKey(CURFILE *in, RecordStruct *rec) {
   DB_Struct *db;
   KeyStruct *skey;
 
-  ENTER_FUNC;
   db = RecordDB(rec);
   skey = New(KeyStruct);
   skey->item = ParKeyItem(in, rec->value);
   db->pkey = skey;
-  LEAVE_FUNC;
 }
 
 static DB_Struct *InitDB_Struct(char *gname) {
   DB_Struct *ret;
 
-  ENTER_FUNC;
   ret = New(DB_Struct);
   ret->paths = NewNameHash();
   ret->use = NewNameHash();
@@ -160,7 +155,6 @@ static DB_Struct *InitDB_Struct(char *gname) {
     ret->gname = NULL;
   }
   ret->pcount = 0;
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -185,7 +179,6 @@ static void InsertBuildIn(PathStruct *ret, char *name, int func) {
 static PathStruct *NewPathStruct(int usage) {
   PathStruct *ret;
 
-  ENTER_FUNC;
   ret = New(PathStruct);
   ret->opHash = NewNameHash();
   ret->ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * SIZE_DBOP);
@@ -198,7 +191,6 @@ static PathStruct *NewPathStruct(int usage) {
   ret->ocount = 6;
   ret->usage = usage;
   ret->args = NULL;
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -232,7 +224,6 @@ static LargeByteString *_ParSCRIPT(CURFILE *in, RecordStruct *rec,
   LargeByteString *scr;
   int pc, c;
 
-  ENTER_FUNC;
   scr = NewLBS();
   pc = 1;
   while ((c = SCRIPT_Lex(in)) != EOF) {
@@ -257,7 +248,6 @@ static LargeByteString *_ParSCRIPT(CURFILE *in, RecordStruct *rec,
   }
   LBS_EmitEnd(scr);
   LBS_EmitFix(scr);
-  LEAVE_FUNC;
   return (scr);
 }
 
@@ -266,7 +256,6 @@ static LargeByteString *ParScript(CURFILE *in, RecordStruct *rec,
   LargeByteString *ret;
   DB_Struct *db = RecordDB(rec);
 
-  ENTER_FUNC;
   if (db->dbg == NULL) {
     Error("'db_group' must be before LD and BD, in directory (%s).", rec->name);
   }
@@ -282,7 +271,6 @@ static LargeByteString *ParScript(CURFILE *in, RecordStruct *rec,
     ret = NULL;
     break;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -293,7 +281,6 @@ static void ParTableOperation(CURFILE *in, RecordStruct *rec,
   ValueStruct *value;
   char name[SIZE_SYMBOL + 1];
 
-  ENTER_FUNC;
   if ((ix = (int)(long)g_hash_table_lookup(path->opHash, ComSymbol)) == 0) {
     ix = path->ocount;
     ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * (ix + 1));
@@ -339,7 +326,6 @@ static void ParTableOperation(CURFILE *in, RecordStruct *rec,
   } else {
     ParError("{ missing");
   }
-  LEAVE_FUNC;
 }
 
 static void ParPath(CURFILE *in, RecordStruct *rec, int usage) {
@@ -348,7 +334,6 @@ static void ParPath(CURFILE *in, RecordStruct *rec, int usage) {
   ValueStruct *value;
   char name[SIZE_SYMBOL + 1];
 
-  ENTER_FUNC;
   pcount = RecordDB(rec)->pcount;
   paths = (PathStruct **)xmalloc(sizeof(PathStruct *) * (pcount + 1));
   if (pcount > 0) {
@@ -409,7 +394,6 @@ static void ParPath(CURFILE *in, RecordStruct *rec, int usage) {
   if (GetSymbol != ';') {
     ParError("; missing");
   }
-  LEAVE_FUNC;
 }
 
 static void ParDBOperation(CURFILE *in, RecordStruct *rec) {
@@ -417,7 +401,6 @@ static void ParDBOperation(CURFILE *in, RecordStruct *rec) {
   int ix;
   DB_Operation **ops, *op;
 
-  ENTER_FUNC;
   if ((ix = (int)(long)g_hash_table_lookup(db->opHash, ComSymbol)) == 0) {
     ix = db->ocount;
     ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * (ix + 1));
@@ -445,7 +428,6 @@ static void ParDBOperation(CURFILE *in, RecordStruct *rec) {
   } else {
     ParError("{ missing");
   }
-  LEAVE_FUNC;
 }
 
 static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
@@ -454,7 +436,6 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
   char buff[SIZE_LONGNAME + 1];
   PathStruct *path;
 
-  ENTER_FUNC;
   dbgprintf("fScript = %d", fScript);
   ret = DD_Parse(in);
   if (ret == NULL) {
@@ -560,7 +541,6 @@ quit:
     RecordDB(ret)->pcount++;
     RecordDB(ret)->path[0] = path;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -571,7 +551,6 @@ static void ResolveAlias(RecordStruct *root, ValueStruct *val) {
   RecordStruct *use;
   ValueStruct *item;
 
-  ENTER_FUNC;
   if (val != NULL) {
     switch (val->type) {
     case GL_TYPE_ARRAY:
@@ -613,7 +592,6 @@ static void ResolveAlias(RecordStruct *root, ValueStruct *val) {
       break;
     }
   }
-  LEAVE_FUNC;
 }
 
 extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
@@ -621,7 +599,6 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
   RecordStruct *ret;
   CURFILE *in, root;
 
-  ENTER_FUNC;
   root.next = NULL;
   dbgprintf("name  = [%s]", name);
   dbgprintf("gname = [%s]", gname);
@@ -636,6 +613,5 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }

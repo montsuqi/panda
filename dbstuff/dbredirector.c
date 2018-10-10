@@ -107,14 +107,12 @@ static void FreeVeryfyData(VeryfyData *veryfydata) {
 
 static Ticket *NewTicket(void) {
   Ticket *ticket;
-  ENTER_FUNC;
   ticket = New(Ticket);
   ticket->ticket_id = 0;
   ticket->fd = 0;
   ticket->veryfydata = NULL;
   ticket->auditlog = NULL;
   ticket->status = TICKET_BEGIN;
-  LEAVE_FUNC;
   return ticket;
 }
 
@@ -202,20 +200,17 @@ static void CleanSyncMode(NETFILE *fpLog) {
 
 static void OrderTicket(NETFILE *fpLog) {
   Ticket *ticket;
-  ENTER_FUNC;
   ticket = NewTicket();
   ticket->fd = fpLog->fd;
   ticket->ticket_id = TICKETID++;
   TicketList = g_slist_append(TicketList, ticket);
   SendInt(fpLog, ticket->ticket_id);
-  LEAVE_FUNC;
 }
 
 static void RecvRedData(NETFILE *fpLog) {
   int ticket_id;
   Ticket *ticket;
   VeryfyData *veryfydata;
-  ENTER_FUNC;
   veryfydata = NewVerfyData();
   ticket_id = RecvInt(fpLog);
 
@@ -232,13 +227,11 @@ static void RecvRedData(NETFILE *fpLog) {
   } else {
     FreeVeryfyData(veryfydata);
   }
-  LEAVE_FUNC;
 }
 
 static Ticket *DequeueTicket(void) {
   GSList *first = NULL;
   Ticket *ticket = NULL;
-  ENTER_FUNC;
   while (ticket == NULL) {
     pthread_mutex_lock(&redlock);
     pthread_mutex_lock(&ticketlock);
@@ -268,7 +261,6 @@ static Ticket *DequeueTicket(void) {
     }
     pthread_mutex_unlock(&redlock);
   }
-  LEAVE_FUNC;
   return ticket;
 }
 
@@ -295,20 +287,17 @@ static void CommitTicket(NETFILE *fpLog) {
 static void AbortTicket(NETFILE *fpLog) {
   Ticket *ticket;
   int ticket_id;
-  ENTER_FUNC;
   ticket_id = RecvInt(fpLog);
   ticket = LookupTicket(ticket_id, fpLog->fd);
   if (ticket) {
     ticket->status = TICKET_ABORT;
   }
   pthread_cond_signal(&redcond);
-  LEAVE_FUNC;
 }
 
 static void AllAbortTicket(NETFILE *fpLog) {
   GSList *list;
   Ticket *ticket;
-  ENTER_FUNC;
   pthread_mutex_lock(&ticketlock);
   for (list = TicketList; list; list = list->next) {
     ticket = (Ticket *)list->data;
@@ -320,13 +309,11 @@ static void AllAbortTicket(NETFILE *fpLog) {
   }
   pthread_mutex_unlock(&ticketlock);
   pthread_cond_signal(&redcond);
-  LEAVE_FUNC;
 }
 
 static void AllAllAbortTicket(void) {
   GSList *list;
   Ticket *ticket;
-  ENTER_FUNC;
   pthread_mutex_lock(&ticketlock);
   for (list = TicketList; list; list = list->next) {
     ticket = (Ticket *)list->data;
@@ -337,24 +324,20 @@ static void AllAllAbortTicket(void) {
     }
   }
   pthread_mutex_unlock(&ticketlock);
-  LEAVE_FUNC;
 }
 
 static void AuditTicket(NETFILE *fpLog, LargeByteString *lbs) {
   Ticket *ticket;
-  ENTER_FUNC;
   ticket = NewTicket();
   ticket->status = TICKET_AUDIT;
   ticket->auditlog = lbs;
   LockTicket(fpLog);
   TicketList = g_slist_append(TicketList, ticket);
   UnLockTicket(fpLog);
-  LEAVE_FUNC;
 }
 
 static void RecvAuditLog(NETFILE *fpLog) {
   LargeByteString *lbs;
-  ENTER_FUNC;
   lbs = NewLBS();
   RecvLBS(fpLog, lbs);
   if (LBS_Size(lbs) > 0) {
@@ -362,7 +345,6 @@ static void RecvAuditLog(NETFILE *fpLog) {
   } else {
     FreeLBS(lbs);
   }
-  LEAVE_FUNC;
 }
 
 static void LogThread(void *para) {
@@ -370,7 +352,6 @@ static void LogThread(void *para) {
   NETFILE *fpLog;
   PacketClass c;
   Bool fSuc = TRUE;
-  ENTER_FUNC;
   dbgmsg("log thread!\n");
   fpLog = SocketToNet(fhLog);
   do {
@@ -425,14 +406,12 @@ static void LogThread(void *para) {
   AllAbortTicket(fpLog);
   CloseNet(fpLog);
   dbgmsg("log thread close!\n");
-  LEAVE_FUNC;
 }
 
 extern pthread_t ConnectServer(int _fh) {
   int fh;
   pthread_t thr;
 
-  ENTER_FUNC;
 
   for (;;) {
     if ((fh = accept(_fh, 0, 0)) < 0) {
@@ -446,14 +425,12 @@ extern pthread_t ConnectServer(int _fh) {
   }
   pthread_create(&thr, NULL, (void *(*)(void *))LogThread, (void *)(long)fh);
   pthread_detach(thr);
-  LEAVE_FUNC;
   return (thr);
 }
 
 static void WriteLog(FILE *fp, char *state) {
   time_t nowtime;
   struct tm Now;
-  ENTER_FUNC;
   if (fp != NULL) {
     time(&nowtime);
     localtime_r(&nowtime, &Now);
@@ -464,7 +441,6 @@ static void WriteLog(FILE *fp, char *state) {
             ThisDBG->func->commentEnd);
     fflush(fp);
   }
-  LEAVE_FUNC;
 }
 
 static void WriteLogQuery(FILE *fp, char *query) {
@@ -472,7 +448,6 @@ static void WriteLogQuery(FILE *fp, char *query) {
   time_t nowtime;
   struct tm Now;
 
-  ENTER_FUNC;
   if (fp != NULL) {
     time(&nowtime);
     localtime_r(&nowtime, &Now);
@@ -484,14 +459,12 @@ static void WriteLogQuery(FILE *fp, char *query) {
     fflush(fp);
     count++;
   }
-  LEAVE_FUNC;
 }
 
 static Bool ConnectDB(void) {
   Bool rc = TRUE;
   DBG_Struct *rdbg;
   int retry = 0;
-  ENTER_FUNC;
   if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
     return rc;
   }
@@ -521,13 +494,11 @@ static Bool ConnectDB(void) {
       rc = FALSE;
     }
   }
-  LEAVE_FUNC;
   return rc;
 }
 
 void ReConnectDB(void) {
   int retry = 0;
-  ENTER_FUNC;
   while (!ConnectDB()) {
     retry++;
     if (retry > MaxSendRetry) {
@@ -538,12 +509,10 @@ void ReConnectDB(void) {
   if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT) {
     ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
   }
-  LEAVE_FUNC;
 }
 
 static Bool DisConnectDB(void) {
   Bool rc = TRUE;
-  ENTER_FUNC;
   CloseRedirectDB(ThisDBG);
   if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_DISCONNECT) {
     Message("disconnect to database successed");
@@ -552,7 +521,6 @@ static Bool DisConnectDB(void) {
     Message("disconnect to database failed");
   }
   return rc;
-  LEAVE_FUNC;
 }
 
 static FILE *OpenLogFile(void) {
@@ -569,7 +537,6 @@ static FILE *OpenLogFile(void) {
 
 extern Bool ConnectAuditDB(void) {
   Bool rc = TRUE;
-  ENTER_FUNC;
   if (AuditDBG == NULL) {
     return rc;
   }
@@ -582,7 +549,6 @@ extern Bool ConnectAuditDB(void) {
       rc = FALSE;
     }
   }
-  LEAVE_FUNC;
   return rc;
 }
 
@@ -602,27 +568,23 @@ static int CloseLogFile(FILE *fp) { return fclose(fp); }
 
 static FILE *ReopenSystem(FILE *fp) {
   FILE *rfp = NULL;
-  ENTER_FUNC;
   DisConnectDB();
   if (fp != NULL) {
     CloseLogFile(fp);
   }
   ConnectDB();
   rfp = OpenLogFile();
-  LEAVE_FUNC;
   return rfp;
 }
 
 static int CheckRedirectData(LargeByteString *src, LargeByteString *dsc) {
   int rc = MCP_OK;
-  ENTER_FUNC;
   if (strcmp(LBS_Body(src), LBS_Body(dsc)) == 0) {
     rc = MCP_OK;
   } else {
     Warning("CheckData difference %s<>%s", LBS_Body(src), LBS_Body(dsc));
     rc = MCP_BAD_OTHER;
   }
-  LEAVE_FUNC;
   return rc;
 }
 
@@ -631,7 +593,6 @@ extern int WriteDB(LargeByteString *query, LargeByteString *orgcheck) {
   LargeByteString *redcheck = NULL;
   char buff[SIZE_BUFF];
 
-  ENTER_FUNC;
   LBS_EmitStart(ThisDBG->checkData);
   rc = TransactionRedirectStart(ThisDBG);
   if (rc == MCP_OK) {
@@ -652,13 +613,11 @@ extern int WriteDB(LargeByteString *query, LargeByteString *orgcheck) {
   if (rc == MCP_OK) {
     rc = TransactionRedirectEnd(ThisDBG);
   }
-  LEAVE_FUNC;
   return rc;
 }
 
 static int ExecDB(VeryfyData *veryfydata) {
   int rc = MCP_OK;
-  ENTER_FUNC;
   if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT) {
     ReConnectDB();
   }
@@ -673,12 +632,10 @@ static int ExecDB(VeryfyData *veryfydata) {
       ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
     }
   }
-  LEAVE_FUNC;
   return ThisDBG->process[PROCESS_UPDATE].dbstatus;
 }
 
 static void ReRedirect(char *query, char *checkData) {
-  ENTER_FUNC;
   if (ThisDBG->redirect == NULL)
     return;
   LockDB_Redirect(ThisDBG);
@@ -687,7 +644,6 @@ static void ReRedirect(char *query, char *checkData) {
   PutDB_Redirect(ThisDBG, query);
   CopyCheckDataDB_Redirect(ThisDBG, checkData);
   CommitDB_Redirect(ThisDBG);
-  LEAVE_FUNC;
 }
 
 static void WriteRedirectAuditLog(void) {
@@ -727,7 +683,6 @@ extern void WriteAuditLog(FILE *afp, FILE *fp, Ticket *ticket) {
   int rc;
   static Bool ExistADBGAuditTable = FALSE;
   static Bool ExistTDBGAuditTable = FALSE;
-  ENTER_FUNC;
   while (fSync) {
     Message("auditlog wait...");
     sleep(1);
@@ -763,23 +718,18 @@ extern void WriteAuditLog(FILE *afp, FILE *fp, Ticket *ticket) {
     }
     FreeLBS(ticket->auditlog);
   }
-  LEAVE_FUNC;
 }
 
 static void HandleRedirector(VeryfyData *veryfydata) {
-  ENTER_FUNC;
   if (ExecDB(veryfydata) == DB_STATUS_UNCONNECT) {
     /* Retry */
     ExecDB(veryfydata);
   }
-  LEAVE_FUNC;
 }
 
 static void HandleLog(VeryfyData *veryfydata) {
-  ENTER_FUNC;
   Put_DBLog(DBLog, LBS_Body(veryfydata->redirectData),
             LBS_Body(veryfydata->checkData));
-  LEAVE_FUNC;
 }
 
 static void FileThread(void *dummy) {
@@ -787,7 +737,6 @@ static void FileThread(void *dummy) {
   FILE *fp, *afp;
   Ticket *ticket;
   char header[SIZE_BUFF];
-  ENTER_FUNC;
   fp = OpenLogFile();
   ConnectDB();
   afp = OpenAuditLogFile();
@@ -850,7 +799,6 @@ static void FileThread(void *dummy) {
   if (!fDbsyncstatus) {
     WriteLog(fp, "DB synchronous failure");
   }
-  LEAVE_FUNC;
 }
 
 extern void ExecuteServer(void) {
@@ -858,7 +806,6 @@ extern void ExecuteServer(void) {
   fd_set ready;
   int maxfd;
 
-  ENTER_FUNC;
   pthread_mutex_init(&redlock, NULL);
   pthread_mutex_init(&ticketlock, NULL);
   pthread_cond_init(&redcond, NULL);
@@ -885,7 +832,6 @@ extern void ExecuteServer(void) {
   AllAllAbortTicket();
   pthread_cond_signal(&redcond);
   pthread_join(_FileThread, NULL);
-  LEAVE_FUNC;
 }
 
 #ifdef DEBUG
@@ -913,7 +859,6 @@ static void _CheckDBG(char *name, DBG_Struct *dbg, char *red_name) {
   char *src_port, *dsc_port;
   char *dbg_dbname = "", *red_dbg_dbname = "";
   char *dbname;
-  ENTER_FUNC;
   if (dbg->redirect != NULL) {
     red_dbg = dbg->redirect;
     if (strcmp(red_dbg->name, red_name) == 0) {
@@ -934,7 +879,6 @@ static void _CheckDBG(char *name, DBG_Struct *dbg, char *red_name) {
       xfree(dsc_port);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void CheckDBG(char *name) {
@@ -977,7 +921,6 @@ void ReopenHandler(int no) {
 extern void InitSystem(char *name, char *program) {
   struct sigaction sa;
   char *filename;
-  ENTER_FUNC;
   InitNET();
 
   memset(&sa, 0, sizeof(struct sigaction));
@@ -1042,7 +985,6 @@ extern void InitSystem(char *name, char *program) {
   }
   //	TicketList = g_slist_alloc();
 
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE option[] = {

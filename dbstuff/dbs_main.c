@@ -71,7 +71,6 @@ static URL Auth;
 static char *Encoding;
 
 static void InitSystem(char *name) {
-  ENTER_FUNC;
   sigemptyset(&hupset);
   sigaddset(&hupset, SIGHUP);
 
@@ -86,7 +85,6 @@ static void InitSystem(char *name) {
   DB_Table = ThisDBD->DBD_Table;
 
   InitDB_Process(AppName);
-  LEAVE_FUNC;
 }
 
 #define COMM_STRING 1
@@ -107,10 +105,8 @@ typedef struct {
 } SessionNode;
 
 static void FinishSession(SessionNode *ses) {
-  ENTER_FUNC;
   Message("[%s@%s] session end", ses->user, ses->remote);
   xfree(ses);
-  LEAVE_FUNC;
 }
 
 static int ParseVersion(char *str) {
@@ -167,7 +163,6 @@ static SessionNode *InitDBSSession(NETFILE *fpComm, char *remote) {
   char *p, *q;
   int ver = 0;
 
-  ENTER_FUNC;
   ses = NewSessionNode();
   /*
    version user password type\n
@@ -239,7 +234,6 @@ static SessionNode *InitDBSSession(NETFILE *fpComm, char *remote) {
     xfree(ses);
     ses = NULL;
   }
-  LEAVE_FUNC;
   return (ses);
 }
 
@@ -271,7 +265,6 @@ static void RecvData(NETFILE *fpComm, ValueStruct *args) {
   char *p;
   ValueStruct *value;
 
-  ENTER_FUNC;
   do {
     RecvStringDelim(fpComm, SIZE_BUFF, buff);
     dbgprintf("RecvData [%s]", buff);
@@ -291,7 +284,6 @@ static void RecvData(NETFILE *fpComm, ValueStruct *args) {
       break;
     }
   } while (TRUE);
-  LEAVE_FUNC;
 }
 
 static void WriteClientString(SessionNode *ses, NETFILE *fpComm, Bool fType,
@@ -303,7 +295,6 @@ static void WriteClientString(SessionNode *ses, NETFILE *fpComm, Bool fType,
   Bool fName;
   int ix, i, limit = INT_MAX;
 
-  ENTER_FUNC;
   SendStringDelim(fpComm, "Exec: ");
   if (ses->fCount) {
     snprintf(buff, SIZE_BUFF, "%d:%d\n", ctrl->rc, ctrl->rcount);
@@ -314,7 +305,6 @@ static void WriteClientString(SessionNode *ses, NETFILE *fpComm, Bool fType,
   SendStringDelim(fpComm, buff);
   dbgprintf("Exec: [%s]", buff);
   if ((ses->fIgnore) && ((ctrl->rcount == 0) || (args == NULL))) {
-    LEAVE_FUNC;
     return;
   }
   ix = 0;
@@ -398,7 +388,6 @@ static void WriteClientString(SessionNode *ses, NETFILE *fpComm, Bool fType,
       SendStringDelim(fpComm, "\n");
     }
   }
-  LEAVE_FUNC;
 }
 
 static void DumpItems(NETFILE *fp, ValueStruct *value) {
@@ -463,11 +452,9 @@ static void DumpItems(NETFILE *fp, ValueStruct *value) {
 
 static void WriteClientStructure(SessionNode *ses, NETFILE *fpComm,
                                  RecordStruct *rec) {
-  ENTER_FUNC;
   SendStringDelim(fpComm, rec->name);
   DumpItems(fpComm, rec->value);
   SendStringDelim(fpComm, ";\n");
-  LEAVE_FUNC;
 }
 
 static Bool ExecQuery(SessionNode *ses, NETFILE *fpComm, char *para) {
@@ -477,7 +464,6 @@ static Bool ExecQuery(SessionNode *ses, NETFILE *fpComm, char *para) {
   DBCOMM_CTRL ctrl;
   char *p, *q;
 
-  ENTER_FUNC;
   InitializeCTRL(&ctrl);
   printf("para => [%s]\n", para);
   if ((q = strchr(para, ':')) != NULL) {
@@ -535,7 +521,6 @@ static Bool ExecQuery(SessionNode *ses, NETFILE *fpComm, char *para) {
   if (retvalue) {
     FreeValueStruct(retvalue);
   }
-  LEAVE_FUNC;
 
   return (ret);
 }
@@ -557,7 +542,6 @@ static Bool GetPathTable(SessionNode *ses, NETFILE *fpComm, char *para) {
     g_hash_table_foreach(rec->opt.db->paths, (GHFunc)_SendPathTable, NULL);
   }
 
-  ENTER_FUNC;
   if (*para != 0) {
     dbgprintf("para = [%s]", para);
     g_strlcpy(rname, para, SIZE_NAME);
@@ -584,7 +568,6 @@ static Bool GetPathTable(SessionNode *ses, NETFILE *fpComm, char *para) {
   SendStringDelim(fpComm, "\n");
 
   ret = TRUE;
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -596,7 +579,6 @@ static Bool GetSchema(SessionNode *ses, NETFILE *fpComm, char *para) {
   DBCOMM_CTRL ctrl;
   Bool ret = FALSE;
 
-  ENTER_FUNC;
   if ((q = strchr(para, ':')) != NULL) {
     *q = 0;
     DecodeStringURL(rname, para);
@@ -625,7 +607,6 @@ static Bool GetSchema(SessionNode *ses, NETFILE *fpComm, char *para) {
     SendStringDelim(fpComm, "\n");
   }
   ret = TRUE;
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -633,7 +614,6 @@ static Bool SetFeature(SessionNode *ses, NETFILE *fpComm, char *para) {
   char *p = para, *q;
   Bool fOn, ret;
 
-  ENTER_FUNC;
   while (*p != 0) {
     while ((*p != 0) && (isspace(*p)))
       p++;
@@ -661,13 +641,11 @@ static Bool SetFeature(SessionNode *ses, NETFILE *fpComm, char *para) {
     p = q;
   }
   ret = TRUE;
-  LEAVE_FUNC;
   return (ret);
 }
 
 static Bool do_String(NETFILE *fpComm, char *input, SessionNode *ses) {
   Bool ret;
-  ENTER_FUNC;
   if (strlcmp(input, "Exec: ") == 0) {
     dbgmsg("exec");
     ret = ExecQuery(ses, fpComm, input + 6);
@@ -687,7 +665,6 @@ static Bool do_String(NETFILE *fpComm, char *input, SessionNode *ses) {
     Warning("invalid message [%s]\n", input);
     ret = FALSE;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -695,7 +672,6 @@ static Bool MainLoop(NETFILE *fpComm, SessionNode *ses) {
   char buff[SIZE_BUFF + 1];
   Bool ret = FALSE;
 
-  ENTER_FUNC;
   if (RecvStringDelim(fpComm, SIZE_BUFF, buff)) {
     switch (ses->type) {
     case COMM_STRING:
@@ -707,7 +683,6 @@ static Bool MainLoop(NETFILE *fpComm, SessionNode *ses) {
       break;
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -721,7 +696,6 @@ static void ExecuteServer(void) {
   Port *port;
   char remote[SIZE_HOST + 1];
 
-  ENTER_FUNC;
   port = ParPortName(PortNumber);
   soc_len = InitServerMultiPort(port, Back, soc);
   while (TRUE) {
@@ -742,12 +716,9 @@ static void ExecuteServer(void) {
       exit(0);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void StopProcess(int ec) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
   exit(ec);
 }
 

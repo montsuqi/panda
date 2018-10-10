@@ -203,7 +203,6 @@ static Bool HerePort(Port *port) {
   Bool ret;
   char *host;
 
-  ENTER_FUNC;
   if (port == NULL) {
     ret = FALSE;
   } else {
@@ -222,7 +221,6 @@ static Bool HerePort(Port *port) {
       ret = FALSE;
     }
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -269,7 +267,6 @@ static void SetDefault(void) {
 }
 
 static void InitSystem(void) {
-  ENTER_FUNC;
   ProcessList = NULL;
   InitDirectory();
   SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
@@ -281,7 +278,6 @@ static void InitSystem(void) {
     Error("cannot make TempDirRoot:%s", TempDir);
   }
   setenv("MCP_TEMPDIR_ROOT", TempDir, 1);
-  LEAVE_FUNC;
 }
 
 static void _execv(char *cmd, char **argv) {
@@ -300,7 +296,6 @@ static int StartProcess(Process *proc) {
   int i;
   size_t size;
 
-  ENTER_FUNC;
 retry:
   if ((pid = fork()) > 0) {
     proc->pid = pid;
@@ -334,7 +329,6 @@ retry:
     Message("can't start process");
     goto retry;
   }
-  LEAVE_FUNC;
   return (pid);
 }
 
@@ -343,7 +337,6 @@ static void InitRedirector(DBG_Struct *dbg) {
   char **argv;
   Process *proc;
 
-  ENTER_FUNC;
   proc = New(Process);
   argv = (char **)xmalloc(sizeof(char *) * 15);
   proc->argv = argv;
@@ -388,26 +381,22 @@ static void InitRedirector(DBG_Struct *dbg) {
   proc->interval = Interval;
   dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
   ProcessList = g_list_append(ProcessList, proc);
-  LEAVE_FUNC;
 }
 
 static void _InitRedirectors(DBG_Struct *dbg) {
 
-  ENTER_FUNC;
   if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
     _InitRedirectors(dbg->redirect);
   }
   if (dbg->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
     InitRedirector(dbg);
   }
-  LEAVE_FUNC;
 }
 
 static void InitRedirectors(void) {
   int i;
   DBG_Struct *dbg;
 
-  ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
     ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
   }
@@ -417,7 +406,6 @@ static void InitRedirectors(void) {
       _InitRedirectors(dbg->redirect);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void InitDBMaster(void) {
@@ -427,7 +415,6 @@ static void InitDBMaster(void) {
   int back;
   int i;
 
-  ENTER_FUNC;
   if (HerePort(ThisEnv->DBMasterPort)) {
     back = 0;
     for (i = 0; i < ThisEnv->cLD; i++) {
@@ -473,7 +460,6 @@ static void InitDBMaster(void) {
     proc->interval = Interval;
     ProcessList = g_list_append(ProcessList, proc);
   }
-  LEAVE_FUNC;
 }
 
 static void InitDBLog(DBG_Struct *dbg) {
@@ -481,7 +467,6 @@ static void InitDBLog(DBG_Struct *dbg) {
   char **argv;
   Process *proc;
 
-  ENTER_FUNC;
   proc = New(Process);
   argv = (char **)xmalloc(sizeof(char *) * 15);
   proc->argv = argv;
@@ -523,26 +508,22 @@ static void InitDBLog(DBG_Struct *dbg) {
   proc->interval = Interval;
   dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
   ProcessList = g_list_append(ProcessList, proc);
-  LEAVE_FUNC;
 }
 
 static void _InitDBLogs(DBG_Struct *dbg) {
 
-  ENTER_FUNC;
   if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
     _InitDBLogs(dbg->redirect);
   }
   if (dbg->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
     InitDBLog(dbg);
   }
-  LEAVE_FUNC;
 }
 
 static void InitDBLogs(void) {
   int i;
   DBG_Struct *dbg;
 
-  ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
     ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
   }
@@ -552,7 +533,6 @@ static void InitDBLogs(void) {
       _InitDBLogs(dbg->redirect);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void InitGlserver(void) {
@@ -560,7 +540,6 @@ static void InitGlserver(void) {
   char **argv;
   Process *proc;
 
-  ENTER_FUNC;
   proc = New(Process);
   argv = (char **)xmalloc(sizeof(char *) * 20);
   proc->argv = argv;
@@ -609,7 +588,6 @@ static void InitGlserver(void) {
   argv[argc++] = NULL;
   proc->interval = Interval;
   ProcessList = g_list_append(ProcessList, proc);
-  LEAVE_FUNC;
 }
 
 static void _InitAps(LD_Struct *ld) {
@@ -618,7 +596,6 @@ static void _InitAps(LD_Struct *ld) {
   Process *proc;
   int n;
 
-  ENTER_FUNC;
   if (ThisEnv->mlevel != MULTI_APS) {
     ld->nports = 1;
   }
@@ -676,14 +653,12 @@ static void _InitAps(LD_Struct *ld) {
       ProcessList = g_list_append(ProcessList, proc);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void InitApss(void) {
   int i;
   char str[512];
 
-  ENTER_FUNC;
   str[0] = 0;
   for (i = 0; i < ThisEnv->cLD; i++) {
     _InitAps(ThisEnv->ld[i]);
@@ -691,7 +666,6 @@ static void InitApss(void) {
     strncat(str, " ", sizeof(str) - strlen(str) - 1);
   }
   Message("start aps:%s", str);
-  LEAVE_FUNC;
 }
 
 static void InitWfc(void) {
@@ -701,7 +675,6 @@ static void InitWfc(void) {
   int back;
   int i;
 
-  ENTER_FUNC;
   if (HerePort(ThisEnv->WfcApsPort)) {
     back = 0;
     for (i = 0; i < ThisEnv->cLD; i++) {
@@ -759,11 +732,9 @@ static void InitWfc(void) {
     ProcessList = g_list_append(ProcessList, proc);
     Message("start wfc");
   }
-  LEAVE_FUNC;
 }
 
 static void InitServers(void) {
-  ENTER_FUNC;
   if (fRedirector) {
     InitRedirectors();
   }
@@ -778,14 +749,12 @@ static void InitServers(void) {
   }
   InitWfc();
   InitApss();
-  LEAVE_FUNC;
 }
 
 static void KillProcess(unsigned char type, int sig) {
   int i;
   Process *proc;
 
-  ENTER_FUNC;
   for (i = 0; i < g_list_length(ProcessList); i++) {
     proc = g_list_nth_data(ProcessList, i);
     if ((proc->type & type) != 0) {
@@ -796,7 +765,6 @@ static void KillProcess(unsigned char type, int sig) {
       proc->state = STATE_STOP;
     }
   }
-  LEAVE_FUNC;
 }
 
 static void StartSetup() {
@@ -806,7 +774,6 @@ static void StartSetup() {
   char **argv;
   int status;
 
-  ENTER_FUNC;
   if (MONSetupPath) {
     cmd = MONSetupPath;
   } else {
@@ -830,46 +797,37 @@ static void StartSetup() {
     Error("can't start monsetup");
   }
   xfree(argv);
-  LEAVE_FUNC;
 }
 
 static void StartServers() {
   int i;
   Process *proc;
 
-  ENTER_FUNC;
   for (i = 0; i < g_list_length(ProcessList); i++) {
     proc = g_list_nth_data(ProcessList, i);
     StartProcess(proc);
   }
-  LEAVE_FUNC;
 }
 
 static void StopServers(void) {
-  ENTER_FUNC;
   KillProcess(PTYPE_GLS, SIGHUP);
   KillProcess(PTYPE_APS, SIGHUP);
   KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST), SIGHUP);
   sleep(1);
-  LEAVE_FUNC;
 }
 
 static void StopSystem(void) {
-  ENTER_FUNC;
   fLoop = FALSE;
   fRestart = FALSE;
   StopServers();
   Message("stop system");
-  LEAVE_FUNC;
 }
 
 static void RestartSystem(void) {
-  ENTER_FUNC;
   fRestart = FALSE;
   StopServers();
   Message("restart system");
   WfcRestartCount = 0;
-  LEAVE_FUNC;
 }
 
 static Process *GetProcess(int pid) {
@@ -916,7 +874,6 @@ static void ProcessMonitor(void) {
   struct sigaction sa;
   char *command;
 
-  ENTER_FUNC;
   /* need for catch SYGCHLD  */
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_DFL;
@@ -970,7 +927,6 @@ static void ProcessMonitor(void) {
       StartProcess(proc);
     }
   }
-  LEAVE_FUNC;
 }
 
 extern int main(int argc, char **argv) {

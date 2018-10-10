@@ -43,7 +43,6 @@ extern RecordStruct *DD_Parse(CURFILE *in) {
   RecordStruct *ret;
   ValueStruct *value;
 
-  ENTER_FUNC;
   if ((value = RecParseMain(in)) != NULL) {
     ret = New(RecordStruct);
     ret->value = value;
@@ -55,7 +54,6 @@ extern RecordStruct *DD_Parse(CURFILE *in) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -64,7 +62,6 @@ extern RecordStruct *ParseRecordFile(char *name) {
   ValueStruct *value;
   char *ValueName;
 
-  ENTER_FUNC;
   dbgprintf("name = [%s]\n", name);
   if ((value = RecParseValue(name, &ValueName)) != NULL) {
     ret = New(RecordStruct);
@@ -74,7 +71,6 @@ extern RecordStruct *ParseRecordFile(char *name) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -83,7 +79,6 @@ extern RecordStruct *ParseRecordMem(char *mem) {
   ValueStruct *value;
   char *ValueName;
 
-  ENTER_FUNC;
   if ((value = RecParseValueMem(mem, &ValueName)) != NULL) {
     ret = New(RecordStruct);
     ret->value = value;
@@ -92,7 +87,6 @@ extern RecordStruct *ParseRecordMem(char *mem) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -101,7 +95,6 @@ extern RecordStruct *ReadRecordDefine(char *name) {
   static gchar **dirs = NULL;
   int i;
   RecordStruct *rec;
-  ENTER_FUNC;
   rec = NULL;
   dirs = g_strsplit_set(RecordDir, ":", -1);
   for (i = 0; dirs[i] != NULL; i++) {
@@ -114,6 +107,5 @@ extern RecordStruct *ReadRecordDefine(char *name) {
     }
   }
   g_strfreev(dirs);
-  LEAVE_FUNC;
   return rec;
 }

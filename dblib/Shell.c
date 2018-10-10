@@ -59,7 +59,6 @@ static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
 }
 
 static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   OpenDB_RedirectPort(dbg);
   dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG) * sizeof(char *));
   dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
@@ -67,12 +66,10 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
     xfree(dbg->process[PROCESS_UPDATE].conn);
     CloseDB_RedirectPort(dbg);
@@ -81,13 +78,11 @@ static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
       ctrl->rc = MCP_OK;
     }
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
 static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   char **cmdv;
-  ENTER_FUNC;
   while (waitpid(-1, NULL, WNOHANG) > 0)
     ;
   dbg->count = 0;
@@ -107,7 +102,6 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -120,7 +114,6 @@ static int DoShell(char **cmdv) {
   int i;
   extern char **environ;
 
-  ENTER_FUNC;
 #ifdef DEBUG
   printf("command --------------------------------\n");
   for (cmd = cmdv; *cmd; cmd++) {
@@ -153,7 +146,6 @@ static int DoShell(char **cmdv) {
   } else {
     rc = MCP_OK;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
@@ -162,7 +154,6 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   char **cmdv;
 
-  ENTER_FUNC;
   CheckDB_Redirect(dbg);
   LBS_EmitEnd(dbg->checkData);
   setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->checkData), 1);
@@ -177,7 +168,6 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -310,7 +300,6 @@ static ValueStruct *RegistShell(DBCOMM_CTRL *ctrl, RecordStruct *rec,
   char **cmdv;
   char *repos_name;
 
-  ENTER_FUNC;
   ret = NULL;
   dbg = rec->opt.db->dbg;
   cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
@@ -352,7 +341,6 @@ static ValueStruct *RegistShell(DBCOMM_CTRL *ctrl, RecordStruct *rec,
   }
   ret = DuplicateValue(args, TRUE);
   cmdv[dbg->count] = NULL;
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -394,7 +382,6 @@ static ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   Bool rc;
   ValueStruct *ret;
 
-  ENTER_FUNC;
   dbgprintf("[%s]\n", ctrl->func);
   ret = NULL;
 
@@ -424,7 +411,6 @@ static ValueStruct *_DBACCESS(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc ? MCP_OK : MCP_BAD_FUNC;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -483,7 +469,6 @@ static ValueStruct *_EXCOMMAND(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *uuid;
   char *repos_name;
 
-  ENTER_FUNC;
   SetBatchEnv(dbg, args);
   uuid = GenUUID();
   setenv("MON_BATCH_ID", uuid, 1);
@@ -512,7 +497,6 @@ static ValueStruct *_EXCOMMAND(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   }
   xfree(uuid);
   ret = DuplicateValue(args, TRUE);
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -637,13 +621,11 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
 static ValueStruct *_DBERROR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                              RecordStruct *rec, ValueStruct *args) {
-  ENTER_FUNC;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
   } else {
     ctrl->rc = MCP_BAD_OTHER;
   }
-  LEAVE_FUNC;
   return (NULL);
 }
 
@@ -673,8 +655,6 @@ static DB_Primitives Core = {
 
 extern DB_Func *InitShell(void) {
   DB_Func *ret;
-  ENTER_FUNC;
   ret = EnterDB_Function("Shell", Operations, DB_PARSER_SQL, &Core, "# ", "\n");
-  LEAVE_FUNC;
   return (ret);
 }

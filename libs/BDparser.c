@@ -85,7 +85,6 @@ static void ParDB(CURFILE *in, BD_Struct *bd, char *gname) {
   char buff[SIZE_BUFF];
   char *p, *q;
 
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
       if (stricmp(ComSymbol, "metadb")) {
@@ -126,13 +125,11 @@ static void ParDB(CURFILE *in, BD_Struct *bd, char *gname) {
     ERROR_BREAK;
   }
   xfree(gname);
-  LEAVE_FUNC;
 }
 
 static void ParBIND(CURFILE *in, BD_Struct *ret) {
   BatchBind *bind;
 
-  ENTER_FUNC;
   if ((GetSymbol == T_SCONST) || (ComToken == T_SYMBOL)) {
     if (ret == NULL) {
       Error("ret is NULL");
@@ -154,12 +151,10 @@ static void ParBIND(CURFILE *in, BD_Struct *ret) {
   } else {
     ParError("module name error");
   }
-  LEAVE_FUNC;
 }
 
 static BD_Struct *NewBD(void) {
   BD_Struct *bd;
-  ENTER_FUNC;
   bd = New(BD_Struct);
   bd->name = NULL;
   bd->cDB = 1;
@@ -172,7 +167,6 @@ static BD_Struct *NewBD(void) {
   bd->home = NULL;
   bd->loadpath = NULL;
   bd->handlerpath = NULL;
-  LEAVE_FUNC;
   return (bd);
 }
 
@@ -180,7 +174,6 @@ static BD_Struct *BD_Par(CURFILE *in) {
   BD_Struct *ret;
   char *gname;
 
-  ENTER_FUNC;
   ret = NULL;
   while (GetSymbol != T_EOF) {
     switch (ComToken) {
@@ -276,7 +269,6 @@ static BD_Struct *BD_Par(CURFILE *in) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -293,7 +285,6 @@ extern BD_Struct *BD_Parser(char *name) {
   struct stat stbuf;
   CURFILE *in, root;
 
-  ENTER_FUNC;
   root.next = NULL;
   if (stat(name, &stbuf) == 0) {
     if ((in = PushLexInfo(&root, name, ThisEnv->D_Dir, Reserved)) != NULL) {
@@ -311,7 +302,6 @@ extern BD_Struct *BD_Parser(char *name) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 

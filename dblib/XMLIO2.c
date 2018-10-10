@@ -132,7 +132,6 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   size_t size;
   int mode;
   DBG_Struct *mondbg;
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -177,7 +176,6 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
 #ifdef TRACE
   DumpValueStruct(ret);
 #endif
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -261,7 +259,6 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                            RecordStruct *rec, ValueStruct *args) {
   ValueStruct *rname, *val, *ret;
   int mode;
-  ENTER_FUNC;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
@@ -311,14 +308,12 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   }
   val = GetRecordItem(ret, ValueToString(rname, NULL));
   InitializeValue(val);
-  LEAVE_FUNC;
   return ret;
 }
 
 static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
   ValueStruct *val;
-  ENTER_FUNC;
   ctrl->rc = MCP_BAD_ARG;
   if (rec->type != RECORD_DB) {
     return NULL;
@@ -330,29 +325,22 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   }
   ObjectID = ValueObjectId(val);
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return NULL;
 }
 
 static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                            RecordStruct *rec, ValueStruct *args) {
-  ENTER_FUNC;
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return NULL;
 }
 
 extern ValueStruct *XML_BEGIN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   ObjectID = 0;
-  LEAVE_FUNC;
   return (NULL);
 }
 
 extern ValueStruct *XML_END(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  ENTER_FUNC;
   ObjectID = 0;
-  LEAVE_FUNC;
   return (NULL);
 }
 

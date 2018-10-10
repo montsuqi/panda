@@ -35,7 +35,6 @@
 #include "debug.h"
 
 extern void AddConninfo(LargeByteString *conninfo, char *item, char *value) {
-  ENTER_FUNC;
   if (value != NULL) {
     dbgprintf("%s = '%s'", item, value);
     LBS_EmitString(conninfo, item);
@@ -44,7 +43,6 @@ extern void AddConninfo(LargeByteString *conninfo, char *item, char *value) {
     LBS_EmitString(conninfo, "'");
     LBS_EmitSpace(conninfo);
   }
-  LEAVE_FUNC;
 }
 
 static LargeByteString *_CreateConninfo(LargeByteString *conninfo,
@@ -86,24 +84,20 @@ static LargeByteString *_CreateConninfo(LargeByteString *conninfo,
 extern LargeByteString *CreateConninfo(DBG_Struct *dbg, int usage) {
   LargeByteString *conninfo;
 
-  ENTER_FUNC;
   conninfo = NewLBS();
   conninfo = _CreateConninfo(conninfo, dbg, usage);
   AddConninfo(conninfo, "dbname", GetDB_DBname(dbg, usage));
   LBS_EmitEnd(conninfo);
-  LEAVE_FUNC;
 
   return conninfo;
 }
 
 extern LargeByteString *Template1Conninfo(DBG_Struct *dbg, int usage) {
   LargeByteString *conninfo;
-  ENTER_FUNC;
   conninfo = NewLBS();
   conninfo = _CreateConninfo(conninfo, dbg, usage);
   AddConninfo(conninfo, "dbname", "template1");
   LBS_EmitEnd(conninfo);
-  LEAVE_FUNC;
   return conninfo;
 }
 

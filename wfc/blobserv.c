@@ -107,7 +107,6 @@ badio:
 }
 
 extern void ServeBLOB(NETFILE *fp) {
-  ENTER_FUNC;
   pthread_mutex_lock(&lock);
   switch (RecvPacketClass(fp)) {
   case BLOB_EXPORT:
@@ -120,5 +119,4 @@ extern void ServeBLOB(NETFILE *fp) {
     break;
   }
   pthread_mutex_unlock(&lock);
-  LEAVE_FUNC;
 }

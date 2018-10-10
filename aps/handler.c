@@ -68,7 +68,6 @@ static MessageHandlerClass *EnterHandlerClass(char *name) {
   MessageHandlerClass *(*finit)(void);
   char filename[SIZE_LONGNAME + 1];
 
-  ENTER_FUNC;
   if ((klass = g_hash_table_lookup(HandlerClassTable, name)) == NULL) {
     dbgprintf("%s handlerClass invoke.", name);
     sprintf(filename, "%s." SO_SUFFIX, name);
@@ -86,14 +85,11 @@ static MessageHandlerClass *EnterHandlerClass(char *name) {
       Error("[%s] not found.", name);
     }
   }
-  LEAVE_FUNC;
   return (klass);
 }
 
 static void InitHandler(void) {
-  ENTER_FUNC;
   HandlerClassTable = NewNameHash();
-  LEAVE_FUNC;
 }
 
 static void _InitiateHandler(MessageHandler *handler) {
@@ -117,7 +113,6 @@ static void _OnlineInit(char *name, WindowBind *bind, void *dummy) {
 }
 
 extern void InitiateHandler(void) {
-  ENTER_FUNC;
   APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH");
   if (APS_HandlerLoadPath == NULL) {
     if (ThisLD->handlerpath != NULL) {
@@ -129,7 +124,6 @@ extern void InitiateHandler(void) {
   InitHandler();
   dbgprintf("LD = [%s]", ThisLD->name);
   g_hash_table_foreach(ThisLD->bhash, (GHFunc)_OnlineInit, NULL);
-  LEAVE_FUNC;
 }
 
 static void _BatchInit(char *name, BatchBind *bind, void *dummy) {
@@ -137,7 +131,6 @@ static void _BatchInit(char *name, BatchBind *bind, void *dummy) {
 }
 
 extern void InitiateBatchHandler(void) {
-  ENTER_FUNC;
   APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH");
   if (APS_HandlerLoadPath == NULL) {
     if (ThisBD->handlerpath != NULL) {
@@ -148,14 +141,12 @@ extern void InitiateBatchHandler(void) {
   }
   InitHandler();
   g_hash_table_foreach(ThisBD->BatchTable, (GHFunc)_BatchInit, NULL);
-  LEAVE_FUNC;
 }
 
 static void _ReadyDC(char *name, WindowBind *bind, void *dummy) {
   MessageHandler *handler;
 
   handler = bind->handler;
-  ENTER_FUNC;
   if ((handler->fInit & INIT_EXECUTE) == 0) {
     handler->fInit |= INIT_EXECUTE;
     if (handler->klass->ReadyExecute != NULL) {
@@ -168,13 +159,10 @@ static void _ReadyDC(char *name, WindowBind *bind, void *dummy) {
       handler->klass->ReadyDC(handler);
     }
   }
-  LEAVE_FUNC;
 }
 
 extern void ReadyDC(void) {
-  ENTER_FUNC;
   g_hash_table_foreach(ThisLD->bhash, (GHFunc)_ReadyDC, NULL);
-  LEAVE_FUNC;
 }
 
 extern void ReadyHandlerDB(MessageHandler *handler) {
@@ -192,11 +180,9 @@ static void _ReadyOnlineDB(char *name, WindowBind *bind, void *dummy) {
 
 extern int ReadyOnlineDB(char *application_name) {
   int rc;
-  ENTER_FUNC;
   InitDB_Process(application_name);
   rc = OpenDB(NULL);
   g_hash_table_foreach(ThisLD->bhash, (GHFunc)_ReadyOnlineDB, NULL);
-  LEAVE_FUNC;
   return rc;
 }
 
@@ -238,7 +224,6 @@ static void CallBefore(WindowBind *bind, ProcessNode *node) {
   WindowStack w;
   int i, sp;
 
-  ENTER_FUNC;
 #ifdef DEBUG
   fprintf(stderr, "==== callbefore 1\n");
   for (i = 0; i < node->w.sp; i++) {
@@ -303,14 +288,12 @@ static void CallBefore(WindowBind *bind, ProcessNode *node) {
             strputtype(node->w.s[i].puttype));
   }
 #endif
-  LEAVE_FUNC;
 }
 
 static void CallAfter(ProcessNode *node) {
   int i, sp;
   char *dc_puttype;
   char *dc_window;
-  ENTER_FUNC;
 #ifdef DEBUG
   fprintf(stderr, "---- callafter 1 ----\n");
   for (i = 0; i < node->w.sp; i++) {
@@ -404,7 +387,6 @@ static void CallAfter(ProcessNode *node) {
   }
   fprintf(stderr, "---- callafter 2 end ----\n");
 #endif
-  LEAVE_FUNC;
 }
 
 extern void ExecuteProcess(ProcessNode *node) {
@@ -413,7 +395,6 @@ extern void ExecuteProcess(ProcessNode *node) {
   char *window;
   long start, end;
 
-  ENTER_FUNC;
   window =
       ValueStringPointer(GetItemLongName(node->mcprec->value, "dc.window"));
   dbgprintf("window [%s]", window);
@@ -443,11 +424,9 @@ extern void ExecuteProcess(ProcessNode *node) {
   TimerPrintf(start, end, "aps %s %s:%s:%s:%s\n", node->user, bind->module,
               window, node->widget, node->event);
   CallAfter(node);
-  LEAVE_FUNC;
 }
 
 static void StopHandlerDC(MessageHandler *handler) {
-  ENTER_FUNC;
   if (((handler->fInit & INIT_READYDC) != 0) &&
       ((handler->fInit & INIT_STOPDC) == 0)) {
     handler->fInit |= INIT_STOPDC;
@@ -455,20 +434,15 @@ static void StopHandlerDC(MessageHandler *handler) {
       handler->klass->StopDC(handler);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void _StopDC(char *name, WindowBind *bind, void *dummy) {
-  ENTER_FUNC;
   dbgprintf("name = [%s]", name);
   StopHandlerDC(bind->handler);
-  LEAVE_FUNC;
 }
 
 extern void StopDC(void) {
-  ENTER_FUNC;
   g_hash_table_foreach(ThisLD->bhash, (GHFunc)_StopDC, NULL);
-  LEAVE_FUNC;
 }
 
 static void CleanUpHandlerDC(MessageHandler *handler) {
@@ -508,7 +482,6 @@ extern void CleanUpOnlineDB(void) {
 }
 
 extern void StopHandlerDB(MessageHandler *handler) {
-  ENTER_FUNC;
   if (((handler->fInit & INIT_READYDB) != 0) &&
       ((handler->fInit & INIT_STOPDB) == 0)) {
     handler->fInit |= INIT_STOPDB;
@@ -516,20 +489,15 @@ extern void StopHandlerDB(MessageHandler *handler) {
       handler->klass->StopDB(handler);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void _StopOnlineDB(char *name, WindowBind *bind, void *dummy) {
-  ENTER_FUNC;
   StopHandlerDB(bind->handler);
-  LEAVE_FUNC;
 }
 
 extern void StopOnlineDB(void) {
-  ENTER_FUNC;
   CloseDB(NULL);
   g_hash_table_foreach(ThisLD->bhash, (GHFunc)_StopOnlineDB, NULL);
-  LEAVE_FUNC;
 }
 
 #if 0
@@ -552,7 +520,6 @@ extern int StartBatch(char *name, char *para) {
   BatchBind *bind;
   int rc;
 
-  ENTER_FUNC;
   dbgprintf("calling [%s]", name);
   if ((bind = g_hash_table_lookup(ThisBD->BatchTable, name)) == NULL) {
     Error("%s application is not in BD.\n", name);
@@ -567,7 +534,6 @@ extern int StartBatch(char *name, char *para) {
     rc = -1;
     Warning("%s is handler not support batch.\n", name);
   }
-  LEAVE_FUNC;
   return (rc);
 }
 

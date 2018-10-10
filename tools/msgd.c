@@ -64,7 +64,6 @@ static void LogThread(void *para) {
   Bool fOK;
   char *str;
 
-  ENTER_FUNC;
   fpLog = SocketToNet(fhLog);
   do {
     if ((fOK = RecvStringDelim(fpLog, SIZE_BUFF, buff))) {
@@ -75,20 +74,17 @@ static void LogThread(void *para) {
       break;
   } while (fOK);
   CloseNet(fpLog);
-  LEAVE_FUNC;
 }
 
 extern pthread_t ConnectLog(int _fhLog) {
   int fhLog;
   pthread_t thr;
 
-  ENTER_FUNC;
   if ((fhLog = accept(_fhLog, 0, 0)) < 0) {
     printf("_fhLog = %d\n", _fhLog);
     Error("INET Domain Accept");
   }
   pthread_create(&thr, NULL, (void *(*)(void *))LogThread, (void *)(long)fhLog);
-  LEAVE_FUNC;
   return (thr);
 }
 
@@ -98,7 +94,6 @@ static void FileThread(char *fn) {
   time_t nowtime;
   struct tm Now;
 
-  ENTER_FUNC;
   if (fn != NULL) {
     if ((fp = fopen(fn, "w")) == NULL) {
       Error("log file can not open");
@@ -133,7 +128,6 @@ static void FileThread(char *fn) {
     }
     xfree(p);
   }
-  LEAVE_FUNC;
 }
 
 extern void ExecuteServer(char *fn) {
@@ -142,7 +136,6 @@ extern void ExecuteServer(char *fn) {
   int maxfd;
   Port *port;
 
-  ENTER_FUNC;
   pthread_create(&_FileThread, NULL, (void *(*)(void *))FileThread, (void *)fn);
   port = ParPortName(PortNumber);
   _fhLog = InitServerPort(port, Back);
@@ -157,17 +150,14 @@ extern void ExecuteServer(char *fn) {
     }
   }
   DestroyPort(port);
-  LEAVE_FUNC;
 }
 
 extern void InitSystem(void) {
-  ENTER_FUNC;
   InitNET();
   sigemptyset(&hupset);
   sigaddset(&hupset, SIGHUP);
 
   FileQueue = NewQueue();
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE option[] = {
