@@ -58,7 +58,6 @@ static void SysDataThread(void *para) {
   PacketClass c;
   Bool fLoop;
 
-  ENTER_FUNC;
   fLoop = TRUE;
   while (fLoop) {
     c = RecvChar(fp);
@@ -81,7 +80,6 @@ static void SysDataThread(void *para) {
   }
 badio:
   CloseNet(fp);
-  LEAVE_FUNC;
 }
 
 extern pthread_t ConnectSysData(int _fhSysData) {
@@ -89,7 +87,6 @@ extern pthread_t ConnectSysData(int _fhSysData) {
   pthread_t thr;
   pthread_attr_t attr;
   NETFILE *fp;
-  ENTER_FUNC;
   pthread_attr_init(&attr);
   pthread_attr_setstacksize(&attr, 256 * 1024);
   if ((fhSysData = accept(_fhSysData, 0, 0)) < 0) {
@@ -98,11 +95,8 @@ extern pthread_t ConnectSysData(int _fhSysData) {
   fp = SocketToNet(fhSysData);
   pthread_create(&thr, NULL, (void *(*)(void *))SysDataThread, (void *)fp);
   pthread_detach(thr);
-  LEAVE_FUNC;
   return (thr);
 }
 
 extern void InitSysData(void) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }

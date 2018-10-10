@@ -117,7 +117,6 @@ static void ExecuteServer(void) {
   SSL_CTX *ctx;
   char *ssl_warning;
 #endif
-  ENTER_FUNC;
   port = ParPortName(PortNumber);
   soc_len = InitServerMultiPort(port, Back, soc);
 #ifdef USE_SSL
@@ -168,7 +167,6 @@ static void ExecuteServer(void) {
     }
   }
   DestroyPort(port);
-  LEAVE_FUNC;
 }
 
 static void InitSystem(void) {

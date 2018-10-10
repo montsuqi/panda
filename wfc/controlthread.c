@@ -58,7 +58,6 @@ static Bool InitSession(NETFILE *fp) {
   Bool ret;
   char name[SIZE_LONGNAME + 1];
 
-  ENTER_FUNC;
   RecvStringDelim(fp, SIZE_LONGNAME, name);
   if (strcmp(name, ThisEnv->name) == 0) {
     SendPacketClass(fp, WFCCONTROL_OK);
@@ -68,21 +67,17 @@ static Bool InitSession(NETFILE *fp) {
     ret = FALSE;
   }
   MessageLog("control session start");
-  LEAVE_FUNC;
   return (ret);
 }
 
 static void FinishSession(void) {
-  ENTER_FUNC;
   MessageLog("control session end");
-  LEAVE_FUNC;
 }
 
 static void ControlThread(void *para) {
   NETFILE *fp;
   Bool fExit;
 
-  ENTER_FUNC;
   fp = SocketToNet((int)(long)para);
 
   if (InitSession(fp)) {
@@ -105,7 +100,6 @@ static void ControlThread(void *para) {
 badio:
   FinishSession();
   CloseNet(fp);
-  LEAVE_FUNC;
   pthread_exit(NULL);
 }
 
@@ -113,18 +107,14 @@ extern pthread_t ConnectControl(int _fhControl) {
   int fhControl;
   pthread_t thr;
 
-  ENTER_FUNC;
   if ((fhControl = accept(_fhControl, 0, 0)) < 0) {
     Error("accept(2) failure:%s", strerror(errno));
   }
   pthread_create(&thr, NULL, (void *(*)(void *))ControlThread,
                  (void *)(long)fhControl);
   pthread_detach(thr);
-  LEAVE_FUNC;
   return (thr);
 }
 
 extern void InitControl(void) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }

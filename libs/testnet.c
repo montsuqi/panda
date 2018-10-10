@@ -77,7 +77,6 @@ static void ExecuteServer(void) {
   NETFILE *fp;
   unsigned char buff[SIZE_BUFF];
 
-  ENTER_FUNC;
   port = ParPortName(PortNumber);
   _fd = InitServerPort(port, Back);
 
@@ -94,7 +93,6 @@ static void ExecuteServer(void) {
   }
   close(_fd);
   CloseNet(fp);
-  LEAVE_FUNC;
 }
 
 static void ExecuteClient(void) {
@@ -104,7 +102,6 @@ static void ExecuteClient(void) {
   NETFILE *fp;
   unsigned char sbuff[SIZE_BUFF], rbuff[SIZE_BUFF];
 
-  ENTER_FUNC;
   port = ParPortName(PortNumber);
   if ((fd = ConnectSocket(port, SOCK_STREAM)) < 0) {
     printf("can not connect server(server port not found)\n");
@@ -131,7 +128,6 @@ static void ExecuteClient(void) {
   SendLength(fp, 0);
   _ProfileLap("stop");
   CloseNet(fp);
-  LEAVE_FUNC;
 }
 
 static void SetDefault(void) {

@@ -42,7 +42,6 @@
 extern int MCP_PutWindow(ProcessNode *node, char *wname, char *type) {
   ValueStruct *mcp;
 
-  ENTER_FUNC;
   mcp = node->mcprec->value;
   if (wname != NULL) {
     dbgprintf("window = [%s]", wname);
@@ -52,14 +51,12 @@ extern int MCP_PutWindow(ProcessNode *node, char *wname, char *type) {
   SetValueString(GetItemLongName(mcp, "dc.puttype"), type, NULL);
   SetValueString(GetItemLongName(mcp, "dc.status"), "PUTG", NULL);
   SetValueInteger(GetItemLongName(mcp, "rc"), 0);
-  LEAVE_FUNC;
   return (0);
 }
 
 extern int MCP_ReturnComponent(ProcessNode *node, char *event) {
   ValueStruct *mcp;
 
-  ENTER_FUNC;
   mcp = node->mcprec->value;
   if (event != NULL) {
     SetValueString(GetItemLongName(mcp, "dc.event"), event, NULL);
@@ -67,7 +64,6 @@ extern int MCP_ReturnComponent(ProcessNode *node, char *event) {
   SetValueString(GetItemLongName(mcp, "dc.puttype"), MCP_PUT_RETURN, NULL);
   SetValueString(GetItemLongName(mcp, "dc.status"), "PUTG", NULL);
   SetValueInteger(GetItemLongName(mcp, "rc"), 0);
-  LEAVE_FUNC;
   return (0);
 }
 
@@ -75,10 +71,8 @@ extern RecordStruct *MCP_GetWindowRecord(ProcessNode *node, char *name) {
   WindowBind *bind;
   RecordStruct *ret;
 
-  ENTER_FUNC;
   bind = (WindowBind *)g_hash_table_lookup(node->bhash, name);
   ret = bind->rec;
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -87,7 +81,6 @@ extern void *MCP_GetEventHandler(GHashTable *StatusTable, ProcessNode *node) {
   GHashTable *EventTable;
   void (*handler)(ProcessNode *);
 
-  ENTER_FUNC;
   status =
       ValueStringPointer(GetItemLongName(node->mcprec->value, "dc.status"));
   event = ValueStringPointer(GetItemLongName(node->mcprec->value, "dc.event"));
@@ -105,7 +98,6 @@ extern void *MCP_GetEventHandler(GHashTable *StatusTable, ProcessNode *node) {
     handler = NULL;
   }
 
-  LEAVE_FUNC;
   return (handler);
 }
 
@@ -113,7 +105,6 @@ extern void MCP_RegistHandler(GHashTable *StatusTable, char *status,
                               char *event, void (*handler)(ProcessNode *)) {
   GHashTable *EventTable;
 
-  ENTER_FUNC;
   if ((EventTable = g_hash_table_lookup(StatusTable, status)) == NULL) {
     EventTable = NewNameHash();
     g_hash_table_insert(StatusTable, StrDup(status), EventTable);
@@ -121,7 +112,6 @@ extern void MCP_RegistHandler(GHashTable *StatusTable, char *status,
   if (g_hash_table_lookup(EventTable, event) == NULL) {
     g_hash_table_insert(EventTable, StrDup(event), handler);
   }
-  LEAVE_FUNC;
 }
 
 extern ValueStruct *MCP_GetDB_Define(char *name) {
@@ -133,7 +123,6 @@ extern ValueStruct *MCP_GetDB_Define(char *name) {
   ValueStruct *val, *ret;
   char *p, *pname, *oname;
 
-  ENTER_FUNC;
   strcpy(buff, name);
   if ((p = strchr(buff, ':')) != NULL) {
     *p = 0;
@@ -169,6 +158,5 @@ extern ValueStruct *MCP_GetDB_Define(char *name) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }

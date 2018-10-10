@@ -43,7 +43,6 @@ extern void *LoadFile(char *path, char *name) {
   void *ret;
   struct stat st;
 
-  ENTER_FUNC;
   strcpy(buff, path);
   p = buff;
   ret = NULL;
@@ -60,6 +59,5 @@ extern void *LoadFile(char *path, char *name) {
     }
     p = q + 1;
   } while ((q != NULL) && (ret == NULL));
-  LEAVE_FUNC;
   return (ret);
 }

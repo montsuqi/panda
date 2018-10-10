@@ -45,7 +45,6 @@ static PacketClass SYSDB_RequestCommon(NETFILE *fp, PacketClass pc,
                                        ValueStruct *val) {
   PacketClass rc;
   LargeByteString *buf;
-  ENTER_FUNC;
   rc = SESSION_CONTROL_NG;
   buf = NewLBS();
   LBS_ReserveSize(buf, NativeSizeValue(NULL, val), FALSE);
@@ -61,7 +60,6 @@ static PacketClass SYSDB_RequestCommon(NETFILE *fp, PacketClass pc,
   NativeUnPackValue(NULL, LBS_Body(buf), val);
 badio:
   FreeLBS(buf);
-  LEAVE_FUNC;
   return rc;
 }
 

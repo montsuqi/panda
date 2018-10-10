@@ -368,7 +368,6 @@ extern int SQL_Lex(CURFILE *in, Bool fName) {
   char *p;
   char buff[SIZE_SYMBOL];
 
-  ENTER_FUNC;
 retry:
   if (in->Symbol != NULL) {
     xfree(in->Symbol);
@@ -444,6 +443,5 @@ retry:
     printf("DB_Token = [%c]\n", in->Token);
   }
 #endif
-  LEAVE_FUNC;
   return (in->Token);
 }

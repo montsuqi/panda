@@ -74,11 +74,9 @@ static void SetApplicationName(DBG_Struct *dbg, char *appname) {
 
 extern void InitDB_Process(char *appname) {
   int i;
-  ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
     SetApplicationName(ThisEnv->DBG[i], appname);
   }
-  LEAVE_FUNC;
 }
 
 static DB_FUNC LookupFUNC(DBG_Struct *dbg, char *funcname) {
@@ -125,7 +123,6 @@ static void _DBRecordFunc(char *rname, RecordStruct *rec, char *fname) {
   int ix;
   DB_Operation *op;
 
-  ENTER_FUNC;
   if ((ix = (int)(long)g_hash_table_lookup(db->opHash, fname)) > 0) {
     if ((op = db->ops[ix - 1]) != NULL) {
       if (!(*dbg->func->primitive->record)(dbg, fname, rec)) {
@@ -133,7 +130,6 @@ static void _DBRecordFunc(char *rname, RecordStruct *rec, char *fname) {
       }
     }
   }
-  LEAVE_FUNC;
 }
 
 static int _ExecFunction(DBG_Struct *dbg, char *funcname, DBCOMM_CTRL *ctrl,
@@ -163,7 +159,6 @@ static int ExecFunction(DBG_Struct *dbg, char *funcname, Bool fAll) {
   DBCOMM_CTRL ctrl;
   int i;
 
-  ENTER_FUNC;
   InitializeCTRL(&ctrl);
   dbgprintf("func  = [%s]", funcname);
   dbgprintf("fAll = [%s]", fAll ? "TRUE" : "FALSE");
@@ -175,7 +170,6 @@ static int ExecFunction(DBG_Struct *dbg, char *funcname, Bool fAll) {
     dbgprintf("name  = [%s]", dbg->name);
     ctrl.rc = _ExecFunction(dbg, funcname, &ctrl, fAll);
   }
-  LEAVE_FUNC;
   return (ctrl.rc);
 }
 
@@ -240,7 +234,6 @@ extern ValueStruct *ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec,
   ValueStruct *ret;
   long start, end;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = 0;
   start = GetNowTime();
@@ -271,7 +264,6 @@ extern ValueStruct *ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec,
   end = GetNowTime();
   ctrl->time = (end - start);
   TimerPrintf(start, end, "%s:%s:%s\n", ctrl->func, ctrl->rname, ctrl->pname);
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -284,18 +276,14 @@ static int ExecDBG_Operation(DBG_Struct *dbg, char *funcname) {
 extern int TransactionStart(DBG_Struct *dbg) {
   int rc;
 
-  ENTER_FUNC;
   rc = ExecDBG_Operation(dbg, "DBSTART");
-  LEAVE_FUNC;
   return (rc);
 }
 
 extern int TransactionEnd(DBG_Struct *dbg) {
   int rc;
 
-  ENTER_FUNC;
   rc = ExecDBG_Operation(dbg, "DBCOMMIT");
-  LEAVE_FUNC;
   return (rc);
 }
 
@@ -303,7 +291,6 @@ extern int GetDBRedirectStatus(int newstatus) {
   int dbstatus;
   DBG_Struct *dbg, *rdbg;
   int i;
-  ENTER_FUNC;
   dbstatus = DB_STATUS_NOCONNECT;
   for (i = 0; i < ThisEnv->cDBG; i++) {
     dbg = ThisEnv->DBG[i];
@@ -314,19 +301,16 @@ extern int GetDBRedirectStatus(int newstatus) {
       }
     }
   }
-  LEAVE_FUNC;
   return dbstatus;
 }
 
 extern void RedirectError(void) {
   DBG_Struct *dbg;
   int i;
-  ENTER_FUNC;
   for (i = 0; i < ThisEnv->cDBG; i++) {
     dbg = ThisEnv->DBG[i];
     CloseDB_RedirectPort(dbg);
   }
-  LEAVE_FUNC;
 }
 
 extern int OpenDB(DBG_Struct *dbg) { return ExecDBG_Operation(dbg, "DBOPEN"); }
@@ -388,7 +372,6 @@ extern Port *GetDB_Port(DBG_Struct *dbg) {
 extern char *GetDB_Host(DBG_Struct *dbg) {
   char *host;
 
-  ENTER_FUNC;
   if (DB_Host != NULL) {
     host = DB_Host;
   } else {
@@ -396,7 +379,6 @@ extern char *GetDB_Host(DBG_Struct *dbg) {
       host = IP_HOST((GetDB_Port(dbg)));
     }
   }
-  LEAVE_FUNC;
   return (host);
 }
 
@@ -404,7 +386,6 @@ extern char *GetDB_PortName(DBG_Struct *dbg) {
   Port *port;
   char *portname;
 
-  ENTER_FUNC;
   if (DB_Port != NULL) {
     portname = DB_Port;
   } else {
@@ -417,7 +398,6 @@ extern char *GetDB_PortName(DBG_Struct *dbg) {
       }
     }
   }
-  LEAVE_FUNC;
   return (portname);
 }
 
@@ -425,14 +405,12 @@ extern int GetDB_PortMode(DBG_Struct *dbg) {
   Port *port;
   int mode;
 
-  ENTER_FUNC;
   port = GetDB_Port(dbg);
   if ((port != NULL) && port->type == PORT_UNIX) {
     mode = UNIX_MODE(port);
   } else {
     mode = 0;
   }
-  LEAVE_FUNC;
   return (mode);
 }
 
@@ -534,7 +512,6 @@ static ValueStruct *GetTableFuncValue(RecordStruct *rec, DBCOMM_CTRL *ctrl) {
   DB_Operation *op;
   int pno, ono;
 
-  ENTER_FUNC;
   value = rec->value;
   if ((strlen(ctrl->pname) > 0) &&
       ((pno = (int)(long)g_hash_table_lookup(RecordDB(rec)->paths,
@@ -552,7 +529,6 @@ static ValueStruct *GetTableFuncValue(RecordStruct *rec, DBCOMM_CTRL *ctrl) {
     pno = 0;
   }
   ctrl->pno = pno;
-  LEAVE_FUNC;
   return (value);
 }
 
@@ -560,7 +536,6 @@ extern int GetTableFuncData(RecordStruct **rec, ValueStruct **value,
                             DBCOMM_CTRL *ctrl) {
   int rno;
 
-  ENTER_FUNC;
   *value = NULL;
   *rec = NULL;
 
@@ -576,7 +551,6 @@ extern int GetTableFuncData(RecordStruct **rec, ValueStruct **value,
     return 1;
   }
   return 0;
-  LEAVE_FUNC;
 }
 
 extern Bool SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname) {
@@ -585,7 +559,6 @@ extern Bool SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname) {
   PathStruct *path;
   DB_Operation *op;
 
-  ENTER_FUNC;
   if (!pname) {
     Warning("path name not set.\n");
     return FALSE;
@@ -612,14 +585,12 @@ extern Bool SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname) {
   }
   ctrl->pno = pno;
   ctrl->value = value;
-  LEAVE_FUNC;
   return TRUE;
 }
 
 extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
   int rno;
   Bool rc = FALSE;
-  ENTER_FUNC;
   if (!rname) {
     Warning("table name not set.\n");
     return rc;
@@ -633,7 +604,6 @@ extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
   } else {
     Warning("The table name of [%s] is not found.\n", rname);
   }
-  LEAVE_FUNC;
   return rc;
 }
 
@@ -700,7 +670,6 @@ extern void AuditLog(ValueStruct *mcp) {
   ValueStruct *ret;
   DB_FUNC func;
   RecordStruct *rec;
-  ENTER_FUNC;
   rec = ThisEnv->auditrec;
   for (i = 0; i < ThisEnv->cDBG; i++) {
     dbg = ThisEnv->DBG[i];
@@ -714,7 +683,6 @@ extern void AuditLog(ValueStruct *mcp) {
       }
     }
   }
-  LEAVE_FUNC;
 }
 
 extern void SetDBConfig(const char *file) {

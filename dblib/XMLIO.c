@@ -67,7 +67,6 @@ static ValueStruct *_OpenXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   xmlNodePtr root;
   DBG_Struct *mondbg;
 
-  ENTER_FUNC;
   XMLpos = 0;
   XMLDoc = NULL;
   XMLmode = MODE_NONE;
@@ -107,7 +106,6 @@ static ValueStruct *_OpenXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -119,7 +117,6 @@ static ValueStruct *_CloseXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   DBG_Struct *mondbg;
   char *id;
 
-  ENTER_FUNC;
   buff = NULL;
   ret = NULL;
   if (rec->type != RECORD_DB) {
@@ -156,7 +153,6 @@ static ValueStruct *_CloseXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   XMLDoc = NULL;
   XMLpos = 0;
   XMLmode = MODE_NONE;
-  LEAVE_FUNC;
   return ret;
 }
 
@@ -174,7 +170,6 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
   char *buff1;
   xmlNodePtr node;
 
-  ENTER_FUNC;
   if (val == NULL || root == NULL) {
     return MCP_BAD_OTHER;
   }
@@ -261,7 +256,6 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
     return MCP_BAD_ARG;
     break;
   }
-  LEAVE_FUNC;
   return MCP_OK;
 }
 
@@ -270,7 +264,6 @@ static xmlNodePtr Value2XMLNode(char *name, ValueStruct *val) {
   xmlNodePtr child;
   int i;
 
-  ENTER_FUNC;
   if (val == NULL) {
     return NULL;
   }
@@ -336,7 +329,6 @@ static ValueStruct *_ReadXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *ret;
   int i;
 
-  ENTER_FUNC;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
@@ -366,7 +358,6 @@ static ValueStruct *_ReadXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 #ifdef TRACE
   DumpValueStruct(ret);
 #endif
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -375,7 +366,6 @@ static ValueStruct *_WriteXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *ret;
   xmlNodePtr root;
   xmlNodePtr node;
-  ENTER_FUNC;
   ret = NULL;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
@@ -391,7 +381,6 @@ static ValueStruct *_WriteXML(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     xmlAddChildList(root, node);
   }
   ctrl->rc = MCP_OK;
-  LEAVE_FUNC;
   return (ret);
 }
 

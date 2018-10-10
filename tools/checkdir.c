@@ -122,7 +122,6 @@ static void DumpItems(int n, ValueStruct *value) {
 static void DumpKey(KeyStruct *pkey) {
   char ***item, **pk;
 
-  ENTER_FUNC;
   if (pkey != NULL) {
     item = pkey->item;
     PutTab(2);
@@ -143,7 +142,6 @@ static void DumpKey(KeyStruct *pkey) {
     }
   }
   printf("\n");
-  LEAVE_FUNC;
 }
 
 #include "SQLparser.h"
@@ -152,7 +150,6 @@ static void _DumpOps(LargeByteString *sql) {
   int n;
   Bool fIntoAster;
 
-  ENTER_FUNC;
   RewindLBS(sql);
   printf("\t\t\t\tlength = %d\n", (int)LBS_Size(sql));
   fIntoAster = FALSE;
@@ -203,7 +200,6 @@ static void _DumpOps(LargeByteString *sql) {
     }
     printf("\n");
   }
-  LEAVE_FUNC;
 }
 
 static void DumpOps(char *name, int ops, PathStruct *path) {
@@ -225,7 +221,6 @@ static void DumpOps(char *name, int ops, PathStruct *path) {
   printf("\t\t\t-----\n");
 }
 static void DumpPath(PathStruct *path) {
-  ENTER_FUNC;
   printf("\t\tname     = [%s]\n", path->name);
   printf("\t\tusage    = [%02X]\n", path->usage);
   if (path->args != NULL) {
@@ -234,13 +229,11 @@ static void DumpPath(PathStruct *path) {
     printf("\n");
   }
   g_hash_table_foreach(path->opHash, (GHFunc)DumpOps, path);
-  LEAVE_FUNC;
 }
 
 static void DumpDB(DB_Struct *db) {
   int i;
 
-  ENTER_FUNC;
   printf("\t\tDB group = [%s]\n", ((DBG_Struct *)db->dbg)->name);
   DumpKey(db->pkey);
   if (db->pcount > 0) {
@@ -249,17 +242,14 @@ static void DumpDB(DB_Struct *db) {
       DumpPath(db->path[i]);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void DumpRecord(RecordStruct *db) {
-  ENTER_FUNC;
   DumpDB(db->opt.db);
   nTab = 2;
   printf("\t\t%s\t", db->name);
   DumpItems(2, db->value);
   printf(";\n");
-  LEAVE_FUNC;
 }
 
 static void _DumpHandler(char *name, WindowBind *bind, void *dummy) {
@@ -340,7 +330,6 @@ static void _DumpBind(char *name, WindowBind *bind, void *dummy) {
 static void DumpLD(LD_Struct *ld) {
   int i;
 
-  ENTER_FUNC;
   printf("name      = [%s]\n", ld->name);
   printf("\tgroup     = [%s]\n", ld->group);
   printf("\tarraysize = %d\n", (int)ld->arraysize);
@@ -369,7 +358,6 @@ static void DumpLD(LD_Struct *ld) {
   for (i = 1; i < ld->cDB; i++) {
     DumpRecord(ld->db[i]);
   }
-  LEAVE_FUNC;
 }
 
 static void DumpBD(BD_Struct *bd) {
@@ -430,7 +418,6 @@ static void DumpDBG(char *name, DBG_Struct *dbg, void *dummy) {
 static void DumpDirectory(void) {
   int i;
 
-  ENTER_FUNC;
   InitDirectory();
   SetUpDirectory(Directory, NULL, NULL, NULL, P_ALL);
 

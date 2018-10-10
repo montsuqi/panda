@@ -64,7 +64,6 @@ extern int BindIP_Socket(char *port, int type) {
   int iport;
   int one;
 
-  ENTER_FUNC;
   if ((ld = socket(PF_INET, type, 0)) < 0) {
     Error("error socket %s", strerror(errno));
   }
@@ -78,7 +77,6 @@ extern int BindIP_Socket(char *port, int type) {
     close(ld);
     Error("INET Domain Bind");
   }
-  LEAVE_FUNC;
   return (ld);
 }
 
@@ -87,7 +85,6 @@ extern int BindUNIX_Socket(char *name, int type, int mode) {
   struct sockaddr_un addr;
   size_t alen;
 
-  ENTER_FUNC;
   if ((sock = socket(PF_UNIX, type, 0)) < 0) {
     Error("error socket %s", strerror(errno));
   }
@@ -102,7 +99,6 @@ extern int BindUNIX_Socket(char *name, int type, int mode) {
   } else {
     chmod(name, mode);
   }
-  LEAVE_FUNC;
   return (sock);
 }
 
@@ -112,7 +108,6 @@ extern int BindIP_Multi_Listen(char *port, int back, int *soc) {
   int one;
   struct addrinfo *info, hints, *head;
 
-  ENTER_FUNC;
   memclear(&hints, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
@@ -161,7 +156,6 @@ extern int BindIP_Multi_Listen(char *port, int back, int *soc) {
   if (i == 0) {
     Error("no socket, port = [%s]", port);
   }
-  LEAVE_FUNC;
   return (i);
 }
 
@@ -172,7 +166,6 @@ extern int ConnectIP_Socket(char *port, int type, char *host)
   int rc;
   struct addrinfo *info, hints, *head;
 
-  ENTER_FUNC;
   dbgprintf("port = %s\n", port);
   dbgprintf("type = %d\n", type);
   dbgprintf("host = %s\n", host);
@@ -194,7 +187,6 @@ extern int ConnectIP_Socket(char *port, int type, char *host)
     break;
   }
   freeaddrinfo(head);
-  LEAVE_FUNC;
   return (ld);
 }
 #else
@@ -205,7 +197,6 @@ extern int ConnectIP_Socket(char *port, int type, char *host)
   struct hostent *hp;
   struct sockaddr_in name;
 
-  ENTER_FUNC;
   if ((ld = socket(PF_INET, type, 0)) < 0) {
     // fprintf(stderr,"error socket");
     ld = -1;
@@ -223,7 +214,6 @@ extern int ConnectIP_Socket(char *port, int type, char *host)
       ld = -1;
     }
   }
-  LEAVE_FUNC;
   return (ld);
 }
 #endif
@@ -233,7 +223,6 @@ extern int ConnectUNIX_Socket(char *name, int type) {
   size_t alen;
   struct sockaddr_un addr;
 
-  ENTER_FUNC;
   if ((sock = socket(PF_UNIX, type, 0)) < 0) {
     Error("error socket");
   }
@@ -244,7 +233,6 @@ extern int ConnectUNIX_Socket(char *name, int type) {
   if (connect(sock, (struct sockaddr *)&addr, alen) < 0) {
     sock = -1;
   }
-  LEAVE_FUNC;
   return (sock);
 }
 

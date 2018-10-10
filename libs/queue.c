@@ -57,7 +57,6 @@ extern Bool EnQueue(Queue *que, void *data) {
   QueueElement *el;
   Bool rc;
 
-  ENTER_FUNC;
   if ((que != NULL) && (LockQueue(que) == 0)) {
     el = New(QueueElement);
     el->data = data;
@@ -76,7 +75,6 @@ extern Bool EnQueue(Queue *que, void *data) {
   } else {
     rc = FALSE;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
@@ -108,7 +106,6 @@ extern void *DeQueue(Queue *que) {
   QueueElement *el;
   void *ret;
 
-  ENTER_FUNC;
   if ((que != NULL) && (LockQueue(que) == 0)) {
     WaitQueue(que);
     el = que->head;
@@ -125,7 +122,6 @@ extern void *DeQueue(Queue *que) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -133,7 +129,6 @@ extern void *DeQueueNoWait(Queue *que) {
   QueueElement *el;
   void *ret;
 
-  ENTER_FUNC;
   if ((que != NULL) && (que->head != NULL) && (LockQueue(que) == 0)) {
     el = que->head;
     if (el->next == NULL) {
@@ -148,7 +143,6 @@ extern void *DeQueueNoWait(Queue *que) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -156,7 +150,6 @@ extern void *DeQueueTime(Queue *que, int ms) {
   QueueElement *el;
   void *ret;
 
-  ENTER_FUNC;
   if ((que != NULL) && (LockQueue(que) == 0)) {
     WaitQueueTime(que, ms);
     if ((el = que->head) != NULL) {
@@ -176,7 +169,6 @@ extern void *DeQueueTime(Queue *que, int ms) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -216,7 +208,6 @@ extern void *WithdrawQueue(Queue *que) {
   QueueElement *el;
   void *ret;
 
-  ENTER_FUNC;
   if (que != NULL) {
     if ((el = que->curr) != NULL) {
       que->curr = que->curr->next;
@@ -241,7 +232,6 @@ extern void *WithdrawQueue(Queue *que) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -249,7 +239,6 @@ extern void *PeekQueue(Queue *que) {
   QueueElement *el;
   void *ret;
 
-  ENTER_FUNC;
   if (que != NULL) {
     if ((el = que->head) == NULL) {
       ret = NULL;
@@ -259,7 +248,6 @@ extern void *PeekQueue(Queue *que) {
   } else {
     ret = NULL;
   }
-  LEAVE_FUNC;
   return (ret);
 }
 
@@ -275,7 +263,6 @@ extern Bool IsQueue(Queue *que) {
 }
 
 extern void FreeQueue(Queue *que) {
-  ENTER_FUNC;
   if (que != NULL) {
     while (IsQueue(que)) {
       WithdrawQueue(que);
@@ -284,5 +271,4 @@ extern void FreeQueue(Queue *que) {
     pthread_cond_destroy(&que->isdata);
     xfree(que);
   }
-  LEAVE_FUNC;
 }

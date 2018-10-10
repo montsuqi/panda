@@ -165,7 +165,6 @@ static TokenTable tokentable[] = {{"ld", T_LD},
 static GHashTable *Reserved;
 
 static void ParWFC(CURFILE *in) {
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     switch (ComToken) {
     case T_PORT:
@@ -209,11 +208,9 @@ static void ParWFC(CURFILE *in) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
 }
 
 static void ParCONTROL(CURFILE *in) {
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     switch (ComToken) {
     case T_PORT:
@@ -245,11 +242,9 @@ static void ParCONTROL(CURFILE *in) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
 }
 
 static void ParDBMaster(CURFILE *in) {
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     switch (ComToken) {
     case T_PORT:
@@ -301,23 +296,19 @@ static void ParDBMaster(CURFILE *in) {
     ParError(" port is null");
   }
 
-  LEAVE_FUNC;
 }
 
 extern LD_Struct *LD_DummyParser(CURFILE *in) {
   LD_Struct *ret;
 
-  ENTER_FUNC;
   ret = New(LD_Struct);
   ret->name = StrDup(ComSymbol);
-  LEAVE_FUNC;
   return (ret);
 }
 
 static SysData_Struct *ParSysData(CURFILE *in) {
   SysData_Struct *sysdata;
 
-  ENTER_FUNC;
   sysdata = New(SysData_Struct);
   sysdata->port = NULL;
   sysdata->dir = NULL;
@@ -364,7 +355,6 @@ static SysData_Struct *ParSysData(CURFILE *in) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
   return (sysdata);
 }
 
@@ -377,7 +367,6 @@ static void ParLD_Elements(CURFILE *in, int parse_type) {
   Port **tports;
   LD_Struct *ld;
 
-  ENTER_FUNC;
   strcpy(buff, ThisEnv->D_Dir);
   p = buff;
   do {
@@ -474,11 +463,9 @@ static void ParLD_Elements(CURFILE *in, int parse_type) {
   if (ld == NULL) {
     ParErrorPrintf("ld file not found %s.ld\n", ComSymbol);
   }
-  LEAVE_FUNC;
 }
 
 static void SkipLD(CURFILE *in) {
-  ENTER_FUNC;
   while (ComToken != ';') {
     switch (ComToken) {
     case T_SYMBOL:
@@ -509,11 +496,9 @@ static void SkipLD(CURFILE *in) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
 }
 
 static void ParLD(CURFILE *in, char *dname, int parse_type) {
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST) ||
         (ComToken == T_EXIT)) {
@@ -532,7 +517,6 @@ static void ParLD(CURFILE *in, char *dname, int parse_type) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
 }
 
 static void ParBD(CURFILE *in, char *dname, int parse_type) {
@@ -542,7 +526,6 @@ static void ParBD(CURFILE *in, char *dname, int parse_type) {
   char buff[SIZE_BUFF];
   char *p, *q;
 
-  ENTER_FUNC;
   bd = NULL;
   while (GetSymbol != '}') {
     if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
@@ -585,7 +568,6 @@ static void ParBD(CURFILE *in, char *dname, int parse_type) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
 }
 
 static void ParDBD(CURFILE *in, char *dname) {
@@ -595,7 +577,6 @@ static void ParDBD(CURFILE *in, char *dname) {
   char buff[SIZE_BUFF];
   char *p, *q;
 
-  ENTER_FUNC;
   while (GetSymbol != '}') {
     if ((ComToken == T_SYMBOL) || (ComToken == T_SCONST)) {
       if (ThisEnv->D_Dir != NULL) {
@@ -637,7 +618,6 @@ static void ParDBD(CURFILE *in, char *dname) {
     }
     ERROR_BREAK;
   }
-  LEAVE_FUNC;
 }
 
 extern DBG_Struct *NewDBG_Struct(char *name) {
@@ -708,7 +688,6 @@ extern void FreeDBG_Struct(DBG_Struct *dbg) {
 static void ParDBGROUP(CURFILE *in, char *name) {
   DBG_Struct *dbg;
 
-  ENTER_FUNC;
   if (g_hash_table_lookup(ThisEnv->DBG_Table, name) != NULL) {
     ParError("DB group name duplicate");
   }
@@ -877,13 +856,11 @@ static void ParDBGROUP(CURFILE *in, char *name) {
     ERROR_BREAK;
   }
   RegistDBG(dbg);
-  LEAVE_FUNC;
 }
 
 static void _AssignDBG(CURFILE *in, char *name, DBG_Struct *dbg) {
   DBG_Struct *red;
 
-  ENTER_FUNC;
   if (dbg->redirectName != NULL) {
     red = g_hash_table_lookup(ThisEnv->DBG_Table, dbg->redirectName);
     if (red == NULL) {
@@ -891,7 +868,6 @@ static void _AssignDBG(CURFILE *in, char *name, DBG_Struct *dbg) {
     }
     dbg->redirect = red;
   }
-  LEAVE_FUNC;
 }
 
 static int DBGcomp(DBG_Struct **x, DBG_Struct **y) {
@@ -902,7 +878,6 @@ static void AssignDBG(CURFILE *in) {
   int i;
   DBG_Struct *dbg;
 
-  ENTER_FUNC;
   qsort(ThisEnv->DBG, ThisEnv->cDBG, sizeof(DBG_Struct *),
         (int (*)(const void *, const void *))DBGcomp);
   for (i = 0; i < ThisEnv->cDBG; i++) {
@@ -911,7 +886,6 @@ static void AssignDBG(CURFILE *in) {
     dbgprintf("  redirectorMode => %d", dbg->redirectorMode);
     _AssignDBG(in, dbg->name, dbg);
   }
-  LEAVE_FUNC;
 }
 
 static RecordStruct *BuildAuditLog(void) {
@@ -1032,7 +1006,6 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
                         int parse_type) {
   char gname[SIZE_LONGNAME + 1], buff[SIZE_LONGNAME + 1];
 
-  ENTER_FUNC;
   ThisEnv = NULL;
   while (GetSymbol != T_EOF) {
     switch (ComToken) {
@@ -1289,7 +1262,6 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
     ThisEnv->auditrec = BuildAuditLog();
     AssignDBG(in);
   }
-  LEAVE_FUNC;
   return (ThisEnv);
 }
 
@@ -1299,7 +1271,6 @@ extern DI_Struct *DI_Parser(char *name, char *ld, char *bd, char *db,
   DI_Struct *ret;
   CURFILE *in, root;
 
-  ENTER_FUNC;
   ret = NULL;
   root.next = NULL;
   DirectoryDir = dirname(StrDup(name));
@@ -1311,7 +1282,6 @@ extern DI_Struct *DI_Parser(char *name, char *ld, char *bd, char *db,
   } else {
     Error("DI file not found %s\n", name);
   }
-  LEAVE_FUNC;
   return (ret);
 }
 

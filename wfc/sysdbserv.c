@@ -46,7 +46,6 @@
 extern void ServeCommon(NETFILE *fp, PacketClass pc) {
   SessionCtrl *ctrl;
   LargeByteString *buf;
-  ENTER_FUNC;
   switch (pc) {
   case SYSDB_GET_DATA:
     ctrl = NewSessionCtrl(SESSION_CONTROL_GET_DATA);
@@ -81,13 +80,11 @@ extern void ServeCommon(NETFILE *fp, PacketClass pc) {
 badio:
   FreeSessionCtrl(ctrl);
   FreeLBS(buf);
-  LEAVE_FUNC;
 }
 
 extern void ServeGetDataAll(NETFILE *fp) {
   SessionCtrl *ctrl;
   LargeByteString *buf;
-  ENTER_FUNC;
   ctrl = NewSessionCtrl(SESSION_CONTROL_GET_DATA_ALL);
   ctrl = ExecSessionCtrl(ctrl);
   buf = NewLBS();
@@ -101,12 +98,10 @@ extern void ServeGetDataAll(NETFILE *fp) {
 badio:
   FreeSessionCtrl(ctrl);
   FreeLBS(buf);
-  LEAVE_FUNC;
 }
 
 extern void ServeSysDB(NETFILE *fp) {
   PacketClass pc;
-  ENTER_FUNC;
   pc = RecvPacketClass(fp);
   ON_IO_ERROR(fp, badio);
   switch (pc) {
@@ -125,5 +120,5 @@ extern void ServeSysDB(NETFILE *fp) {
     break;
   }
 badio:
-  LEAVE_FUNC;
+  return;
 }

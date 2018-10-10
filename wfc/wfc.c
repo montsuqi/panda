@@ -91,13 +91,11 @@ extern int pselect(int __nfds, fd_set *__restrict __readfds,
 
 #ifdef DEBUG
 extern void DumpNode(SessionData *data) {
-  ENTER_FUNC;
   printf("window   = [%s]\n", data->hdr->window);
   printf("widget   = [%s]\n", data->hdr->widget);
   printf("event    = [%s]\n", data->hdr->event);
   printf("term     = [%s]\n", data->hdr->term);
   printf("user     = [%s]\n", data->hdr->user);
-  LEAVE_FUNC;
 }
 #endif
 
@@ -105,7 +103,6 @@ extern LargeByteString *GetScreenData(SessionData *data, char *name) {
   LargeByteString *scrdata;
   RecordStruct *rec;
 
-  ENTER_FUNC;
   if ((scrdata = (LargeByteString *)g_hash_table_lookup(data->scrpool, name)) ==
       NULL) {
     if ((rec = GetWindow(name)) != NULL) {
@@ -117,7 +114,6 @@ extern LargeByteString *GetScreenData(SessionData *data, char *name) {
       scrdata = NULL;
     }
   }
-  LEAVE_FUNC;
   return (scrdata);
 }
 
@@ -125,7 +121,6 @@ extern void ChangeLD(SessionData *data, LD_Node *newld) {
   int i;
   LargeByteString **scrdata;
 
-  ENTER_FUNC;
   if (newld != NULL) {
     data->spa = g_hash_table_lookup(data->spadata, newld->info->name);
     if (data->spa == NULL) {
@@ -155,7 +150,6 @@ extern void ChangeLD(SessionData *data, LD_Node *newld) {
   }
   data->ld = newld;
   data->apsid = -1;
-  LEAVE_FUNC;
 }
 
 extern void ExecuteServer(void) {
@@ -165,7 +159,6 @@ extern void ExecuteServer(void) {
   int ret;
   struct timespec timeout;
 
-  ENTER_FUNC;
   _fhTerm = InitServerPort(WfcPort, Back);
   maxfd = _fhTerm;
   _fhAps = InitServerPort(ApsPort, Back);
@@ -217,11 +210,9 @@ extern void ExecuteServer(void) {
       ConnectSysData(_fhSysData);
     }
   }
-  LEAVE_FUNC;
 }
 
 static void InitSystem(void) {
-  ENTER_FUNC;
   fNumericHOST = TRUE;
   fShutdown = FALSE;
   InitDirectory();
@@ -256,7 +247,6 @@ static void InitSystem(void) {
   StartCoreThread();
   InitSessionCtrl();
   InitControl();
-  LEAVE_FUNC;
 }
 
 static void CleanUp(void) {
@@ -288,7 +278,6 @@ static ARG_TABLE option[] = {
     {NULL, 0, TRUE, NULL}};
 
 static void SetDefault(void) {
-  ENTER_FUNC;
   PortNumber = NULL;
   ApsPortNumber = NULL;
   Back = 5;
@@ -303,7 +292,6 @@ static void SetDefault(void) {
   MaxTransactionRetry = 0;
   ControlPort = NULL;
   SesNum = 0;
-  LEAVE_FUNC;
 }
 
 extern int main(int argc, char **argv) {
@@ -352,7 +340,6 @@ extern int main(int argc, char **argv) {
   prctl(PR_SET_PDEATHSIG, SIGHUP);
 
   InitMessage("wfc", NULL);
-  ENTER_FUNC;
 
   SetDefault();
   GetOption(option, argc, argv, NULL);
@@ -363,6 +350,5 @@ extern int main(int argc, char **argv) {
   Message("wfc stop");
   CleanUp();
   rc = 0;
-  LEAVE_FUNC;
   return (rc);
 }

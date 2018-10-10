@@ -53,9 +53,7 @@ static char *APS_LoadPath;
 static GHashTable *InitLoader(void) {
   GHashTable *table;
 
-  ENTER_FUNC;
   table = NewNameHash();
-  LEAVE_FUNC;
   return (table);
 }
 
@@ -65,7 +63,6 @@ static void *LoadModule(GHashTable *table, char *path, char *name) {
   void (*f_init)(void);
   void *handle;
 
-  ENTER_FUNC;
   if ((f_main = (void *)g_hash_table_lookup(table, name)) == NULL) {
     sprintf(filename, "%s." SO_SUFFIX, name);
     if ((handle = LoadFile(path, filename)) != NULL) {
@@ -80,22 +77,17 @@ static void *LoadModule(GHashTable *table, char *path, char *name) {
       fprintf(stderr, "[%s] not found.\n", name);
     }
   }
-  LEAVE_FUNC;
   return (f_main);
 }
 
 static void PutApplication(ProcessNode *node) {
   ValueStruct *mcp;
-  ENTER_FUNC;
   mcp = node->mcprec->value;
   strcpy(ValueStringPointer(GetItemLongName(mcp, "dc.puttype")),
          MCP_PUT_RETURN);
-  LEAVE_FUNC;
 }
 
 static void GetApplication(ProcessNode *node) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
@@ -103,7 +95,6 @@ static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
   char *module;
   Bool rc;
 
-  ENTER_FUNC;
   module =
       ValueStringPointer(GetItemLongName(node->mcprec->value, "dc.module"));
   if ((apl = LoadModule(ApplicationTable, handler->loadpath, module)) != NULL) {
@@ -121,36 +112,26 @@ static Bool _ExecuteProcess(MessageHandler *handler, ProcessNode *node) {
     Message("%s is not found. path=[%s]", module, handler->loadpath);
     rc = FALSE;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
 static void _ReadyDC(MessageHandler *handler) {
-  ENTER_FUNC;
   ApplicationTable = InitLoader();
-  LEAVE_FUNC;
 }
 
 static void _StopDC(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static void _StopDB(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static void _ReadyDB(MessageHandler *handler) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
 }
 
 static int _StartBatch(MessageHandler *handler, char *name, char *param) {
   int (*apl)(char *);
   int rc;
 
-  ENTER_FUNC;
   ApplicationTable = InitLoader();
   dbgprintf("starting [%s][%s]\n", name, param);
   if ((apl = LoadModule(ApplicationTable, handler->loadpath, name)) != NULL) {
@@ -159,12 +140,10 @@ static int _StartBatch(MessageHandler *handler, char *name, char *param) {
     Message("%s is not found.", name);
     rc = -1;
   }
-  LEAVE_FUNC;
   return (rc);
 }
 
 static void _ReadyExecute(MessageHandler *handler, char *loadpath) {
-  ENTER_FUNC;
   if (LibPath == NULL) {
     if ((APS_LoadPath = getenv("APS_LOAD_PATH")) == NULL) {
       if (loadpath != NULL) {
@@ -179,7 +158,6 @@ static void _ReadyExecute(MessageHandler *handler, char *loadpath) {
   if (handler->loadpath == NULL) {
     handler->loadpath = APS_LoadPath;
   }
-  LEAVE_FUNC;
 }
 
 static MessageHandlerClass Handler = {
@@ -187,7 +165,5 @@ static MessageHandlerClass Handler = {
     _StopDC, NULL,          _ReadyDB,        _StopDB,     NULL};
 
 extern MessageHandlerClass *C(void) {
-  ENTER_FUNC;
-  LEAVE_FUNC;
   return (&Handler);
 }

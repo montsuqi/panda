@@ -60,7 +60,6 @@ json_object *WFCIO_JSONRPC(json_object *req) {
   NETFILE *fp;
   json_object *res;
   char *str;
-  ENTER_FUNC;
   if (TermPort == NULL) {
     TermPort = getenv("WFC_TERM_PORT");
   }

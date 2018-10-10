@@ -69,7 +69,6 @@ static char *MiddleWareVersion;
 static void InitSystem(char *name) {
   int i;
 
-  ENTER_FUNC;
   MiddleWareName = getenv("__MCP_MIDDLEWARE_NAME");
   if (MiddleWareName == NULL) {
     MiddleWareName = "panda";
@@ -115,14 +114,12 @@ static void InitSystem(char *name) {
     }
   }
   ReadyDC();
-  LEAVE_FUNC;
 }
 
 static ProcessNode *MakeProcessNode(void) {
   ProcessNode *node;
   int i;
   ValueStruct *e;
-  ENTER_FUNC;
   node = New(ProcessNode);
   node->mcprec = ThisEnv->mcprec;
   node->linkrec = ThisEnv->linkrec;
@@ -143,15 +140,12 @@ static ProcessNode *MakeProcessNode(void) {
                  NULL);
   SetValueString(GetItemLongName(e, "dc.middleware_version"), MiddleWareVersion,
                  NULL);
-  LEAVE_FUNC;
   return (node);
 }
 
 static void FinishSession(ProcessNode *node) {
-  ENTER_FUNC;
   xfree(node->scrrec);
   xfree(node);
-  LEAVE_FUNC;
 }
 
 static void SetMCPEnv(ValueStruct *val) {
@@ -178,7 +172,6 @@ static int ExecuteServer(void) {
   char *wname;
   PacketClass pc;
 
-  ENTER_FUNC;
   if (WfcPortNumber == NULL) {
     port = ThisEnv->WfcApsPort;
   } else {
@@ -265,19 +258,16 @@ quit:
     CloseNet(fpWFC);
   }
 #endif
-  LEAVE_FUNC;
   return (rc);
 }
 
 static void HungUp(void) { exit(15); }
 
 static void StopProcess(void) {
-  ENTER_FUNC;
   StopOnlineDB();
   CleanUpOnlineDB();
   StopDC();
   CleanUpOnlineDC();
-  LEAVE_FUNC;
 }
 
 static ARG_TABLE option[] = {
