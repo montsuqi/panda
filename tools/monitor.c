@@ -784,7 +784,6 @@ static void InitServers(void) {
 static void KillProcess(unsigned char type, int sig) {
   int i;
   Process *proc;
-  char command[1024];
 
   ENTER_FUNC;
   for (i = 0; i < g_list_length(ProcessList); i++) {
@@ -792,10 +791,7 @@ static void KillProcess(unsigned char type, int sig) {
     if ((proc->type & type) != 0) {
       dbgprintf("kill -%d %d\n", sig, proc->pid);
       if (kill(proc->pid, sig) == -1) {
-        sprintf(command, "killall -HUP %s", proc->argv[0]);
-        system(command);
         Message("kill(2) failure: %s", strerror(errno));
-        Message("%s", command);
       }
       proc->state = STATE_STOP;
     }
