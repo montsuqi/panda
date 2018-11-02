@@ -18,10 +18,6 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/*
-#define	DEBUG
-#define	TRACE
-*/
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -34,7 +30,6 @@
 #include "types.h"
 #include "libmondai.h"
 #include "styleLex.h"
-#include "debug.h"
 
 #define GetChar(fp) fgetc(fp)
 #define UnGetChar(fp, c) ungetc((c), (fp))
@@ -96,7 +91,6 @@ extern int StyleLex(Bool fSymbol) {
   char *s;
   Bool fFloat;
 
-  dbgmsg(">StyleLex");
 retry:
   while (isspace(c = GetChar(StyleFile))) {
     if (c == '\n') {
@@ -178,6 +172,5 @@ retry:
       break;
     }
   }
-  dbgmsg("<StyleLex");
   return (token);
 }
