@@ -18,12 +18,6 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/*
-#define	DEBUG
-#define	TRACE
-#define	MAIN
-*/
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -42,7 +36,6 @@
 #include "libmondai.h"
 #include "styleLex.h"
 #include "styleParser.h"
-#include "debug.h"
 
 static char *StyleFileName;
 static Bool fError;
@@ -142,7 +135,6 @@ static void ParStyle(void) {
   GtkStyle *st, *dst;
   int state;
 
-  dbgmsg(">ParStyle");
   dst = gtk_widget_get_default_style();
   GetSymbol;
   do {
@@ -251,7 +243,6 @@ static void ParStyle(void) {
     }
     GetSymbol;
   } while (StyleToken != T_EOF);
-  dbgmsg("<ParStyle");
 }
 
 extern void StyleParserInit(void) {
@@ -277,7 +268,6 @@ extern void StyleParser(char *name) {
   FILE *fp;
   struct stat stbuf;
 
-  dbgmsg(">StyleParser");
   if (stat(name, &stbuf) == 0) {
     fError = FALSE;
     StylecLine = 1;
@@ -288,7 +278,6 @@ extern void StyleParser(char *name) {
       fclose(fp);
     }
   }
-  dbgmsg("<StyleParser");
 }
 
 extern GtkStyle *GetStyle(char *name) {
