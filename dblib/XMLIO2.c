@@ -59,7 +59,6 @@ typedef enum xml_open_mode {
   MODE_NONE,
 } XMLMode;
 
-static char *ObjectID = NULL;
 static XMLMode PrevMode = MODE_WRITE_XML;
 
 static int _ReadXML(ValueStruct *ret, unsigned char *buff, size_t size) {
@@ -128,7 +127,7 @@ static int _ReadJSON(ValueStruct *ret, unsigned char *buff, size_t size) {
 static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
   ValueStruct *ret, *val;
-  char *buff;
+  char *buff,*oid;
   size_t size;
   int mode;
   DBG_Struct *mondbg;
@@ -138,6 +137,15 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     ctrl->rc = MCP_BAD_ARG;
     return NULL;
   }
+  if (rec->type != RECORD_DB) {
+    return NULL;
+  }
+  if ((val = GetItemLongName(args, "object")) == NULL) {
+    Warning("no [object] record");
+    ctrl->rc = MCP_BAD_ARG;
+    return NULL;
+  }
+  oid = ValueObjectId(val);
   if ((val = GetItemLongName(args, "mode")) == NULL) {
     Warning("no [mode] record");
     ctrl->rc = MCP_BAD_ARG;
@@ -150,7 +158,7 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     return NULL;
   }
   mondbg = GetDBG_monsys();
-  if (monblob_export_mem(mondbg, ObjectID, &buff, &size)) {
+  if (monblob_export_mem(mondbg, oid, &buff, &size)) {
     ret = DuplicateValue(args, TRUE);
     if (size > 0) {
       switch (CheckFormat(buff, size)) {
@@ -317,44 +325,23 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
 static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
-  ValueStruct *val;
-  ctrl->rc = MCP_BAD_ARG;
-  if (rec->type != RECORD_DB) {
-    return NULL;
-  }
-  if ((val = GetItemLongName(args, "object")) == NULL) {
-    Warning("no [object] record");
-    ctrl->rc = MCP_BAD_ARG;
-    return NULL;
-  }
-  if (ObjectID != NULL) {
-    xfree(ObjectID);
-    ObjectID = NULL;
-  }
-  ObjectID = StrDup(ValueObjectId(val));
+  fprintf(stderr,"XMLOPEN: don't use this function.deprecated\n");
   ctrl->rc = MCP_OK;
   return NULL;
 }
 
 static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                            RecordStruct *rec, ValueStruct *args) {
+  fprintf(stderr,"XMLCLOSE: don't use this function.deprecated\n");
   ctrl->rc = MCP_OK;
   return NULL;
 }
 
 extern ValueStruct *XML_BEGIN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  if (ObjectID != NULL) {
-    xfree(ObjectID);
-    ObjectID = NULL;
-  }
   return (NULL);
 }
 
 extern ValueStruct *XML_END(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  if (ObjectID != NULL) {
-    xfree(ObjectID);
-    ObjectID = NULL;
-  }
   return (NULL);
 }
 
