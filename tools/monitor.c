@@ -61,8 +61,8 @@ static char *Log;
 static Bool fQ;
 static Bool fRedirector;
 static Bool fNoApsConnectRetry;
-static int Interval;
-static int Wfcinterval;
+static int Interval; /* deprecated */
+static int Wfcinterval; /* deprecated */
 static int MaxTransactionRetry;
 static int Sleep;
 static int SesNum;
@@ -98,7 +98,6 @@ typedef struct {
   int state;
   unsigned char type;
   int argc;
-  int interval;
   char **argv;
 } Process;
 
@@ -301,9 +300,6 @@ retry:
       free(msg);
     }
   } else if (pid == 0) {
-    if (proc->interval > 0) {
-      sleep(proc->interval);
-    }
     _execv(proc->argv[0], proc->argv);
   } else {
     Message("can't start process");
@@ -358,7 +354,6 @@ static void InitRedirector(DBG_Struct *dbg) {
   proc->argc = argc;
   argv[argc++] = NULL;
   Message("start redirector:%s", dbg->name);
-  proc->interval = Interval;
   dbg->dbstatus = DB_STATUS_CONNECT;
   ProcessList = g_list_append(ProcessList, proc);
 }
@@ -443,7 +438,6 @@ static void InitGlserver(void) {
 
   proc->argc = argc;
   argv[argc++] = NULL;
-  proc->interval = Interval;
   ProcessList = g_list_append(ProcessList, proc);
 }
 
@@ -506,7 +500,6 @@ static void _InitAps(LD_Struct *ld) {
       }
       proc->argc = argc;
       argv[argc++] = NULL;
-      proc->interval = Interval;
       ProcessList = g_list_append(ProcessList, proc);
     }
   }
@@ -585,7 +578,6 @@ static void InitWfc(void) {
     }
     proc->argc = argc;
     argv[argc++] = NULL;
-    proc->interval = Wfcinterval;
     ProcessList = g_list_append(ProcessList, proc);
     Message("start wfc");
   }
@@ -664,7 +656,7 @@ static void StopServers(void) {
   KillProcess(PTYPE_GLS, SIGHUP);
   KillProcess(PTYPE_APS, SIGHUP);
   KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST), SIGHUP);
-  sleep(1);
+  sleep(5);
 }
 
 static void StopSystem(void) {
