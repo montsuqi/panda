@@ -68,6 +68,13 @@ struct _BDComponent {
   GList *printer_combo_list;
   // info
   GtkWidget *infotable;
+  // single sign on
+  GtkWidget *ssotable;
+  GtkWidget *sso_container;
+  GtkWidget *sso;
+  GtkWidget *sso_user;
+  GtkWidget *sso_password;
+  GtkWidget *sso_sp_uri;
 };
 
 typedef struct { GtkWidget *entry, *filesel; } file_selection_data;

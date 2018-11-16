@@ -297,6 +297,11 @@ extern void LoadConfig(int n) {
   PKCS11Lib = g_strdup(gl_config_get_string(n, "pkcs11lib"));
   PIN = g_strdup(gl_config_get_string(n, "pin"));
   fSavePIN = gl_config_get_boolean(n, "savepin");
+
+  fSSO = gl_config_get_boolean(n, "sso");
+  SSOUser = g_strdup(gl_config_get_string(n, "sso_user"));
+  SSOPassword = g_strdup(gl_config_get_string(n, "sso_password"));
+  SSO_SP_URI = g_strdup(gl_config_get_string(n, "sso_sp_uri"));
 }
 
 extern void LoadConfigByDesc(const char *desc) {

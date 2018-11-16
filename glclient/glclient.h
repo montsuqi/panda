@@ -118,4 +118,9 @@ GLOBAL Bool fSavePIN;
 GLOBAL Bool UsePushClient;
 GLOBAL pid_t PushClientPID;
 GLOBAL char *PushClientCMD;
+
+GLOBAL Bool fSSO;
+GLOBAL char *SSOUser;
+GLOBAL char *SSOPassword;
+GLOBAL char *SSO_SP_URI;
 #endif

@@ -127,6 +127,26 @@ msgstr ""
 msgid "Show Startup Message"
 msgstr ""
 
+#: glclient/bootdialog.c:514
+msgid "SingleSignOn"
+msgstr ""
+
+#: glclient/bd_component.c:736
+msgid "Use Single Sign On"
+msgstr ""
+
+#: glclient/bd_component.c:743
+msgid "SSO User"
+msgstr ""
+
+#: glclient/bd_component.c:752
+msgid "SSO Password"
+msgstr ""
+
+#: glclient/bd_component.c:762
+msgid "SSO SP URL"
+msgstr ""
+
 #: glclient/bootdialog.c:58 glclient/bootdialog.c:249
 msgid "New"
 msgstr ""

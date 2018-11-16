@@ -510,6 +510,11 @@ static BootDialog *boot_dialog_new() {
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), self->component->infotable,
                            label);
 
+  /* Single Sign On tab */
+  label = gtk_label_new(_("SingleSignOn"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), self->component->ssotable,
+                           label);
+
   return self;
 }
 

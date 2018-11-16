@@ -126,6 +126,26 @@ msgstr "タイマー起動時間(ミリ秒)"
 msgid "Show Startup Message"
 msgstr "接続時お知らせ表示"
 
+#: glclient/bootdialog.c:514
+msgid "SingleSignOn"
+msgstr "シングルサインオン"
+
+#: glclient/bd_component.c:736
+msgid "Use Single Sign On"
+msgstr "シングルサインオンを使用"
+
+#: glclient/bd_component.c:743
+msgid "SSO User"
+msgstr "ユーザー名"
+
+#: glclient/bd_component.c:752
+msgid "SSO Password"
+msgstr "パスワード"
+
+#: glclient/bd_component.c:762
+msgid "SSO SP URL"
+msgstr "サービスプロバイダ"
+
 #: glclient/bootdialog.c:58 glclient/bootdialog.c:249
 msgid "New"
 msgstr "新規作成"
