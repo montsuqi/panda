@@ -34,17 +34,31 @@ size_t open_id_write_data(void *buf, size_t size, size_t nmemb, void *userp) {
   return buf_size;
 }
 
+char *trim(char *str) {
+  int i;
+  if (str == NULL) {
+    return str;
+  }
+  i = strlen(str);
+  while (--i > 0 && isspace(str[i]));
+  str[i+1] = '\0';
+  while (isspace(*str)) str++;
+  return str;
+}
+
 json_object *parse_header_text(char *header_text) {
   json_object *result;
   result = json_object_new_object();
 
   char *ptr, *value;
+
   ptr = strtok(header_text, "\n");
   while (ptr != NULL) {
     value = strchr(ptr, ':');
     if (value) {
       *value = '\0';
       value += sizeof(char);
+      value = trim(value);
       json_object_object_add(result, ptr, json_object_new_string(value));
     }
     ptr = strtok(NULL, "\n");
@@ -55,6 +69,7 @@ json_object *parse_header_text(char *header_text) {
 json_object *request(CURL *curl, char *uri, int method, json_object *params) {
   LargeByteString *body, *headers;
   json_object *res, *res_headers;
+  struct curl_slist *request_headers = NULL;
 
   body = NewLBS();
   headers = NewLBS();
@@ -64,15 +79,26 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, open_id_write_data);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)headers);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, open_id_write_data);
+  request_headers = curl_slist_append(request_headers, "Accept: application/json");
+  if (method == OPENID_HTTP_POST) {
+    request_headers = curl_slist_append(request_headers, "Content-Type: application/json");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, request_headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_object_to_json_string_ext(params, JSON_C_TO_STRING_PLAIN));
+  }
 
   curl_easy_perform(curl);
 
-  res = json_tokener_parse(LBS_Body(body));
+  if (LBS_Body(body) == NULL) {
+    res = json_object_new_object();
+  } else {
+    res = json_tokener_parse(LBS_Body(body));
+  }
   res_headers = parse_header_text(LBS_Body(headers));
   json_object_object_add(res, "headers", res_headers);
 
-  curl_easy_cleanup(curl);
-  
+  curl_slist_free_all(request_headers);
+  curl_easy_reset(curl);
+
   return res;
 }
 
@@ -116,6 +142,21 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
 }
 
 void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
+  json_object *params, *result, *obj;
+  params = json_object_new_object();
+  json_object_object_add(params, "response_type", json_object_new_string("code"));
+  json_object_object_add(params, "scope", json_object_new_string("openid"));
+  json_object_object_add(params, "client_id", json_object_new_string(oip->ClientId));
+  json_object_object_add(params, "state", json_object_new_string(oip->State));
+  json_object_object_add(params, "redirect_uri", json_object_new_string(oip->RedirectURI));
+  json_object_object_add(params, "nonce", json_object_new_string(oip->Nonce));
+
+  result = request(oip->Curl, oip->AuthenticationRequestURI, OPENID_HTTP_POST, params);
+
+  if (!json_object_object_get_ex(result, "request_url", &obj)) {
+    Error(_("no request_url object"));
+  }
+  oip->RequestURL = g_strdup(json_object_get_string(obj));
 }
 
 void doLoginToIP(OpenIdConnectProtocol *oip) {
