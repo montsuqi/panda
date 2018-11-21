@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-04-19 10:49+0900\n"
+"POT-Creation-Date: 2018-11-21 14:40+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -16,119 +16,115 @@ msgstr ""
 "Content-Type: text/plain; charset=EUC-JP\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: glclient/bd_component.c:51
+#: glclient/bd_component.c:50
 msgid "Open File"
 msgstr "参照"
 
-#: glclient/bd_component.c:77
+#: glclient/bd_component.c:71
 msgid "Open Directory"
 msgstr "キャッシュディレクトリ名"
 
-#: glclient/bd_component.c:344 glclient/bootdialog.c:303
+#: glclient/bd_component.c:380 glclient/bootdialog.c:275
 msgid "AuthURI"
 msgstr "サーバ"
 
-#: glclient/bd_component.c:353 glclient/bootdialog.c:305
+#: glclient/bd_component.c:389 glclient/bootdialog.c:277
 msgid "User"
 msgstr "ユーザ名"
 
-#: glclient/bd_component.c:362
+#: glclient/bd_component.c:398
 msgid "Password"
 msgstr "パスワード"
 
-#: glclient/bd_component.c:373
+#: glclient/bd_component.c:409
 msgid "Remember Password"
 msgstr "パスワードの保存"
 
-#: glclient/bd_component.c:388
+#: glclient/bd_component.c:424
 msgid "Use SSL Client Verification"
 msgstr "SSLクライアント認証を使用"
 
-#: glclient/bd_component.c:403
+#: glclient/bd_component.c:439
 msgid "CA Certificate File"
 msgstr "CA証明書ファイル"
 
-#: glclient/bd_component.c:406 glclient/bd_component.c:421
-#: glclient/bd_component.c:436 glclient/bd_component.c:498
-#: glclient/bd_component.c:566 glclient/bd_component.c:582
+#: glclient/bd_component.c:442 glclient/bd_component.c:457
+#: glclient/bd_component.c:472 glclient/bd_component.c:535
+#: glclient/bd_component.c:604 glclient/bd_component.c:620
 msgid "Open"
 msgstr "参照"
 
-#: glclient/bd_component.c:418
+#: glclient/bd_component.c:454
 msgid "Certificate(*.crt)"
 msgstr "証明書ファイル名(*.crt)"
 
-#: glclient/bd_component.c:433
+#: glclient/bd_component.c:469
 msgid "CertificateKey(*.pem)"
 msgstr "秘密鍵ファイル名(*.pem)"
 
-#: glclient/bd_component.c:448
+#: glclient/bd_component.c:484
 msgid "CertificateKey Passphrase"
 msgstr "秘密鍵パスフレーズ"
 
-#: glclient/bd_component.c:459
+#: glclient/bd_component.c:496
 msgid "Remember CertificateKey Passphrase"
 msgstr "秘密鍵パスフレーズの保存"
 
-#: glclient/bd_component.c:466
+#: glclient/bd_component.c:503
 msgid "Cipher Suite"
 msgstr "暗号スイート"
 
-#: glclient/bd_component.c:477
+#: glclient/bd_component.c:514
 msgid "Use Security Device"
 msgstr "セキュリティデバイスを使う"
 
-#: glclient/bd_component.c:495
+#: glclient/bd_component.c:532
 msgid "PKCS#11 Library"
 msgstr "PKCS#11ライブラリ"
 
-#: glclient/bd_component.c:518
+#: glclient/bd_component.c:555
 msgid "Printer Name"
 msgstr "プリンタ名"
 
-#: glclient/bd_component.c:522
+#: glclient/bd_component.c:559
 msgid "Actual Printer"
 msgstr "割り当てプリンタ"
 
-#: glclient/bd_component.c:562
+#: glclient/bd_component.c:600
 msgid "Style"
 msgstr "スタイル"
 
-#: glclient/bd_component.c:578
+#: glclient/bd_component.c:616
 msgid "Gtkrc"
 msgstr "Gtkrc"
 
-#: glclient/bd_component.c:594
+#: glclient/bd_component.c:632
 msgid "FontName"
 msgstr "フォント"
 
-#: glclient/bd_component.c:606
+#: glclient/bd_component.c:644
 msgid "Debug"
 msgstr ""
 
-#: glclient/bd_component.c:614
+#: glclient/bd_component.c:652
 msgid "Enable Keybuffer"
 msgstr "キーバッファを有効にする"
 
-#: glclient/bd_component.c:622
+#: glclient/bd_component.c:661
 msgid "Disable IM control and Kana input"
 msgstr "入力メソッドの制御とカタカナ入力を無効にする"
 
-#: glclient/bd_component.c:630
+#: glclient/bd_component.c:669
 msgid "Enable Timer"
 msgstr "タイマー処理を有効にする"
 
-#: glclient/bd_component.c:648
+#: glclient/bd_component.c:687
 msgid "Timer Period(ms)"
 msgstr "タイマー起動時間(ミリ秒)"
 
-#: glclient/bd_component.c:659
+#: glclient/bd_component.c:698
 msgid "Show Startup Message"
 msgstr "接続時お知らせ表示"
-
-#: glclient/bootdialog.c:514
-msgid "SingleSignOn"
-msgstr "シングルサインオン"
 
 #: glclient/bd_component.c:736
 msgid "Use Single Sign On"
@@ -146,92 +142,96 @@ msgstr "パスワード"
 msgid "SSO SP URL"
 msgstr "サービスプロバイダ"
 
-#: glclient/bootdialog.c:58 glclient/bootdialog.c:249
+#: glclient/bootdialog.c:54 glclient/bootdialog.c:225
 msgid "New"
 msgstr "新規作成"
 
-#: glclient/bootdialog.c:62 glclient/bootdialog.c:258
+#: glclient/bootdialog.c:58 glclient/bootdialog.c:233
 msgid "Edit"
 msgstr "編集"
 
-#: glclient/bootdialog.c:83
+#: glclient/bootdialog.c:74
 msgid "ConfigName"
 msgstr "設定"
 
-#: glclient/bootdialog.c:241
+#: glclient/bootdialog.c:217
 msgid "Server Setting"
 msgstr "サーバ設定"
 
-#: glclient/bootdialog.c:267
+#: glclient/bootdialog.c:241
 msgid "Delete"
 msgstr "削除"
 
-#: glclient/bootdialog.c:276 glclient/bootdialog.c:537
+#: glclient/bootdialog.c:249 glclient/bootdialog.c:496
 msgid "Close"
 msgstr "閉じる"
 
-#: glclient/bootdialog.c:301
+#: glclient/bootdialog.c:272
 msgid "Description"
 msgstr "説明"
 
-#: glclient/bootdialog.c:468 glclient/bootdialog.c:477
+#: glclient/bootdialog.c:422 glclient/bootdialog.c:431
 msgid "glclient2 Launcher"
 msgstr "glclient2 ランチャー"
 
-#: glclient/bootdialog.c:485
+#: glclient/bootdialog.c:439
 msgid "Server"
 msgstr "サーバ"
 
-#: glclient/bootdialog.c:509
+#: glclient/bootdialog.c:464
 msgid "Basic"
 msgstr "基本"
 
-#: glclient/bootdialog.c:514
+#: glclient/bootdialog.c:470
 msgid "SSL"
 msgstr "SSL"
 
-#: glclient/bootdialog.c:519
+#: glclient/bootdialog.c:476
 msgid "Printer"
 msgstr "プリンタ"
 
-#: glclient/bootdialog.c:523
+#: glclient/bootdialog.c:481
 msgid "Details"
 msgstr "詳細"
 
-#: glclient/bootdialog.c:528
+#: glclient/bootdialog.c:487
 msgid "Connect"
 msgstr "接続"
 
-#: glclient/bootdialog.c:543
+#: glclient/bootdialog.c:502
 msgid "Configuration"
 msgstr "設定"
 
-#: glclient/bootdialog.c:550
+#: glclient/bootdialog.c:509
+msgid "SingleSignOn"
+msgstr "シングルサインオン"
+
+#: glclient/bootdialog.c:514
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/dialogs.c:180 glclient/client.c:242
+#: glclient/dialogs.c:143 glclient/client.c:219
 msgid "pin:"
 msgstr "PIN:"
 
-#: glclient/dialogs.c:188
+#: glclient/dialogs.c:151
 msgid "save pin"
 msgstr "PINを保存する"
 
-#: glclient/download.c:54
+#: glclient/download.c:51
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
 
-#: glclient/download.c:73
+#: glclient/download.c:68
 #, c-format
 msgid "%s saved"
 msgstr "%s に保存しました"
 
-#: glclient/download.c:74
+#: glclient/download.c:69
 msgid "save complete"
 msgstr "保存完了"
 
-#: glclient/download.c:145
+#: glclient/download.c:121
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -246,7 +246,7 @@ msgstr ""
 "説明: %s\n"
 "サイズ: %s"
 
-#: glclient/download.c:153
+#: glclient/download.c:129
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -259,28 +259,28 @@ msgstr ""
 "ファイル名: %s\n"
 "サイズ: %s"
 
-#: glclient/action.c:524
+#: glclient/action.c:460
 msgid "Now loading..."
 msgstr "読み込み中..."
 
-#: glclient/action.c:962
+#: glclient/action.c:849
 msgid "glclient message notify"
 msgstr "glclientメッセージ通知"
 
-#: glclient/action.c:1065
+#: glclient/action.c:944
 msgid "invalid list_report response"
 msgstr ""
 
-#: glclient/print.c:69
+#: glclient/print.c:67
 #, c-format
 msgid "client printing - %s"
 msgstr "クライアント印刷 - %s"
 
-#: glclient/print.c:71
+#: glclient/print.c:70
 msgid "Preview"
 msgstr "プレビュー"
 
-#: glclient/print.c:107
+#: glclient/print.c:99
 #, c-format
 msgid ""
 "starting print\n"
@@ -293,154 +293,154 @@ msgstr ""
 "タイトル:%s\n"
 "出力先プリンタ:%s\n"
 
-#: glclient/print.c:110
+#: glclient/print.c:103
 msgid "glclient print notify"
 msgstr "glclient印刷通知"
 
-#: glclient/client.c:140 glclient/push_action.c:161
+#: glclient/client.c:130 glclient/push_action.c:152
 msgid "orca cloud announce"
 msgstr "日レセクラウドからのお知らせ"
 
-#: glclient/client.c:249
+#: glclient/client.c:226
 msgid "certificate password:"
 msgstr "証明書パスワード:"
 
-#: glclient/client.c:254
+#: glclient/client.c:231
 msgid "password:"
 msgstr "パスワード:"
 
-#: glclient/desktop.c:178
+#: glclient/desktop.c:174
 msgid "Application start failure"
 msgstr "アプリケーション起動失敗"
 
-#: glclient/desktop.c:180
+#: glclient/desktop.c:176
 #, c-format
 msgid "can't execute command.\\n\"%s\""
 msgstr "コマンドを実行できません\\n\"%s\""
 
-#: glclient/protocol.c:219 glclient/protocol.c:224 glclient/protocol.c:278
-#: glclient/protocol.c:283 glclient/protocol.c:454 glclient/protocol.c:461
-#: glclient/protocol.c:465
+#: glclient/protocol.c:198 glclient/protocol.c:203 glclient/protocol.c:255
+#: glclient/protocol.c:260 glclient/protocol.c:421 glclient/protocol.c:428
+#: glclient/protocol.c:432
 #, c-format
 msgid "comm error:%s"
 msgstr "通信エラー:%s"
 
-#: glclient/protocol.c:233 glclient/protocol.c:292 glclient/protocol.c:486
+#: glclient/protocol.c:212 glclient/protocol.c:269 glclient/protocol.c:454
 msgid "authentication error:incorrect user or password"
 msgstr "認証エラー:ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:236 glclient/protocol.c:295 glclient/protocol.c:490
+#: glclient/protocol.c:215 glclient/protocol.c:272 glclient/protocol.c:458
 msgid "server maintenance error"
 msgstr "サーバメンテナンス中です"
 
-#: glclient/protocol.c:239 glclient/protocol.c:298
+#: glclient/protocol.c:218 glclient/protocol.c:275
 #, c-format
 msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:335
+#: glclient/protocol.c:304
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:338
+#: glclient/protocol.c:307
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:342 glclient/protocol.c:346
+#: glclient/protocol.c:311 glclient/protocol.c:315
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:358
+#: glclient/protocol.c:327
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:371
+#: glclient/protocol.c:340
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:468 glclient/protocol.c:473
+#: glclient/protocol.c:435 glclient/protocol.c:441
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:484
+#: glclient/protocol.c:452
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 "この証明書による接続は許可されていません。\n"
 "証明書を確認してください。"
 
-#: glclient/protocol.c:493
+#: glclient/protocol.c:461
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:499
+#: glclient/protocol.c:467
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:522
+#: glclient/protocol.c:484
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:527
+#: glclient/protocol.c:489
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:532
+#: glclient/protocol.c:494
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:558
+#: glclient/protocol.c:518
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:569
+#: glclient/protocol.c:529
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:578
+#: glclient/protocol.c:538
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:583
+#: glclient/protocol.c:543
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:700
+#: glclient/protocol.c:647
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:705
+#: glclient/protocol.c:652
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:710
+#: glclient/protocol.c:657
 msgid "invalid message data:abort"
 msgstr ""
 
-#: glclient/push_action.c:163
+#: glclient/push_action.c:154
 msgid "websocket_reconnect"
 msgstr "PUSH通知再接続"
 
-#: glclient/push_action.c:163
+#: glclient/push_action.c:154
 msgid "websocket_reconnect_message"
 msgstr ""
 "PUSH通知が受信可能になりました。\n"
 "クライアント印刷できます。"
 
-#: glclient/push_action.c:165
+#: glclient/push_action.c:157
 msgid "websocket_disconnect"
 msgstr "PUSH通知切断"
 
-#: glclient/push_action.c:165
+#: glclient/push_action.c:157
 msgid "websocket_disconnect_message"
 msgstr ""
 "PUSH通知接続が切断されました。\n"
 "切断中はクライアント印刷ができません。\n"
 "接続回復後に再印刷等による印刷処理を行ってください。"
 
-#: libs/net.c:287
+#: libs/net.c:259
 #, c-format
 msgid ""
 "read error:\n"
@@ -449,7 +449,7 @@ msgstr ""
 "readエラー:\n"
 " %s\n"
 
-#: libs/net.c:305
+#: libs/net.c:272
 #, c-format
 msgid ""
 "write error:\n"
@@ -458,11 +458,11 @@ msgstr ""
 "writeエラー\n"
 " %s\n"
 
-#: libs/net.c:421
+#: libs/net.c:363
 msgid "Please input key passphrase:"
 msgstr "秘密鍵のパスフレーズを入力してください。"
 
-#: libs/net.c:422
+#: libs/net.c:364
 msgid ""
 "Verify ERROR!\n"
 "Please input key passphrase:"
@@ -470,7 +470,7 @@ msgstr ""
 "検証エラー\n"
 "秘密鍵のパスフレーズを再入力してください。"
 
-#: libs/net.c:471
+#: libs/net.c:401
 #, c-format
 msgid ""
 "SSL read error:\n"
@@ -479,7 +479,7 @@ msgstr ""
 "SSL readエラー:\n"
 " %s\n"
 
-#: libs/net.c:492
+#: libs/net.c:417
 #, c-format
 msgid ""
 "SSL write error:\n"
@@ -488,7 +488,7 @@ msgstr ""
 "SSL writeエラー:\n"
 " %s\n"
 
-#: libs/net.c:540
+#: libs/net.c:460
 #, c-format
 msgid ""
 "BIO_new failure:\n"
@@ -497,7 +497,7 @@ msgstr ""
 "BIO_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:544
+#: libs/net.c:464
 #, c-format
 msgid ""
 "X509_NAME_print_ex failure:\n"
@@ -506,7 +506,7 @@ msgstr ""
 "X509_NAME_print_exに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:574
+#: libs/net.c:492
 #, c-format
 msgid ""
 "X509_NAME_oneline failure:\n"
@@ -515,7 +515,7 @@ msgstr ""
 "X509_NAME_onelineに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:702
+#: libs/net.c:623
 #, c-format
 msgid ""
 "SSL_connect failure:\n"
@@ -524,12 +524,12 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:709
+#: libs/net.c:630
 #, c-format
 msgid "The hostname does not match %s.\n"
 msgstr "接続先のホスト名(%s)が証明書と一致しません。\n"
 
-#: libs/net.c:725
+#: libs/net.c:644
 #, c-format
 msgid ""
 "SSL_accept failure:\n"
@@ -538,7 +538,7 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:750
+#: libs/net.c:666
 #, c-format
 msgid ""
 "SSL_new failure:\n"
@@ -547,7 +547,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:755
+#: libs/net.c:671
 #, c-format
 msgid ""
 "SSL_set_fd failure:\n"
@@ -556,7 +556,7 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:810
+#: libs/net.c:720
 #, c-format
 msgid ""
 "The certificate(%s) will be expired in %d days.\n"
@@ -565,7 +565,7 @@ msgstr ""
 "証明書(%s)の期限切れまであと%d日です。\n"
 "証明書を更新してください。\n"
 
-#: libs/net.c:835
+#: libs/net.c:745
 #, c-format
 msgid ""
 " Unable to get issuer cert.\n"
@@ -574,7 +574,7 @@ msgstr ""
 " 発行者(CA)の証明書が取得できません。\n"
 " 発行者= %s\n"
 
-#: libs/net.c:839
+#: libs/net.c:749
 msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
@@ -582,7 +582,7 @@ msgstr ""
 " 証明書の有効期限開始前です。\n"
 " 有効期限の開始時刻="
 
-#: libs/net.c:847
+#: libs/net.c:758
 msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
@@ -590,7 +590,7 @@ msgstr ""
 " 証明書の有効期限が切れています。\n"
 " 有効期限の終了時刻="
 
-#: libs/net.c:873
+#: libs/net.c:781
 #, c-format
 msgid ""
 "Verification error of local entity certificate:\n"
@@ -601,7 +601,7 @@ msgstr ""
 " depth=%d\n"
 " %s:%s\n"
 
-#: libs/net.c:895
+#: libs/net.c:800
 #, c-format
 msgid ""
 "Verification error of remote entity certificate:\n"
@@ -612,7 +612,7 @@ msgstr ""
 " depth=%d\n"
 " %s:%s\n"
 
-#: libs/net.c:1030 libs/net.c:1306
+#: libs/net.c:943 libs/net.c:1211
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
@@ -621,7 +621,7 @@ msgstr ""
 "SSL_CTX_use_certificateに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1034 libs/net.c:1310
+#: libs/net.c:948 libs/net.c:1216
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
@@ -630,7 +630,7 @@ msgstr ""
 "SSL_CTX_use_PrivateKeyに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1038 libs/net.c:1126 libs/net.c:1314
+#: libs/net.c:953 libs/net.c:1035 libs/net.c:1221
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
@@ -640,7 +640,7 @@ msgstr ""
 " %s\n"
 "鍵ファイルが不正な可能性があります。\n"
 
-#: libs/net.c:1062 libs/net.c:1336
+#: libs/net.c:970 libs/net.c:1236
 #, c-format
 msgid ""
 "SSL_CTX_new failure:\n"
@@ -649,7 +649,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:1070 libs/net.c:1341
+#: libs/net.c:978 libs/net.c:1241
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failure:\n"
@@ -659,7 +659,7 @@ msgstr ""
 " %s\n"
 "「SSL暗号スイート」が不正な可能性があります。\n"
 
-#: libs/net.c:1083 libs/net.c:1354
+#: libs/net.c:991 libs/net.c:1254
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
@@ -669,14 +669,14 @@ msgstr ""
 " %s\n"
 "システムのデフォルト検証パスを使おうとしましたが失敗しました。\n"
 
-#: libs/net.c:1089 libs/net.c:1360
+#: libs/net.c:997 libs/net.c:1260
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 "SSL_CTX_load_verify_locations(%s)でエラーが発生しました:\n"
 "「CA証明書へのパス」または「CA証明書ファイル」が不正な可能性があります。\n"
 
-#: libs/net.c:1106
+#: libs/net.c:1013
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
@@ -686,7 +686,7 @@ msgstr ""
 " %s\n"
 "「証明書ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
-#: libs/net.c:1116
+#: libs/net.c:1024
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
@@ -696,11 +696,11 @@ msgstr ""
 " %s\n"
 "「鍵ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
-#: libs/net.c:1133
+#: libs/net.c:1042
 msgid "Please specify certificate file"
 msgstr "証明書ファイル名を指定してください。"
 
-#: libs/net.c:1156
+#: libs/net.c:1063
 #, c-format
 msgid ""
 "Engine_by_id:\n"
@@ -709,7 +709,7 @@ msgstr ""
 "Engine_by_idに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1166
+#: libs/net.c:1073
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
@@ -718,7 +718,7 @@ msgstr ""
 "Engine_ctrl_cmd_stringに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1172
+#: libs/net.c:1079
 #, c-format
 msgid ""
 "Engine_init failure:\n"
@@ -727,11 +727,11 @@ msgstr ""
 "Engine_initに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1180
+#: libs/net.c:1087
 msgid "Please input security device PIN:"
 msgstr "セキュリティデバイスの PIN を入力してください。"
 
-#: libs/net.c:1299
+#: libs/net.c:1203
 #, c-format
 msgid ""
 "ENGINE_load_private_key failure:\n"
