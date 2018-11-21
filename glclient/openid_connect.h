@@ -13,7 +13,7 @@ typedef struct {
   char *Nonce;
   char *AuthenticationRequestURI;
   char *RequestURL;
-  char *get_session_uri;
+  char *GetSessionURI;
   char *SessionID;
   char *RPCookie;
   char RPDomain;

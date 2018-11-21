@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <json.h>
+#include <ctype.h>
 #include "openid_connect.h"
 #include "logger.h"
 #include "libmondai.h"
@@ -88,14 +89,14 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params) {
 
   curl_easy_perform(curl);
 
-  if (LBS_Body(body) == NULL) {
+  res = json_tokener_parse(LBS_Body(body));
+  if (res == NULL) {
     res = json_object_new_object();
-  } else {
-    res = json_tokener_parse(LBS_Body(body));
   }
   res_headers = parse_header_text(LBS_Body(headers));
   json_object_object_add(res, "headers", res_headers);
 
+  json_object_put(params);
   curl_slist_free_all(request_headers);
   curl_easy_reset(curl);
 
@@ -139,6 +140,8 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
     Error(_("no Location object"));
   }
   oip->AuthenticationRequestURI = g_strdup(json_object_get_string(obj));
+
+  json_object_put(result);
 }
 
 void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
@@ -157,9 +160,32 @@ void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
     Error(_("no request_url object"));
   }
   oip->RequestURL = g_strdup(json_object_get_string(obj));
+
+  json_object_put(result);
 }
 
 void doLoginToIP(OpenIdConnectProtocol *oip) {
+  json_object *params, *result, *obj, *headers;
+  params = json_object_new_object();
+  json_object_object_add(params, "response_type", json_object_new_string("code"));
+  json_object_object_add(params, "scope", json_object_new_string("openid"));
+  json_object_object_add(params, "client_id", json_object_new_string(oip->ClientId));
+  json_object_object_add(params, "state", json_object_new_string(oip->State));
+  json_object_object_add(params, "redirect_uri", json_object_new_string(oip->RedirectURI));
+  json_object_object_add(params, "nonce", json_object_new_string(oip->Nonce));
+  json_object_object_add(params, "login_id", json_object_new_string(oip->User));
+  json_object_object_add(params, "password", json_object_new_string(oip->Password));
+
+  result = request(oip->Curl, oip->RequestURL, OPENID_HTTP_POST, params);
+
+  json_object_object_get_ex(result, "headers", &headers);
+
+  if (!json_object_object_get_ex(headers, "Location", &obj)) {
+    Error(_("no Location object"));
+  }
+  oip->GetSessionURI = g_strdup(json_object_get_string(obj));
+
+  json_object_put(result);
 }
 
 void doLoginToRP(OpenIdConnectProtocol *oip) {
