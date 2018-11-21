@@ -67,7 +67,7 @@ json_object *parse_header_text(char *header_text) {
   return result;
 }
 
-json_object *request(CURL *curl, char *uri, int method, json_object *params) {
+json_object *request(CURL *curl, char *uri, int method, json_object *params, char *cookie) {
   LargeByteString *body, *headers;
   json_object *res, *res_headers;
   struct curl_slist *request_headers = NULL;
@@ -80,12 +80,17 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, open_id_write_data);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)headers);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, open_id_write_data);
+  if (cookie) {
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "Cookie: %s", cookie);
+    request_headers = curl_slist_append(request_headers, buf);
+  }
   request_headers = curl_slist_append(request_headers, "Accept: application/json");
   if (method == OPENID_HTTP_POST) {
     request_headers = curl_slist_append(request_headers, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, request_headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_object_to_json_string_ext(params, JSON_C_TO_STRING_PLAIN));
   }
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, request_headers);
 
   curl_easy_perform(curl);
 
@@ -107,7 +112,7 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
   json_object *obj, *result, *headers;
   obj = json_object_new_object();
 
-  result = request(oip->Curl, oip->SP_URI, OPENID_HTTP_GET, obj);
+  result = request(oip->Curl, oip->SP_URI, OPENID_HTTP_GET, obj, NULL);
 
   if (!json_object_object_get_ex(result, "client_id", &obj)) {
     Error(_("no client_id object"));
@@ -154,7 +159,7 @@ void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
   json_object_object_add(params, "redirect_uri", json_object_new_string(oip->RedirectURI));
   json_object_object_add(params, "nonce", json_object_new_string(oip->Nonce));
 
-  result = request(oip->Curl, oip->AuthenticationRequestURI, OPENID_HTTP_POST, params);
+  result = request(oip->Curl, oip->AuthenticationRequestURI, OPENID_HTTP_POST, params, NULL);
 
   if (!json_object_object_get_ex(result, "request_url", &obj)) {
     Error(_("no request_url object"));
@@ -176,7 +181,7 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
   json_object_object_add(params, "login_id", json_object_new_string(oip->User));
   json_object_object_add(params, "password", json_object_new_string(oip->Password));
 
-  result = request(oip->Curl, oip->RequestURL, OPENID_HTTP_POST, params);
+  result = request(oip->Curl, oip->RequestURL, OPENID_HTTP_POST, params, NULL);
 
   json_object_object_get_ex(result, "headers", &headers);
 
@@ -189,6 +194,17 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
 }
 
 void doLoginToRP(OpenIdConnectProtocol *oip) {
+  json_object *obj, *result;
+  obj = json_object_new_object();
+
+  result = request(oip->Curl, oip->GetSessionURI, OPENID_HTTP_GET, obj, oip->RPCookie);
+
+  if (!json_object_object_get_ex(result, "session_id", &obj)) {
+    Error(_("no session_id object"));
+  }
+  oip->SessionID = g_strdup(json_object_get_string(obj));
+
+  json_object_put(result);
 }
 
 extern OpenIdConnectProtocol *InitOpenIdConnectProtocol(const char *sso_sp_uri, const char *user, const char * pass) {
