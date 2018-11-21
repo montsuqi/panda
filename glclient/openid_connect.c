@@ -71,6 +71,7 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params, cha
   LargeByteString *body, *headers;
   json_object *res, *res_headers;
   struct curl_slist *request_headers = NULL;
+  int response_code;
 
   body = NewLBS();
   headers = NewLBS();
@@ -100,6 +101,8 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params, cha
   }
   res_headers = parse_header_text(LBS_Body(headers));
   json_object_object_add(res, "headers", res_headers);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+  json_object_object_add(res, "response_code", json_object_new_int(response_code));
 
   json_object_put(params);
   curl_slist_free_all(request_headers);
@@ -183,6 +186,12 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
 
   result = request(oip->Curl, oip->RequestURL, OPENID_HTTP_POST, params, NULL);
 
+  json_object_object_get_ex(result, "response_code", &obj);
+  if (json_object_get_int(obj) == 403) {
+    Error(_("User ID or Password Incorrect"));
+    exit(0);
+  }
+
   json_object_object_get_ex(result, "headers", &headers);
 
   if (!json_object_object_get_ex(headers, "Location", &obj)) {
@@ -230,5 +239,5 @@ extern char *StartOpenIdConnect(OpenIdConnectProtocol *oip) {
   // バックエンドサーバへの session_id 発行要求
   doLoginToRP(oip);
 
-  return oip->RPCookie;
+  return oip->SessionID;
 }

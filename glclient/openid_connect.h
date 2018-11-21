@@ -16,7 +16,7 @@ typedef struct {
   char *GetSessionURI;
   char *SessionID;
   char *RPCookie;
-  char RPDomain;
+  char *RPDomain;
 } OpenIdConnectProtocol;
 
 OpenIdConnectProtocol *InitOpenIdConnectProtocol(const char *sso_sp_uri, const char *user, const char *pass);
