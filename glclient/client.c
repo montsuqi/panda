@@ -59,6 +59,7 @@
 #include "utils.h"
 #include "tempdir.h"
 #include "dialogs.h"
+#include "openid_connect.h"
 
 extern void SetSessionTitle(const char *title) {
   if (TITLE(Session)) {
@@ -146,8 +147,19 @@ static gboolean StartClient() {
   SCREENDATA(Session) = NULL;
   InitTopWindow();
 
-  RPC_GetServerInfo(GLP(Session));
-  RPC_StartSession(GLP(Session));
+  if (fSSO) {
+    // TODO: single sign on
+    OpenIdConnectProtocol *oip;
+    Info("try open id connect...");
+    oip = InitOpenIdConnectProtocol(SSO_SP_URI, SSOUser, SSOPassword);
+    StartOpenIdConnect(oip);
+    Info("open id connect done.");
+    // TODO: call start_session
+    exit(0);
+  } else {
+    RPC_GetServerInfo(GLP(Session));
+    RPC_StartSession(GLP(Session));
+  }
   if (SCREENDATA(Session) != NULL) {
     json_object_put(SCREENDATA(Session));
   }

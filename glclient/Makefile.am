@@ -41,6 +41,7 @@ base_sources =						\
 	notify.c		notify.h		\
 	widgetOPS.c		widgetOPS.h		\
 	tempdir.c		tempdir.h		\
+	openid_connect.c openid_connect.h \
 	logger.c		logger.h		\
 					icon.h
 
