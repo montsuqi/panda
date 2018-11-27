@@ -43,6 +43,7 @@
 #include <libgen.h>
 #include <gtk/gtk.h>
 #include <gtkpanda/gtkpanda.h>
+#include <openssl/pkcs12.h>
 
 #define MAIN
 #include "glclient.h"
@@ -59,6 +60,8 @@
 #include "utils.h"
 #include "tempdir.h"
 #include "dialogs.h"
+
+#define CERT_EXPIRE_CHECK_MONTHES 2
 
 extern void SetSessionTitle(const char *title) {
   if (TITLE(Session)) {
@@ -132,6 +135,41 @@ static void ShowStartupMessage() {
   }
 }
 
+void checkCertificateExpire(const char *file, const char *pass) {
+  FILE *fp;
+  EVP_PKEY *pkey;
+  X509 *cert;
+  STACK_OF(X509) *ca = NULL;
+  PKCS12 *p12;
+  ASN1_TIME *not_after;
+  int day, sec;
+
+  if ((fp = fopen(file, "rb")) == NULL) {
+    Error("Error open file");
+  }
+  p12 = d2i_PKCS12_fp(fp, NULL);
+  fclose(fp);
+  if (!p12) {
+    Error("Error reading PKCS#12 file");
+  }
+  if (!PKCS12_parse(p12, pass, &pkey, &cert, &ca)) {
+    Error("Error parsing PKCS#12 file");
+  }
+
+  not_after = X509_get_notAfter(cert);
+  ASN1_TIME_diff(&day, &sec, NULL, not_after);
+
+  if (day < (CERT_EXPIRE_CHECK_MONTHES * 30)) {
+    int str_buf = 256;
+    time_t t = time(NULL);
+    char s[str_buf];
+    t += day * 24 * 3600 + sec;
+    strftime(s, str_buf, _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d/ %H:%M:%S"), localtime(&t));
+    MessageDialog(GTK_MESSAGE_INFO, s);
+  }
+}
+
+
 static gboolean StartClient() {
   GLP(Session) = InitProtocol(AuthURI, User, Pass);
 #if USE_SSL
@@ -139,6 +177,9 @@ static gboolean StartClient() {
     GLP_SetSSLPKCS11(GLP(Session), PKCS11Lib, PIN);
   } else if (fSSL) {
     GLP_SetSSL(GLP(Session), CertFile, CertKeyFile, CertPass, CAFile);
+  }
+  if (fSSL) {
+    checkCertificateExpire(CertFile, CertPass);
   }
 #endif
   THISWINDOW(Session) = NULL;
