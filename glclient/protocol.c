@@ -405,6 +405,11 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   headers = curl_slist_append(headers, buf);
   snprintf(buf, sizeof(buf), "Expect:");
   headers = curl_slist_append(headers, buf);
+  if (ctx->OpenIdConnectRPCookie != NULL) {
+    char cookie_buf[1024];
+    snprintf(cookie_buf, sizeof(cookie_buf), "Cookie: %s", ctx->OpenIdConnectRPCookie);
+    headers = curl_slist_append(headers, cookie_buf);
+  }
 
   curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
   curl_easy_setopt(ctx->Curl, CURLOPT_POST, 1);
@@ -945,10 +950,12 @@ static CURL *InitCURL(const char *user, const char *pass) {
     curl_easy_setopt(Curl, CURLOPT_VERBOSE, 1);
   }
 
-  memset(userpass, 0, sizeof(userpass));
-  snprintf(userpass, sizeof(userpass) - 1, "%s:%s", user, pass);
+  if (user != NULL && pass != NULL) {
+    memset(userpass, 0, sizeof(userpass));
+    snprintf(userpass, sizeof(userpass) - 1, "%s:%s", user, pass);
+    curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+  }
   curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-  curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
   curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
   curl_easy_setopt(Curl, CURLOPT_TCP_KEEPALIVE, 0L);
 

@@ -148,14 +148,11 @@ static gboolean StartClient() {
   InitTopWindow();
 
   if (fSSO) {
-    // TODO: single sign on
     OpenIdConnectProtocol *oip;
-    Info("try open id connect...");
     oip = InitOpenIdConnectProtocol(SSO_SP_URI, SSOUser, SSOPassword);
     StartOpenIdConnect(oip);
-    Info("open id connect done.");
-    // TODO: call start_session
-    exit(0);
+    GLP(Session)->OpenIdConnectRPCookie = oip->RPCookie;
+    RPC_StartSession(GLP(Session));
   } else {
     RPC_GetServerInfo(GLP(Session));
     RPC_StartSession(GLP(Session));

@@ -229,15 +229,13 @@ extern OpenIdConnectProtocol *InitOpenIdConnectProtocol(const char *sso_sp_uri, 
   return oip;
 }
 
-extern char *StartOpenIdConnect(OpenIdConnectProtocol *oip) {
+extern void StartOpenIdConnect(OpenIdConnectProtocol *oip) {
   // バックエンドサーバへのログイン要求
   doAuthenticationRequestToRP(oip);
   // 認証サーバへのログイン要求
   doAuthenticationRequestToIp(oip);
   // 認証サーバへのログイン
-   doLoginToIP(oip);
+  doLoginToIP(oip);
   // バックエンドサーバへの session_id 発行要求
   doLoginToRP(oip);
-
-  return oip->SessionID;
 }

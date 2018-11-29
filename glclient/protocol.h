@@ -41,6 +41,7 @@ typedef struct {
   char *StartupMessage;
   char *ProtocolVersion;
   char *AppVersion;
+  char *OpenIdConnectRPCookie;
   gboolean fGinbee;
   size_t ReqSize;
   size_t ResSize;
