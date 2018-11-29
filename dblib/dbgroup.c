@@ -420,7 +420,7 @@ extern char *GetDB_DBname(DBG_Struct *dbg) {
   }
   char *name = GetMONDB_ENV(dbg, "NAME");
   if (name != NULL) {
-    return DB_Name;
+    return name;
   }
   return dbg->server->dbname;
 }
