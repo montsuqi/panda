@@ -154,7 +154,7 @@ void checkCertificateExpire(const char *file) {
     time_t t = time(NULL);
     char s[256];
     t += day * 24 * 3600 + sec;
-    strftime(s, 256, _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d/ %H:%M:%S"), localtime(&t));
+    strftime(s, sizeof(s), _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d/ %H:%M:%S"), localtime(&t));
     MessageDialog(GTK_MESSAGE_INFO, s);
   }
 }
