@@ -151,11 +151,10 @@ void checkCertificateExpire(const char *file) {
   ASN1_TIME_diff(&day, &sec, NULL, not_after);
 
   if (day < (CERT_EXPIRE_CHECK_MONTHES * 30)) {
-    int str_buf = 256;
     time_t t = time(NULL);
-    char s[str_buf];
+    char s[256];
     t += day * 24 * 3600 + sec;
-    strftime(s, str_buf, _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d/ %H:%M:%S"), localtime(&t));
+    strftime(s, 256, _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d/ %H:%M:%S"), localtime(&t));
     MessageDialog(GTK_MESSAGE_INFO, s);
   }
 }
