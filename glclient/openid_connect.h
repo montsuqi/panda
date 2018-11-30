@@ -20,4 +20,4 @@ typedef struct {
 } OpenIdConnectProtocol;
 
 OpenIdConnectProtocol *InitOpenIdConnectProtocol(const char *sso_sp_uri, const char *user, const char *pass);
-char *StartOpenIdConnect(OpenIdConnectProtocol *);
+void StartOpenIdConnect(OpenIdConnectProtocol *);
