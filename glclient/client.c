@@ -43,7 +43,8 @@
 #include <libgen.h>
 #include <gtk/gtk.h>
 #include <gtkpanda/gtkpanda.h>
-#include <openssl/pkcs12.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #define MAIN
 #include "glclient.h"
@@ -137,24 +138,14 @@ static void ShowStartupMessage() {
 
 void checkCertificateExpire(const char *file, const char *pass) {
   FILE *fp;
-  EVP_PKEY *pkey;
   X509 *cert;
-  STACK_OF(X509) *ca = NULL;
-  PKCS12 *p12;
   ASN1_TIME *not_after;
   int day, sec;
 
   if ((fp = fopen(file, "rb")) == NULL) {
     Error("Error open file");
   }
-  p12 = d2i_PKCS12_fp(fp, NULL);
-  fclose(fp);
-  if (!p12) {
-    Error("Error reading PKCS#12 file");
-  }
-  if (!PKCS12_parse(p12, pass, &pkey, &cert, &ca)) {
-    Error("Error parsing PKCS#12 file");
-  }
+  cert = PEM_read_X509(fp, NULL, NULL, NULL);
 
   not_after = X509_get_notAfter(cert);
   ASN1_TIME_diff(&day, &sec, NULL, not_after);
