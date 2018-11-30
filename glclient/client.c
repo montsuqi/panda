@@ -136,7 +136,7 @@ static void ShowStartupMessage() {
   }
 }
 
-void checkCertificateExpire(const char *file, const char *pass) {
+void checkCertificateExpire(const char *file) {
   FILE *fp;
   X509 *cert;
   ASN1_TIME *not_after;
@@ -170,7 +170,7 @@ static gboolean StartClient() {
     GLP_SetSSL(GLP(Session), CertFile, CertKeyFile, CertPass, CAFile);
   }
   if (fSSL) {
-    checkCertificateExpire(CertFile, CertPass);
+    checkCertificateExpire(CertFile);
   }
 #endif
   THISWINDOW(Session) = NULL;
