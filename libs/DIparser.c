@@ -659,28 +659,9 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   return (dbg);
 }
 
-extern void FreeDB_Server(DB_Server *server)
-{
-  if (server == NULL) {
-    return;
-  }
-  DestroyPort(server->port);
-  xfree(server->dbname);
-  xfree(server->user);
-  xfree(server->pass);
-  xfree(server->sslmode);
-  xfree(server->sslcert);
-  xfree(server->sslkey);
-  xfree(server->sslrootcert);
-  xfree(server->sslcrl);
-
-  xfree(server);
-}
-
 extern void FreeDBG_Struct(DBG_Struct *dbg) {
   FreeLBS(dbg->checkData);
   FreeLBS(dbg->last_query);
-  FreeDB_Server(dbg->server);
   xfree(dbg->name);
   xfree(dbg);
 }
