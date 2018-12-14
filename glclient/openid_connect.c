@@ -185,6 +185,7 @@ void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
 
 void doLoginToIP(OpenIdConnectProtocol *oip) {
   json_object *params, *result, *obj, *headers;
+  char *redirect_uri, *ip_cookie;
   params = json_object_new_object();
   json_object_object_add(params, "response_type", json_object_new_string("code"));
   json_object_object_add(params, "scope", json_object_new_string("openid"));
@@ -204,10 +205,24 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
   }
 
   json_object_object_get_ex(result, "headers", &headers);
-
   if (!json_object_object_get_ex(headers, "Location", &obj)) {
     Error(_("no Location object"));
   }
+  redirect_uri = g_strdup(json_object_get_string(obj));
+
+  if (!json_object_object_get_ex(headers, "Set-Cookie", &obj)) {
+    Error(_("no Set-Cookie object"));
+  }
+  ip_cookie = g_strdup(json_object_get_string(obj));
+
+  params = json_object_new_object();
+  result = request(oip->Curl, redirect_uri, OPENID_HTTP_GET, params, ip_cookie);
+
+  json_object_object_get_ex(result, "headers", &headers);
+  if (!json_object_object_get_ex(headers, "Location", &obj)) {
+    Error(_("no Location object"));
+  }
+
   oip->GetSessionURI = g_strdup(json_object_get_string(obj));
 
   json_object_put(result);
