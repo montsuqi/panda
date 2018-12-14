@@ -153,7 +153,9 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
 }
 
 void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
-  json_object *params, *result, *obj;
+  json_object *params, *result, *obj, *headers;
+  char *redirect_uri;
+
   params = json_object_new_object();
   json_object_object_add(params, "response_type", json_object_new_string("code"));
   json_object_object_add(params, "scope", json_object_new_string("openid"));
@@ -163,6 +165,15 @@ void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
   json_object_object_add(params, "nonce", json_object_new_string(oip->Nonce));
 
   result = request(oip->Curl, oip->AuthenticationRequestURI, OPENID_HTTP_POST, params, NULL);
+
+  json_object_object_get_ex(result, "headers", &headers);
+  if (!json_object_object_get_ex(headers, "Location", &obj)) {
+    Error(_("no Location object"));
+  }
+  redirect_uri = g_strdup(json_object_get_string(obj));
+
+  params = json_object_new_object();
+  result = request(oip->Curl, redirect_uri, OPENID_HTTP_GET, params, NULL);
 
   if (!json_object_object_get_ex(result, "request_url", &obj)) {
     Error(_("no request_url object"));
