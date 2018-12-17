@@ -237,7 +237,7 @@ static char table_relkind(TableList *table_list, int num) {
 }
 
 static TableList *table_check(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
-  int i, m, s, cmp, rcmp;
+  int i, m, s, cmp, rcmp, cnt;
   TableList *master_list, *slave_list, *ng_list;
 
   pg_trans_begin(master_dbg);
@@ -247,7 +247,12 @@ static TableList *table_check(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
   pg_trans_commit(master_dbg);
   pg_trans_commit(slave_dbg);
 
-  ng_list = NewTableList(master_list->count + slave_list->count);
+  cnt = master_list->count + slave_list->count;
+  if (cnt <= 0) {
+    Error("master_list->count + slave_list->count <= 0; empty dbs?");
+  }
+
+  ng_list = NewTableList(cnt);
   m = s = 0;
   for (i = 0; (master_list->count > m) || (slave_list->count > s); i++) {
     cmp = strcmp(table_name(master_list, m), table_name(slave_list, s));
