@@ -55,6 +55,11 @@ extern PGconn *pg_connect(DBG_Struct *dbg) {
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     /* database is already connected. */
     conn = PGCONN(dbg);
+  } else {
+    if ((conn = PgConnect(dbg)) != NULL) {
+      dbg->conn = (void*)conn;
+      dbg->dbstatus = DB_STATUS_CONNECT;
+    }
   }
   return conn;
 }
@@ -69,7 +74,6 @@ extern void pg_disconnect(DBG_Struct *dbg) {
 extern Bool pg_trans_begin(DBG_Struct *dbg) {
   Bool ret = FALSE;
   PGconn *conn = NULL;
-
   conn = pg_connect(dbg);
   ret = db_command(conn, "BEGIN;");
   return ret;
