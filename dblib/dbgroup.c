@@ -415,14 +415,15 @@ extern int GetDB_PortMode(DBG_Struct *dbg) {
 }
 
 extern char *GetDB_DBname(DBG_Struct *dbg) {
+  char *name = NULL;
   if (DB_Name != NULL) {
-    return DB_Name;
+    name = DB_Name;
+  } else {
+    if ((name = GetMONDB_ENV(dbg, "NAME")) == NULL) {
+      name = dbg->server->dbname;
+    }
   }
-  char *name = GetMONDB_ENV(dbg, "NAME");
-  if (name != NULL) {
-    return name;
-  }
-  return dbg->server->dbname;
+  return (name);
 }
 
 extern char *GetDB_User(DBG_Struct *dbg) {
@@ -430,7 +431,9 @@ extern char *GetDB_User(DBG_Struct *dbg) {
   if (DB_User != NULL) {
     user = DB_User;
   } else {
-    user = GetMONDB_ENV(dbg, "USER");
+    if ((user = GetMONDB_ENV(dbg, "USER")) == NULL) {
+      user = dbg->server->user;
+    }
   }
   return (user);
 }
@@ -440,7 +443,9 @@ extern char *GetDB_Pass(DBG_Struct *dbg) {
   if (DB_Pass != NULL) {
     pass = DB_Pass;
   } else {
-    pass = GetMONDB_ENV(dbg, "PASS");
+    if ((pass = GetMONDB_ENV(dbg, "PASS")) == NULL) {
+      pass = dbg->server->pass;
+    }
   }
   return (pass);
 }
@@ -458,31 +463,41 @@ extern char *GetDB_Crypt(DBG_Struct *dbg) {
 
 extern char *GetDB_Sslmode(DBG_Struct *dbg) {
   char *sslmode = NULL;
-  sslmode = GetMONDB_ENV(dbg, "SSLMODE");
+  if ((sslmode = GetMONDB_ENV(dbg, "SSLMODE")) == NULL) {
+    sslmode = dbg->server->sslmode;
+  }
   return (sslmode);
 }
 
 extern char *GetDB_Sslcert(DBG_Struct *dbg) {
   char *sslcert = NULL;
-  sslcert = GetMONDB_ENV(dbg, "SSLCERT");
+  if ((sslcert = GetMONDB_ENV(dbg, "SSLCERT")) == NULL) {
+    sslcert = dbg->server->sslcert;
+  }
   return (sslcert);
 }
 
 extern char *GetDB_Sslkey(DBG_Struct *dbg) {
   char *sslkey = NULL;
-  sslkey = GetMONDB_ENV(dbg, "SSLKEY");
+  if ((sslkey = GetMONDB_ENV(dbg, "SSLKEY")) == NULL) {
+    sslkey = dbg->server->sslkey;
+  }
   return (sslkey);
 }
 
 extern char *GetDB_Sslrootcert(DBG_Struct *dbg) {
   char *sslrootcert = NULL;
-  sslrootcert = GetMONDB_ENV(dbg, "SSLROOTCERT");
+  if ((sslrootcert = GetMONDB_ENV(dbg, "SSLROOTCERT")) == NULL) {
+    sslrootcert = dbg->server->sslrootcert;
+  }
   return (sslrootcert);
 }
 
 extern char *GetDB_Sslcrl(DBG_Struct *dbg) {
   char *sslcrl = NULL;
-  sslcrl = GetMONDB_ENV(dbg, "SSLCRL");
+  if ((sslcrl = GetMONDB_ENV(dbg, "SSLCRL")) == NULL) {
+    sslcrl = dbg->server->sslcrl;
+  }
   return (sslcrl);
 }
 

@@ -629,7 +629,6 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   dbg->id = 0;
   dbg->type = NULL;
   dbg->func = NULL;
-  dbg->server = New(DB_Server);
   dbg->transaction_id = NULL;
   dbg->file = NULL;
   dbg->sumcheck = 1;
@@ -649,6 +648,17 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   dbg->errcount = 0;
   dbg->dbstatus = DB_STATUS_NOCONNECT;
   dbg->conn = NULL;
+
+  dbg->server = New(DB_Server);
+  dbg->server->port = NULL;
+  dbg->server->dbname = NULL;
+  dbg->server->user = NULL;
+  dbg->server->pass = NULL;
+  dbg->server->sslmode = NULL;
+  dbg->server->sslcert = NULL;
+  dbg->server->sslkey = NULL;
+  dbg->server->sslrootcert = NULL;
+  dbg->server->sslcrl = NULL;
 
   if ((env = getenv("MONDB_LOCALE")) == NULL) {
     dbg->coding = DB_LOCALE;
