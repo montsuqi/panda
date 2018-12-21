@@ -505,11 +505,6 @@ static BootDialog *boot_dialog_new() {
                    G_CALLBACK(boot_dialog_on_config), self);
   gtk_widget_set_can_default(button, TRUE);
 
-  /* Single Sign On tab */
-  label = gtk_label_new(_("SingleSignOn"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), self->component->ssotable,
-                           label);
-
   /* INFO tab */
   label = gtk_label_new(_("INFOMATION"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), self->component->infotable,

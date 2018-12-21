@@ -149,7 +149,7 @@ static gboolean StartClient() {
 
   if (fSSO) {
     OpenIdConnectProtocol *oip;
-    oip = InitOpenIdConnectProtocol(SSO_SP_URI, SSOUser, SSOPassword);
+    oip = InitOpenIdConnectProtocol(AuthURI, User, Pass);
     StartOpenIdConnect(oip);
     GLP(Session)->OpenIdConnectRPCookie = oip->RPCookie;
     RPC_StartSession(GLP(Session));
@@ -262,6 +262,7 @@ extern void LoadConfig(int n) {
   } else {
     Pass = g_strdup("");
   }
+  fSSO = gl_config_get_boolean(n, "sso");
   setenv("GLPRINTER_CONFIG", gl_config_get_string(n, "printer_config"), 1);
   fTimer = gl_config_get_boolean(n, "timer");
   TimerPeriod = gl_config_get_int(n, "timerperiod");
@@ -306,11 +307,6 @@ extern void LoadConfig(int n) {
   PKCS11Lib = g_strdup(gl_config_get_string(n, "pkcs11lib"));
   PIN = g_strdup(gl_config_get_string(n, "pin"));
   fSavePIN = gl_config_get_boolean(n, "savepin");
-
-  fSSO = gl_config_get_boolean(n, "sso");
-  SSOUser = g_strdup(gl_config_get_string(n, "sso_user"));
-  SSOPassword = g_strdup(gl_config_get_string(n, "sso_password"));
-  SSO_SP_URI = g_strdup(gl_config_get_string(n, "sso_sp_uri"));
 }
 
 extern void LoadConfigByDesc(const char *desc) {
