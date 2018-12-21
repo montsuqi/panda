@@ -90,6 +90,7 @@ cpanda_sources =	\
 	logger.c		logger.h		\
 	utils.c			utils.h			\
 	tempdir.c		tempdir.h		\
+	openid_connect.c openid_connect.h \
 	cpanda.c
 
 cpanda_SOURCES =		\
@@ -147,6 +148,7 @@ gl_push_action_sources =	\
 	utils.c			utils.h			\
 	logger.c		logger.h		\
 	tempdir.c		tempdir.h		\
+	openid_connect.c openid_connect.h \
 	push_action.c
 
 gl_push_action_SOURCES =		\

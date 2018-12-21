@@ -31,6 +31,8 @@
 typedef struct {
   CURL *Curl;
   char *AuthURI;
+  char *User;
+  char *Pass;
   char *RPCURI;
   char *RESTURI;
   char *PusherURI;
@@ -53,6 +55,7 @@ typedef struct {
   gboolean fPKCS11;
   ENGINE *Engine;
 #endif
+  gboolean fSSO;
 } GLProtocol;
 
 void RPC_GetServerInfo(GLProtocol *);
