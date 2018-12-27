@@ -59,7 +59,6 @@
 #include "utils.h"
 #include "tempdir.h"
 #include "dialogs.h"
-#include "openid_connect.h"
 
 extern void SetSessionTitle(const char *title) {
   if (TITLE(Session)) {
@@ -135,6 +134,7 @@ static void ShowStartupMessage() {
 
 static gboolean StartClient() {
   GLP(Session) = InitProtocol(AuthURI, User, Pass);
+  GLP(Session)->fSSO = fSSO;
 #if USE_SSL
   if (fPKCS11) {
     GLP_SetSSLPKCS11(GLP(Session), PKCS11Lib, PIN);
@@ -147,16 +147,7 @@ static gboolean StartClient() {
   SCREENDATA(Session) = NULL;
   InitTopWindow();
 
-  if (fSSO) {
-    OpenIdConnectProtocol *oip;
-    oip = InitOpenIdConnectProtocol(SSO_SP_URI, SSOUser, SSOPassword);
-    StartOpenIdConnect(oip);
-    GLP(Session)->OpenIdConnectRPCookie = oip->RPCookie;
-    RPC_StartSession(GLP(Session));
-  } else {
-    RPC_GetServerInfo(GLP(Session));
-    RPC_StartSession(GLP(Session));
-  }
+  RPC_StartSession(GLP(Session));
   if (SCREENDATA(Session) != NULL) {
     json_object_put(SCREENDATA(Session));
   }
@@ -262,6 +253,7 @@ extern void LoadConfig(int n) {
   } else {
     Pass = g_strdup("");
   }
+  fSSO = gl_config_get_boolean(n, "sso");
   setenv("GLPRINTER_CONFIG", gl_config_get_string(n, "printer_config"), 1);
   fTimer = gl_config_get_boolean(n, "timer");
   TimerPeriod = gl_config_get_int(n, "timerperiod");
@@ -306,11 +298,6 @@ extern void LoadConfig(int n) {
   PKCS11Lib = g_strdup(gl_config_get_string(n, "pkcs11lib"));
   PIN = g_strdup(gl_config_get_string(n, "pin"));
   fSavePIN = gl_config_get_boolean(n, "savepin");
-
-  fSSO = gl_config_get_boolean(n, "sso");
-  SSOUser = g_strdup(gl_config_get_string(n, "sso_user"));
-  SSOPassword = g_strdup(gl_config_get_string(n, "sso_password"));
-  SSO_SP_URI = g_strdup(gl_config_get_string(n, "sso_sp_uri"));
 }
 
 extern void LoadConfigByDesc(const char *desc) {

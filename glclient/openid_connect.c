@@ -115,7 +115,7 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
   json_object *obj, *result, *headers;
   obj = json_object_new_object();
 
-  result = request(oip->Curl, oip->SP_URI, OPENID_HTTP_GET, obj, NULL);
+  result = request(oip->Curl, oip->SP_URI, OPENID_HTTP_POST, obj, NULL);
 
   if (!json_object_object_get_ex(result, "client_id", &obj)) {
     Error(_("no client_id object"));
@@ -228,20 +228,6 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
   json_object_put(result);
 }
 
-void doLoginToRP(OpenIdConnectProtocol *oip) {
-  json_object *obj, *result;
-  obj = json_object_new_object();
-
-  result = request(oip->Curl, oip->GetSessionURI, OPENID_HTTP_GET, obj, oip->RPCookie);
-
-  if (!json_object_object_get_ex(result, "session_id", &obj)) {
-    Error(_("no session_id object"));
-  }
-  oip->SessionID = g_strdup(json_object_get_string(obj));
-
-  json_object_put(result);
-}
-
 extern OpenIdConnectProtocol *InitOpenIdConnectProtocol(const char *sso_sp_uri, const char *user, const char * pass) {
   OpenIdConnectProtocol *oip;
   oip = g_new0(OpenIdConnectProtocol, 1);
@@ -262,6 +248,4 @@ extern void StartOpenIdConnect(OpenIdConnectProtocol *oip) {
   doAuthenticationRequestToIp(oip);
   // 認証サーバへのログイン
   doLoginToIP(oip);
-  // バックエンドサーバへの session_id 発行要求
-  doLoginToRP(oip);
 }
