@@ -144,7 +144,7 @@ static gboolean StartClient() {
     GLP_SetSSL(GLP(Session), CertFile, CertKeyFile, CertPass, CAFile);
   }
   if (fSSL) {
-    checkCertificateExpire(CertFile);
+    checkCertificateExpire(AuthURI, CertFile, CertKeyFile, CertPass, CAFile);
   }
 #endif
   THISWINDOW(Session) = NULL;
