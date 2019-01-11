@@ -67,6 +67,7 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   json_object *res;
   struct curl_slist *request_headers = NULL;
   FILE *fp;
+  int response_code;
 
   body = NewLBS();
   headers = NewLBS();
@@ -96,6 +97,12 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, request_headers);
 
   curl_easy_perform(curl);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+  Info("code: %d", response_code);
+  if (response_code != 200) {
+    return NULL;
+  }
+
   if (filename == NULL) {
     res = json_tokener_parse(LBS_Body(body));
   } else {
@@ -158,11 +165,15 @@ void cert_setSSL(Certificate *cert) {
   curl_easy_setopt(cert->Curl, CURLOPT_CAINFO, cert->CAFile);
 }
 
-void call_update_certificate(Certificate *cert) {
+int call_update_certificate(Certificate *cert) {
   char url_buf[256];
   json_object *result, *obj;
   sprintf(url_buf, "%s/api/cert", cert->APIDomain);
   result = cert_request(cert->Curl, url_buf, CERT_HTTP_POST, NULL);
+
+  if (result == NULL) {
+    return -1;
+  }
 
   if (!json_object_object_get_ex(result, "uri", &obj)) {
     Error(_("no uri object"));
@@ -173,6 +184,7 @@ void call_update_certificate(Certificate *cert) {
     Error(_("no pass object"));
   }
   cert->NewCertPass = g_strdup(json_object_get_string(obj));
+  return 0;
 }
 
 void get_new_certificate(Certificate *cert) {
@@ -232,7 +244,10 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
   cert->CAFile = CAFile;
   cert_setSSL(cert);
   initCertDir(cert);
-  call_update_certificate(cert);
+  if(call_update_certificate(cert) < 0) {
+    MessageDialog(GTK_MESSAGE_WARNING, _("Failure update certificate."));
+    return;
+  }
   setupNewCert(cert);
   get_new_certificate(cert);
   decode_p12(cert);
