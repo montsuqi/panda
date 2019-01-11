@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-11-27 17:44+0900\n"
+"POT-Creation-Date: 2019-01-07 19:11+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -190,7 +190,7 @@ msgstr "設定"
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/dialogs.c:143 glclient/client.c:264
+#: glclient/dialogs.c:143 glclient/client.c:225
 msgid "pin:"
 msgstr "PIN:"
 
@@ -281,19 +281,11 @@ msgstr "glclient印刷通知"
 msgid "orca cloud announce"
 msgstr "日レセクラウドからのお知らせ"
 
-#: glclient/client.c:167
-msgid ""
-"Certificate Expiration is Approaching.\n"
-"expiration: %Y/%m/%d/ %H:%M:%S"
-msgstr ""
-"クライアント証明書の有効期限が近づいています。\n"
-"有効期限: %Y年%m月%d日 %H:%M:%S"
-
-#: glclient/client.c:271
+#: glclient/client.c:232
 msgid "certificate password:"
 msgstr "証明書パスワード:"
 
-#: glclient/client.c:276
+#: glclient/client.c:237
 msgid "password:"
 msgstr "パスワード:"
 
@@ -728,6 +720,13 @@ msgstr ""
 "ENGINE_load_private_keyに失敗しました:\n"
 " %s\n"
 "「PKCS#11ライブラリ」が不正な可能性があります。\n"
+
+#~ msgid ""
+#~ "Certificate Expiration is Approaching.\n"
+#~ "expiration: %Y/%m/%d/ %H:%M:%S"
+#~ msgstr ""
+#~ "クライアント証明書の有効期限が近づいています。\n"
+#~ "有効期限: %Y年%m月%d日 %H:%M:%S"
 
 #~ msgid "Output Logfile"
 #~ msgstr "ログ出力"

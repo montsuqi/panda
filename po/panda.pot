@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 2.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-11-27 17:44+0900\n"
+"POT-Creation-Date: 2019-01-07 19:11+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -191,7 +191,7 @@ msgstr ""
 msgid "INFOMATION"
 msgstr ""
 
-#: glclient/dialogs.c:143 glclient/client.c:264
+#: glclient/dialogs.c:143 glclient/client.c:225
 msgid "pin:"
 msgstr ""
 
@@ -269,17 +269,11 @@ msgstr ""
 msgid "orca cloud announce"
 msgstr ""
 
-#: glclient/client.c:167
-msgid ""
-"Certificate Expiration is Approaching.\n"
-"expiration: %Y/%m/%d/ %H:%M:%S"
-msgstr ""
-
-#: glclient/client.c:271
+#: glclient/client.c:232
 msgid "certificate password:"
 msgstr ""
 
-#: glclient/client.c:276
+#: glclient/client.c:237
 msgid "password:"
 msgstr ""
 
