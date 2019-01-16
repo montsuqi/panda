@@ -406,11 +406,6 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   headers = curl_slist_append(headers, buf);
   snprintf(buf, sizeof(buf), "Expect:");
   headers = curl_slist_append(headers, buf);
-  if (ctx->OpenIdConnectRPCookie != NULL) {
-    char cookie_buf[1024];
-    snprintf(cookie_buf, sizeof(cookie_buf), "Cookie: %s", ctx->OpenIdConnectRPCookie);
-    headers = curl_slist_append(headers, cookie_buf);
-  }
 
   curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
   curl_easy_setopt(ctx->Curl, CURLOPT_POST, 1);

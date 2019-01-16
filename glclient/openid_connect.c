@@ -139,11 +139,6 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
 
   json_object_object_get_ex(result, "headers", &headers);
 
-  if (!json_object_object_get_ex(headers, "Set-Cookie", &obj)) {
-    Error(_("no Set-Cookie object"));
-  }
-  oip->RPCookie = g_strdup(json_object_get_string(obj));
-
   if (!json_object_object_get_ex(headers, "Location", &obj)) {
     Error(_("no Location object"));
   }
