@@ -78,10 +78,11 @@ typedef struct {
 } DB_Struct;
 
 #define RECORD_NULL 0
-#define RECORD_DB 1
+#define RECORD_DB   1
 
 typedef struct _RecordStruct {
   char *name;
+  char *filename;
   ValueStruct *value;
   int type;
   union {

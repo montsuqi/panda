@@ -614,7 +614,10 @@ extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
   ctrl->fDBOperation = FALSE;
   if ((rno = (int)(long)g_hash_table_lookup(DB_Table, ctrl->rname)) != 0) {
     ctrl->rno = rno - 1;
-    ctrl->rec = ThisDB[rno - 1];
+    ctrl->rec = ThisDB[ctrl->rno];
+    if (GetDBRecMemSave()) {
+      MallocRecordValue(ctrl->rec);
+    }
     rc = TRUE;
   } else {
     Warning("The table name of [%s] is not found.\n", rname);

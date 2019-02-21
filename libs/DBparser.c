@@ -437,7 +437,7 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
   PathStruct *path;
 
   dbgprintf("fScript = %d", fScript);
-  ret = DD_Parse(in);
+  ret = DD_Parse(in,name);
   if (ret == NULL) {
     Error("DB_Parse Error (%s).", name);
   }
@@ -447,6 +447,9 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
   } else {
     ret->type = RECORD_NULL;
   }
+  if (GetDBRecMemSave()) {
+    FreeRecordValue(ret);
+  }
   SetReserved(in, DB_Reserved);
   while (GetSymbol != T_EOF) {
     switch (ComToken) {
@@ -454,7 +457,7 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
       switch (GetName) {
       case T_SYMBOL:
         sprintf(buff, "%s.db", ComSymbol);
-        use = ReadRecordDefine(buff);
+        use = ReadRecordDefine(buff,TRUE);
         if (use == NULL) {
           ParError("define not found");
         } else {

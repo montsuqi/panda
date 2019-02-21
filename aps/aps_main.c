@@ -41,6 +41,7 @@
 #include "const.h"
 #include "libmondai.h"
 #include "RecParser.h"
+#include "DDparser.h"
 #include "enum.h"
 #include "dirs.h"
 #include "socket.h"
@@ -81,6 +82,17 @@ static void InitSystem(char *name) {
   setenv("MCP_MIDDLEWARE_VERSION", MiddleWareVersion, 1);
 
   InitDirectory();
+  {
+    char *env;
+    env = getenv("MON_DB_REC_MEM_SAVE");
+    if (env != NULL) {
+      SetDBRecMemSave(env[0] == '1');
+    }
+    env = getenv("MON_SCR_REC_MEM_SAVE");
+    if (env != NULL) {
+      SetScrRecMemSave(env[0]=='1');
+    }
+  }
   SetUpDirectory(Directory, name, "", "", P_ALL);
   setenv("MON_DIRECTORY_PATH", Directory, 1);
 
@@ -163,6 +175,37 @@ static void SetMCPEnv(ValueStruct *val) {
          1);
 }
 
+static void MemSaveBegin(ProcessNode *node) {
+  int i;
+  unsigned long st,ed;
+  st = GetNowTime();
+  if (GetScrRecMemSave()) {
+    for(i=0;i<node->cWindow;i++) {
+      MallocRecordValue(node->scrrec[i]);
+    }
+  }
+  ed = GetNowTime();
+  TimerPrintf(st, ed, "MemSaveBegin");
+}
+
+static void MemSaveEnd(ProcessNode *node) {
+  int i;
+  unsigned long st,ed;
+  st = GetNowTime();
+  if (GetScrRecMemSave()) {
+    for(i=0;i<node->cWindow;i++) {
+      FreeRecordValue(node->scrrec[i]);
+    }
+  }
+  if (GetDBRecMemSave()) {
+    for(i=0;i<ThisLD->cDB;i++) {
+      FreeRecordValue(ThisLD->db[i]);
+    }
+  }
+  ed = GetNowTime();
+  TimerPrintf(st, ed, "MemSaveEnd");
+}
+
 static int ExecuteServer(void) {
   int fhWFC, rc;
   Port *port;
@@ -216,6 +259,7 @@ retry:
   }
   node = MakeProcessNode();
   while (1) {
+    MemSaveBegin(node);
     if (!GetWFC(fpWFC, node)) {
       Message("GetWFC failure");
       rc = -1;
@@ -249,15 +293,14 @@ retry:
     }
     TransactionEnd(NULL);
     PutWFC(fpWFC, node);
+    MemSaveEnd(node);
   }
   MessageLogPrintf("exiting APS (%s)", ThisLD->name);
   FinishSession(node);
 quit:
-#if 1
   if (fpWFC != NULL) {
     CloseNet(fpWFC);
   }
-#endif
   return (rc);
 }
 

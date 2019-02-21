@@ -1023,7 +1023,7 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
       if (GetSymbol == T_SYMBOL) {
         if (parse_type >= P_LD) {
           sprintf(buff, "%s.rec", ComSymbol);
-          ThisEnv->linkrec = ReadRecordDefine(buff);
+          ThisEnv->linkrec = ReadRecordDefine(buff,TRUE);
         } else {
           break;
         }

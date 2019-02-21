@@ -36,76 +36,120 @@
 #include <RecParser.h>
 #include "struct.h"
 #include "monstring.h"
+#include "directory.h"
 #include "DDparser.h"
 #include "debug.h"
 
-extern RecordStruct *DD_Parse(CURFILE *in) {
-  RecordStruct *ret;
+extern RecordStruct *DD_Parse(CURFILE *in,const char *filename) {
+  RecordStruct *rec;
   ValueStruct *value;
 
   if ((value = RecParseMain(in)) != NULL) {
-    ret = New(RecordStruct);
-    ret->value = value;
-    ret->name = StrDup(in->ValueName);
+    rec = New(RecordStruct);
+    rec->filename = g_strdup(filename);
+    rec->value = value;
+    rec->name = StrDup(in->ValueName);
     if (ValueRootRecordName(value) == NULL) {
-      ValueRootRecordName(value) = ret->name;
+      ValueRootRecordName(value) = StrDup(in->ValueName);
     }
-    ret->type = RECORD_NULL;
+    rec->type = RECORD_NULL;
   } else {
-    ret = NULL;
+    rec = NULL;
   }
-  return (ret);
+  return (rec);
 }
 
-extern RecordStruct *ParseRecordFile(char *name) {
-  RecordStruct *ret;
-  ValueStruct *value;
-  char *ValueName;
-
-  dbgprintf("name = [%s]\n", name);
-  if ((value = RecParseValue(name, &ValueName)) != NULL) {
-    ret = New(RecordStruct);
-    ret->value = value;
-    ret->name = ValueName;
-    ret->type = RECORD_NULL;
-  } else {
-    ret = NULL;
-  }
-  return (ret);
+static Bool _MallocValue(RecordStruct *rec,const char *fname,Bool use_cache) {
+    char *valuename;
+    if (use_cache) {
+      rec->value = RecParseValue(fname, &valuename);
+    } else {
+      rec->value = RecParseValueNoCache(fname, &valuename);
+    }
+    if (rec->value != NULL) {
+      if (rec->name == NULL) {
+        rec->name = valuename;
+      } else {
+        /* name malloced by RecParseValue */
+        g_free(valuename);
+      }
+      return TRUE;
+    }
+    return FALSE;
 }
 
-extern RecordStruct *ParseRecordMem(char *mem) {
-  RecordStruct *ret;
+static void MallocValue(RecordStruct *rec,Bool use_cache) {
+  int i;
+  gchar *fname;
+  static gchar **dirs = NULL;
+  if (rec->value != NULL) {
+    Warning("MallocValue rec->value not NULL");
+    return;
+  }
+  if (_MallocValue(rec,rec->filename,use_cache)) {
+    return;
+  }
+  dirs = g_strsplit_set(RecordDir, ":", -1);
+  for (i = 0; dirs[i] != NULL; i++) {
+    fname = g_strdup_printf("%s/%s", dirs[i], rec->filename);
+    if (_MallocValue(rec,fname,use_cache)) {
+      g_free(fname);
+      break;
+    }
+    g_free(fname);
+  }
+  g_strfreev(dirs);
+}
+
+extern RecordStruct *ParseRecordMem(const char *mem) {
+  RecordStruct *rec;
   ValueStruct *value;
   char *ValueName;
 
   if ((value = RecParseValueMem(mem, &ValueName)) != NULL) {
-    ret = New(RecordStruct);
-    ret->value = value;
-    ret->name = ValueName;
-    ret->type = RECORD_NULL;
+    rec = New(RecordStruct);
+    rec->value = value;
+    rec->name = ValueName;
+    rec->filename = NULL;
+    rec->type = RECORD_NULL;
   } else {
-    ret = NULL;
+    rec = NULL;
   }
-  return ret;
+  return rec;
 }
 
-extern RecordStruct *ReadRecordDefine(char *name) {
-  gchar *fname;
-  static gchar **dirs = NULL;
-  int i;
+extern RecordStruct *ReadRecordDefine(const char *fname,Bool use_cache) {
   RecordStruct *rec;
-  rec = NULL;
-  dirs = g_strsplit_set(RecordDir, ":", -1);
-  for (i = 0; dirs[i] != NULL; i++) {
-    fname = g_strdup_printf("%s/%s", dirs[i], name);
-    if ((rec = ParseRecordFile(fname)) != NULL) {
-      g_free(fname);
-      break;
-    } else {
-      g_free(fname);
+  rec = New(RecordStruct);
+  rec->value = NULL;
+  rec->name = NULL;
+  rec->filename = g_strdup(fname);
+  rec->type = RECORD_NULL;
+  MallocValue(rec, use_cache);
+  if (rec->value != NULL) {
+    return rec;
+  } else {
+    Warning("ReadRecordDeifne failure");
+    if (rec->name != NULL) {
+      g_free(rec->name);
     }
+    if (rec->filename != NULL) {
+      g_free(rec->filename);
+    }
+    g_free(rec);
+    return NULL;
   }
-  g_strfreev(dirs);
-  return rec;
+}
+
+extern void MallocRecordValue(RecordStruct *rec) {
+  if (rec != NULL && rec->filename != NULL && rec->value == NULL) {
+    MallocValue(rec,FALSE);
+  }
+}
+
+extern void FreeRecordValue(RecordStruct *rec) {
+  if (rec != NULL && rec->filename != NULL && rec->value != NULL) {
+    FreeValueStruct(rec->value);
+    rec->value = NULL;
+  }
 }

@@ -79,46 +79,19 @@ static GHashTable *DBParsed;
 static GHashTable *Records;
 
 extern RecordStruct *GetWindow(char *name) {
-  RecordStruct *rec, *rec2;
-  ValueStruct *value;
-  char fname[SIZE_LONGNAME + 1], buff[SIZE_LONGNAME + 1];
-  char *p, *iname, *wname;
-
-  dbgprintf("GetWindow(%s)", name);
-  strcpy(buff, name);
-  if ((p = strchr(buff, '.')) != NULL) {
-    *p = 0;
-    iname = p + 1;
-  } else {
-    iname = NULL;
-  }
-  wname = buff;
+  RecordStruct *rec;
+  char fname[SIZE_LONGNAME + 1];
 
   if (name != NULL) {
     rec = (RecordStruct *)g_hash_table_lookup(Records, name);
     if (rec == NULL) {
-      rec2 = (RecordStruct *)g_hash_table_lookup(Records, wname);
-      if (rec2 == NULL) {
-        sprintf(fname, "%s.rec", wname);
-        if ((rec2 = ReadRecordDefine(fname)) != NULL) {
-          g_hash_table_insert(Records, rec2->name, rec2);
-          InitializeValue(rec2->value);
-        } else {
-          Warning("window record not found [%s].", wname);
-          rec = NULL;
-        }
-      }
-      if (iname == NULL) {
-        rec = rec2;
+      sprintf(fname, "%s.rec", name);
+      rec = ReadRecordDefine(fname,!GetScrRecMemSave());
+      if (rec != NULL) {
+        g_hash_table_insert(Records, g_strdup(name), rec);
       } else {
-        if (rec2 != NULL) {
-          value = GetItemLongName(rec2->value, iname);
-          rec = New(RecordStruct);
-          rec->name = StrDup(name);
-          rec->type = RECORD_NULL;
-          rec->value = value;
-          g_hash_table_insert(Records, rec->name, rec);
-        }
+        Warning("window record not found [%s].", name);
+        rec = NULL;
       }
     }
   } else {
@@ -238,7 +211,7 @@ static void ParDATA(CURFILE *in, LD_Struct *ld) {
         GetName;
         if (ComToken == T_SYMBOL) {
           sprintf(buff, "%s.rec", ComSymbol);
-          if ((ld->sparec = ReadRecordDefine(buff)) == NULL) {
+          if ((ld->sparec = ReadRecordDefine(buff,TRUE)) == NULL) {
             ParError("spa record not found");
           }
         } else {
