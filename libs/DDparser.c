@@ -38,6 +38,7 @@
 #include "monstring.h"
 #include "directory.h"
 #include "DDparser.h"
+#include "DBparser.h"
 #include "debug.h"
 
 extern RecordStruct *DD_Parse(CURFILE *in,const char *filename) {
@@ -46,12 +47,12 @@ extern RecordStruct *DD_Parse(CURFILE *in,const char *filename) {
 
   if ((value = RecParseMain(in)) != NULL) {
     rec = New(RecordStruct);
-    rec->filename = g_strdup(filename);
     rec->value = value;
     rec->name = StrDup(in->ValueName);
     if (ValueRootRecordName(value) == NULL) {
       ValueRootRecordName(value) = StrDup(in->ValueName);
     }
+    rec->filename = StrDup(filename);
     rec->type = RECORD_NULL;
   } else {
     rec = NULL;
@@ -124,21 +125,45 @@ extern RecordStruct *ReadRecordDefine(const char *fname,Bool use_cache) {
   rec->value = NULL;
   rec->name = NULL;
   rec->filename = g_strdup(fname);
+  rec->dbname = NULL;
+  rec->dbgname = NULL;
+  rec->dbreal = NULL;
   rec->type = RECORD_NULL;
   MallocValue(rec, use_cache);
   if (rec->value != NULL) {
     return rec;
   } else {
     Warning("ReadRecordDeifne failure");
-    if (rec->name != NULL) {
-      g_free(rec->name);
-    }
-    if (rec->filename != NULL) {
-      g_free(rec->filename);
-    }
-    g_free(rec);
     return NULL;
   }
+}
+
+extern void FreeRecordStruct(RecordStruct *rec) {
+  if (rec == NULL) {
+    return;
+  }
+  if (rec->name != NULL) {
+    xfree(rec->name);
+  }
+  if (rec->filename != NULL) {
+    xfree(rec->filename);
+  }
+  if (rec->dbname != NULL) {
+    xfree(rec->dbname);
+  }
+  if (rec->dbgname != NULL) {
+    xfree(rec->dbgname);
+  }
+  if (rec->dbreal != NULL) {
+    FreeRecordStruct(rec->dbreal);
+  }
+  if (rec->value != NULL) {
+    FreeValueStruct(rec->value);
+  }
+  if (rec->type == RECORD_DB && RecordDB(rec) != NULL) {
+    FreeDB_Struct(RecordDB(rec));
+  }
+  xfree(rec);
 }
 
 extern void MallocRecordValue(RecordStruct *rec) {

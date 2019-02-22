@@ -42,6 +42,7 @@
 #include "libmondai.h"
 #include "RecParser.h"
 #include "DDparser.h"
+#include "DBparser.h"
 #include "enum.h"
 #include "dirs.h"
 #include "socket.h"
@@ -199,7 +200,7 @@ static void MemSaveEnd(ProcessNode *node) {
   }
   if (GetDBRecMemSave()) {
     for(i=0;i<ThisLD->cDB;i++) {
-      FreeRecordValue(ThisLD->db[i]);
+      DB_Parser_Lazy_Free(ThisLD->db[i]);
     }
   }
   ed = GetNowTime();

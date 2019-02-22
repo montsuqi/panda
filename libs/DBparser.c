@@ -158,6 +158,71 @@ static DB_Struct *InitDB_Struct(char *gname) {
   return (ret);
 }
 
+static void FreeDB_Operation(DB_Operation *op) {
+  if (op->proc != NULL) {
+    FreeLBS(op->proc);
+  }
+  if (op->name != NULL) {
+    xfree(op->name);
+  }
+  if (op->args != NULL) {
+    FreeValueStruct(op->args);
+  }
+  xfree(op);
+}
+
+static void FreePathStruct(PathStruct *path) {
+  int i;
+  if (path == NULL) {
+    return;
+  }
+  if (path->name != NULL) {
+    xfree(path->name);
+  }
+  if (path->ops != NULL) {
+    for(i=0;i<path->ocount;i++) {
+      FreeDB_Operation(path->ops[i]);
+    }
+    xfree(path->ops);
+  }
+  DestroyHashTable(path->opHash);
+  if (path->args != NULL) {
+    FreeValueStruct(path->args);
+  }
+  xfree(path);
+}
+
+extern void FreeDB_Struct(DB_Struct *db) {
+  int i,j;
+  char **name;
+  if (db->gname != NULL) {
+    xfree(db->gname);
+  }
+  if (db->path != NULL) {
+    for(i=0;i<db->pcount;i++) {
+      FreePathStruct(db->path[i]);
+    }
+    xfree(db->path);
+  }
+  DestroyHashTable(db->paths);
+  if (db->pkey != NULL) {
+    if (db->pkey->item != NULL) {
+      for(i=0;db->pkey->item[i]!=NULL;i++) {
+        name = db->pkey->item[i];
+        for(j=0;name[j]!=NULL;j++) {
+          xfree(name[j]);
+        }
+        xfree(name);
+      }
+      xfree(db->pkey->item);
+    }
+    xfree(db->pkey);
+  }
+  DestroyHashTable(db->opHash);
+  DestroyHashTable(db->use);
+  xfree(db);
+}
+
 static DB_Operation *NewOperation(char *name) {
   DB_Operation *op;
 
@@ -193,6 +258,7 @@ static PathStruct *NewPathStruct(int usage) {
   ret->args = NULL;
   return (ret);
 }
+
 
 static void EnterUse(RecordStruct *root, char *name, RecordStruct *rec) {
   if (g_hash_table_lookup(RecordDB(root)->use, name) == NULL) {
@@ -441,14 +507,14 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
   if (ret == NULL) {
     Error("DB_Parse Error (%s).", name);
   }
-  if (!stricmp(strrchr(name, '.'), ".db")) {
+  if (strcasestr(name,".db")) {
     ret->type = RECORD_DB;
     RecordDB(ret) = InitDB_Struct(gname);
+    ret->dbreal = NULL;
+fprintf(stderr,"DB_Parse RECORD_DB\n");
   } else {
     ret->type = RECORD_NULL;
-  }
-  if (GetDBRecMemSave()) {
-    FreeRecordValue(ret);
+fprintf(stderr,"DB_Parse RECORD_NULL\n");
   }
   SetReserved(in, DB_Reserved);
   while (GetSymbol != T_EOF) {
@@ -604,11 +670,12 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
   CURFILE *in, root;
 
   root.next = NULL;
-  dbgprintf("name  = [%s]", name);
-  dbgprintf("gname = [%s]", gname);
+  fprintf(stderr,"DB_Parser name  = [%s] gname = [%s]\n", name,gname);
   if (stat(name, &stbuf) == 0) {
     if ((in = PushLexInfo(&root, name, RecordDir, DB_Reserved)) != NULL) {
       ret = DB_Parse(in, name, gname, fScript);
+      ret->dbname = StrDup(name);
+      ret->dbgname = StrDup(gname);
       DropLexInfo(&in);
       ResolveAlias(ret, ret->value);
     } else {
@@ -618,4 +685,28 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
     ret = NULL;
   }
   return (ret);
+}
+
+extern RecordStruct *DB_Parser_Lazy_Real(RecordStruct *rec) {
+  if (rec == NULL) {
+    Error("DB_Parser_Lazy_Real rec = NULL");
+  }
+  if (rec->dbreal == NULL) {
+    rec->dbreal = DB_Parser(rec->dbname,rec->dbgname,TRUE);
+fprintf(stderr,"DB_Parser_Lazy_Real real:%p\n",rec->dbreal);
+  }
+  return rec->dbreal;
+}
+
+extern void DB_Parser_Lazy_Free(RecordStruct *rec) {
+  if (rec != NULL && rec->type == RECORD_DB && rec->dbname != NULL) {
+    if (rec->value != NULL) {
+      FreeValueStruct(rec->value);
+      rec->value = NULL;
+    }
+    if (rec->dbreal != NULL) {
+      FreeRecordStruct(rec->dbreal);
+      rec->dbreal = NULL;
+    }
+  }
 }

@@ -26,6 +26,7 @@ extern RecordStruct *DD_Parse(CURFILE *in,const char *filename);
 extern RecordStruct *ParseRecordFile(const char *name);
 extern RecordStruct *ParseRecordMem(const char *mem);
 extern RecordStruct *ReadRecordDefine(const char *name,Bool use_cache);
+extern void FreeRecordStruct(RecordStruct *);
 extern void MallocRecordValue(RecordStruct *);
 extern void FreeRecordValue(RecordStruct *);
 #endif

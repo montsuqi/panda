@@ -43,6 +43,7 @@
 #include "libmondai.h"
 #include "directory.h"
 #include "DDparser.h"
+#include "DBparser.h"
 #include "dbgroup.h"
 #include "debug.h"
 
@@ -578,11 +579,13 @@ extern Bool SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname) {
     Warning("path name not set.\n");
     return FALSE;
   }
+fprintf(stderr,"ctrl->rec:%p name:%s value:%p RecordDB:%p\n",ctrl->rec,ctrl->rec->name,ctrl->rec->value,RecordDB(ctrl->rec));
   strncpy(ctrl->pname, pname, SIZE_NAME);
   if (ctrl->rec == NULL) {
     return FALSE;
   }
   value = ctrl->rec->value;
+fprintf(stderr,"RecordDB(ctrl->rec)->paths:%p\n",RecordDB(ctrl->rec)->paths);
   if ((pno = (int)(long)g_hash_table_lookup(RecordDB(ctrl->rec)->paths,
                                             pname)) != 0) {
     pno--;
@@ -616,7 +619,15 @@ extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
     ctrl->rno = rno - 1;
     ctrl->rec = ThisDB[ctrl->rno];
     if (GetDBRecMemSave()) {
-      MallocRecordValue(ctrl->rec);
+fprintf(stderr,"org ctrl->rec:%p\n",ctrl->rec);
+      RecordStruct *real;
+      real = DB_Parser_Lazy_Real(ctrl->rec);
+fprintf(stderr,"real:%p\n",real);
+fprintf(stderr,"RecordDB(real):%p\n",RecordDB(real));
+fprintf(stderr,"dbg:%p\n",RecordDB(real)->dbg);
+      RecordDB(real)->dbg = RecordDB(ctrl->rec)->dbg;
+      ctrl->rec = real;
+fprintf(stderr,"new ctrl->rec:%p\n",ctrl->rec);
     }
     rc = TRUE;
   } else {
