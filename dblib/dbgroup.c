@@ -47,6 +47,11 @@
 #include "dbgroup.h"
 #include "debug.h"
 
+extern void DBGroup_Init(RecordStruct **db, RecordStructMeta **meta) {
+  ThisDB = db;
+  ThisDBMeta = meta;
+}
+
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl) {
   *ctrl->func = '\0';
   *ctrl->rname = '\0';
@@ -579,13 +584,11 @@ extern Bool SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname) {
     Warning("path name not set.\n");
     return FALSE;
   }
-fprintf(stderr,"ctrl->rec:%p name:%s value:%p RecordDB:%p\n",ctrl->rec,ctrl->rec->name,ctrl->rec->value,RecordDB(ctrl->rec));
   strncpy(ctrl->pname, pname, SIZE_NAME);
   if (ctrl->rec == NULL) {
     return FALSE;
   }
   value = ctrl->rec->value;
-fprintf(stderr,"RecordDB(ctrl->rec)->paths:%p\n",RecordDB(ctrl->rec)->paths);
   if ((pno = (int)(long)g_hash_table_lookup(RecordDB(ctrl->rec)->paths,
                                             pname)) != 0) {
     pno--;
@@ -618,16 +621,9 @@ extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
   if ((rno = (int)(long)g_hash_table_lookup(DB_Table, ctrl->rname)) != 0) {
     ctrl->rno = rno - 1;
     ctrl->rec = ThisDB[ctrl->rno];
-    if (GetDBRecMemSave()) {
-fprintf(stderr,"org ctrl->rec:%p\n",ctrl->rec);
-      RecordStruct *real;
-      real = DB_Parser_Lazy_Real(ctrl->rec);
-fprintf(stderr,"real:%p\n",real);
-fprintf(stderr,"RecordDB(real):%p\n",RecordDB(real));
-fprintf(stderr,"dbg:%p\n",RecordDB(real)->dbg);
-      RecordDB(real)->dbg = RecordDB(ctrl->rec)->dbg;
-      ctrl->rec = real;
-fprintf(stderr,"new ctrl->rec:%p\n",ctrl->rec);
+    if (GetDBRecMemSave() && ThisDBMeta != NULL && ctrl->rec == NULL) {
+      ctrl->rec = DB_Parser(ThisDBMeta[ctrl->rno]->name,ThisDBMeta[ctrl->rno]->gname,TRUE);
+      ThisDB[ctrl->rno] = ctrl->rec;
     }
     rc = TRUE;
   } else {

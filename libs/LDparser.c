@@ -85,7 +85,8 @@ extern RecordStruct *GetWindow(char *name) {
   if (name != NULL) {
     rec = (RecordStruct *)g_hash_table_lookup(Records, name);
     if (rec == NULL) {
-      sprintf(fname, "%s.rec", name);
+      fname[SIZE_LONGNAME] = 0;
+      snprintf(fname,SIZE_LONGNAME,"%s.rec", name);
       rec = ReadRecordDefine(fname,!GetScrRecMemSave());
       if (rec != NULL) {
         g_hash_table_insert(Records, g_strdup(name), rec);
@@ -104,7 +105,8 @@ extern RecordStruct *GetWindow(char *name) {
 static void ParWindow(CURFILE *in, LD_Struct *ld) {
   RecordStruct *window;
   RecordStruct **wn;
-  char wname[SIZE_NAME + 1];
+  RecordStructMeta **wnm;
+  char wname[SIZE_NAME + 1],rname[SIZE_LONGNAME+1];
 
   window = NULL;
   if (GetSymbol != '{') {
@@ -120,12 +122,20 @@ static void ParWindow(CURFILE *in, LD_Struct *ld) {
         }
         wn = (RecordStruct **)xmalloc(sizeof(RecordStruct *) *
                                       (ld->cWindow + 1));
+        wnm = (RecordStructMeta **)xmalloc(sizeof(RecordStructMeta *) *
+                                      (ld->cWindow + 1));
         if (ld->cWindow > 0) {
           memcpy(wn, ld->windows, sizeof(RecordStruct *) * ld->cWindow);
           xfree(ld->windows);
+          memcpy(wnm, ld->windowsmeta, sizeof(RecordStructMeta *) * ld->cWindow);
+          xfree(ld->windowsmeta);
         }
         ld->windows = wn;
         ld->windows[ld->cWindow] = window;
+        ld->windowsmeta = wnm;
+        rname[SIZE_LONGNAME] = 0;
+        snprintf(rname,SIZE_LONGNAME,"%s.rec",wname);
+        ld->windowsmeta[ld->cWindow] = NewRecordStructMeta(rname,NULL);
         ld->cWindow++;
         if (window != NULL) {
           g_hash_table_insert(ld->whash, window->name, (void *)ld->cWindow);
@@ -149,6 +159,7 @@ static void _ParDB(CURFILE *in, LD_Struct *ld, char *dbgname,
   char *p, *q;
   RecordStruct *db = NULL;
   RecordStruct **rtmp;
+  RecordStructMeta **mtmp;
 
   strcpy(buff, RecordDir);
   p = buff;
@@ -171,11 +182,18 @@ static void _ParDB(CURFILE *in, LD_Struct *ld, char *dbgname,
     if (db != NULL) {
       rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * (ld->cDB + 1));
       memcpy(rtmp, ld->db, sizeof(RecordStruct *) * ld->cDB);
+      mtmp = (RecordStructMeta **)xmalloc(sizeof(RecordStructMeta *) * (ld->cDB + 1));
+      memcpy(mtmp, ld->dbmeta, sizeof(RecordStructMeta *) * ld->cDB);
       if (ld->db != NULL) {
         xfree(ld->db);
       }
+      if (ld->dbmeta != NULL) {
+        xfree(ld->dbmeta);
+      }
       ld->db = rtmp;
       ld->db[ld->cDB] = db;
+      ld->dbmeta = mtmp;
+      ld->dbmeta[ld->cDB] = NewRecordStructMeta(name, dbgname);
       ld->cDB++;
       g_hash_table_insert(ld->DB_Table, StrDup(table_name), (void *)ld->cDB);
     }
@@ -287,6 +305,8 @@ static LD_Struct *NewLD(void) {
   ld->cDB = 1;
   ld->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
   ld->db[0] = NULL;
+  ld->dbmeta = (RecordStructMeta **)xmalloc(sizeof(RecordStructMeta *));
+  ld->dbmeta[0] = NULL;
   ld->cWindow = 0;
   ld->cBind = 0;
   ld->arraysize = SIZE_DEFAULT_ARRAY_SIZE;

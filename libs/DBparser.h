@@ -26,8 +26,6 @@
 
 extern void DB_ParserInit(void);
 extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript);
-extern RecordStruct *DB_Parser_Lazy_Real(RecordStruct *rec);
-extern void DB_Parser_Lazy_Free(RecordStruct *rec);
 extern void FreeDB_Struct(DB_Struct *);
 
 #undef GLOBAL

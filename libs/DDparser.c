@@ -48,58 +48,16 @@ extern RecordStruct *DD_Parse(CURFILE *in,const char *filename) {
   if ((value = RecParseMain(in)) != NULL) {
     rec = New(RecordStruct);
     rec->value = value;
+    InitializeValue(rec->value);
     rec->name = StrDup(in->ValueName);
     if (ValueRootRecordName(value) == NULL) {
       ValueRootRecordName(value) = StrDup(in->ValueName);
     }
-    rec->filename = StrDup(filename);
     rec->type = RECORD_NULL;
   } else {
     rec = NULL;
   }
   return (rec);
-}
-
-static Bool _MallocValue(RecordStruct *rec,const char *fname,Bool use_cache) {
-    char *valuename;
-    if (use_cache) {
-      rec->value = RecParseValue(fname, &valuename);
-    } else {
-      rec->value = RecParseValueNoCache(fname, &valuename);
-    }
-    if (rec->value != NULL) {
-      if (rec->name == NULL) {
-        rec->name = valuename;
-      } else {
-        /* name malloced by RecParseValue */
-        g_free(valuename);
-      }
-      return TRUE;
-    }
-    return FALSE;
-}
-
-static void MallocValue(RecordStruct *rec,Bool use_cache) {
-  int i;
-  gchar *fname;
-  static gchar **dirs = NULL;
-  if (rec->value != NULL) {
-    Warning("MallocValue rec->value not NULL");
-    return;
-  }
-  if (_MallocValue(rec,rec->filename,use_cache)) {
-    return;
-  }
-  dirs = g_strsplit_set(RecordDir, ":", -1);
-  for (i = 0; dirs[i] != NULL; i++) {
-    fname = g_strdup_printf("%s/%s", dirs[i], rec->filename);
-    if (_MallocValue(rec,fname,use_cache)) {
-      g_free(fname);
-      break;
-    }
-    g_free(fname);
-  }
-  g_strfreev(dirs);
 }
 
 extern RecordStruct *ParseRecordMem(const char *mem) {
@@ -111,7 +69,6 @@ extern RecordStruct *ParseRecordMem(const char *mem) {
     rec = New(RecordStruct);
     rec->value = value;
     rec->name = ValueName;
-    rec->filename = NULL;
     rec->type = RECORD_NULL;
   } else {
     rec = NULL;
@@ -119,17 +76,34 @@ extern RecordStruct *ParseRecordMem(const char *mem) {
   return rec;
 }
 
-extern RecordStruct *ReadRecordDefine(const char *fname,Bool use_cache) {
+extern RecordStruct *ReadRecordDefine(const char *name,Bool use_cache) {
   RecordStruct *rec;
+  int i;
+  char *vname;
+  gchar *fname;
+  static gchar **dirs = NULL;
   rec = New(RecordStruct);
   rec->value = NULL;
   rec->name = NULL;
-  rec->filename = g_strdup(fname);
-  rec->dbname = NULL;
-  rec->dbgname = NULL;
-  rec->dbreal = NULL;
   rec->type = RECORD_NULL;
-  MallocValue(rec, use_cache);
+  if (dirs == NULL) {
+    dirs = g_strsplit_set(RecordDir, ":", -1);
+  }
+  for (i = 0; dirs[i] != NULL; i++) {
+    fname = g_strdup_printf("%s/%s", dirs[i], name);
+    if (use_cache) {
+      rec->value = RecParseValue(fname, &vname);
+    } else {
+      rec->value = RecParseValueNoCache(fname, &vname);
+    }
+    if (rec->value != NULL) {
+      InitializeValue(rec->value);
+      rec->name = vname;
+      g_free(fname);
+      break;
+    }
+    g_free(fname);
+  }
   if (rec->value != NULL) {
     return rec;
   } else {
@@ -145,18 +119,6 @@ extern void FreeRecordStruct(RecordStruct *rec) {
   if (rec->name != NULL) {
     xfree(rec->name);
   }
-  if (rec->filename != NULL) {
-    xfree(rec->filename);
-  }
-  if (rec->dbname != NULL) {
-    xfree(rec->dbname);
-  }
-  if (rec->dbgname != NULL) {
-    xfree(rec->dbgname);
-  }
-  if (rec->dbreal != NULL) {
-    FreeRecordStruct(rec->dbreal);
-  }
   if (rec->value != NULL) {
     FreeValueStruct(rec->value);
   }
@@ -166,15 +128,16 @@ extern void FreeRecordStruct(RecordStruct *rec) {
   xfree(rec);
 }
 
-extern void MallocRecordValue(RecordStruct *rec) {
-  if (rec != NULL && rec->filename != NULL && rec->value == NULL) {
-    MallocValue(rec,FALSE);
+extern RecordStructMeta *NewRecordStructMeta(const char *name, const char *gname) {
+  RecordStructMeta *meta;
+  meta = New(RecordStructMeta);
+  meta->name = NULL;
+  if (name != NULL) {
+    meta->name = StrDup(name);
   }
-}
-
-extern void FreeRecordValue(RecordStruct *rec) {
-  if (rec != NULL && rec->filename != NULL && rec->value != NULL) {
-    FreeValueStruct(rec->value);
-    rec->value = NULL;
+  meta->gname = NULL;
+  if (gname != NULL) {
+    meta->gname = StrDup(gname);
   }
+  return meta;
 }

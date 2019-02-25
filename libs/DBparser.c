@@ -510,11 +510,8 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
   if (strcasestr(name,".db")) {
     ret->type = RECORD_DB;
     RecordDB(ret) = InitDB_Struct(gname);
-    ret->dbreal = NULL;
-fprintf(stderr,"DB_Parse RECORD_DB\n");
   } else {
     ret->type = RECORD_NULL;
-fprintf(stderr,"DB_Parse RECORD_NULL\n");
   }
   SetReserved(in, DB_Reserved);
   while (GetSymbol != T_EOF) {
@@ -670,12 +667,9 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
   CURFILE *in, root;
 
   root.next = NULL;
-  fprintf(stderr,"DB_Parser name  = [%s] gname = [%s]\n", name,gname);
   if (stat(name, &stbuf) == 0) {
     if ((in = PushLexInfo(&root, name, RecordDir, DB_Reserved)) != NULL) {
       ret = DB_Parse(in, name, gname, fScript);
-      ret->dbname = StrDup(name);
-      ret->dbgname = StrDup(gname);
       DropLexInfo(&in);
       ResolveAlias(ret, ret->value);
     } else {
@@ -685,28 +679,4 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
     ret = NULL;
   }
   return (ret);
-}
-
-extern RecordStruct *DB_Parser_Lazy_Real(RecordStruct *rec) {
-  if (rec == NULL) {
-    Error("DB_Parser_Lazy_Real rec = NULL");
-  }
-  if (rec->dbreal == NULL) {
-    rec->dbreal = DB_Parser(rec->dbname,rec->dbgname,TRUE);
-fprintf(stderr,"DB_Parser_Lazy_Real real:%p\n",rec->dbreal);
-  }
-  return rec->dbreal;
-}
-
-extern void DB_Parser_Lazy_Free(RecordStruct *rec) {
-  if (rec != NULL && rec->type == RECORD_DB && rec->dbname != NULL) {
-    if (rec->value != NULL) {
-      FreeValueStruct(rec->value);
-      rec->value = NULL;
-    }
-    if (rec->dbreal != NULL) {
-      FreeRecordStruct(rec->dbreal);
-      rec->dbreal = NULL;
-    }
-  }
 }

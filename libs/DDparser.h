@@ -27,6 +27,5 @@ extern RecordStruct *ParseRecordFile(const char *name);
 extern RecordStruct *ParseRecordMem(const char *mem);
 extern RecordStruct *ReadRecordDefine(const char *name,Bool use_cache);
 extern void FreeRecordStruct(RecordStruct *);
-extern void MallocRecordValue(RecordStruct *);
-extern void FreeRecordValue(RecordStruct *);
+extern RecordStructMeta *NewRecordStructMeta(const char *name, const char *gname);
 #endif

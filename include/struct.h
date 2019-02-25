@@ -82,11 +82,7 @@ typedef struct {
 
 typedef struct _RecordStruct {
   char *name;
-  char *filename;
   ValueStruct *value;
-  char *dbname;
-  char *dbgname;
-  struct _RecordStruct *dbreal;
   int type;
   union {
     DB_Struct *db;
@@ -94,6 +90,11 @@ typedef struct _RecordStruct {
 } RecordStruct;
 
 #define RecordDB(rec) ((rec)->opt.db)
+
+typedef struct _RecordStructMeta {
+  char *name;
+  char *gname;
+} RecordStructMeta;
 
 typedef struct {
   char func[SIZE_FUNC];
@@ -289,10 +290,12 @@ typedef struct {
   size_t cDB;
   GHashTable *DB_Table;
   RecordStruct **db;
+  RecordStructMeta **dbmeta;
   size_t nports;
   Port **ports;
   RecordStruct *sparec;
   RecordStruct **windows;
+  RecordStructMeta **windowsmeta;
   size_t cWindow;
   GHashTable *whash;
   WindowBind **binds;

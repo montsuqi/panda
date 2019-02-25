@@ -107,7 +107,7 @@ static void InitSystem(char *name) {
   ThisDBD = NULL;
 
   InitiateHandler();
-  ThisDB = ThisLD->db;
+  DBGroup_Init(ThisLD->db, ThisLD->dbmeta);
   DB_Table = ThisLD->DB_Table;
   TextSize = ThisLD->textsize;
   if (ThisEnv->mcprec != NULL) {
@@ -182,7 +182,9 @@ static void MemSaveBegin(ProcessNode *node) {
   st = GetNowTime();
   if (GetScrRecMemSave()) {
     for(i=0;i<node->cWindow;i++) {
-      MallocRecordValue(node->scrrec[i]);
+      if (node->scrrec[i] == NULL) {
+        node->scrrec[i] = ReadRecordDefine(ThisLD->windowsmeta[i]->name,FALSE);
+      }
     }
   }
   ed = GetNowTime();
@@ -195,12 +197,18 @@ static void MemSaveEnd(ProcessNode *node) {
   st = GetNowTime();
   if (GetScrRecMemSave()) {
     for(i=0;i<node->cWindow;i++) {
-      FreeRecordValue(node->scrrec[i]);
+      if (node->scrrec[i] != NULL) {
+        FreeRecordStruct(node->scrrec[i]);
+        node->scrrec[i] = NULL;
+      }
     }
   }
   if (GetDBRecMemSave()) {
     for(i=0;i<ThisLD->cDB;i++) {
-      DB_Parser_Lazy_Free(ThisLD->db[i]);
+      if (ThisLD->db[i] != NULL) {
+        FreeRecordStruct(ThisLD->db[i]);
+        ThisLD->db[i] = NULL;
+      }
     }
   }
   ed = GetNowTime();
