@@ -220,7 +220,7 @@ json_object *push_event_conv_value(ValueStruct *v) {
 }
 
 static gboolean AMQPSend(const char *event, const char *msg) {
-  char *p, *hostname, *exchange, *routingkey;
+  char *p, *hostname, *exchange, routingkey[SIZE_LONGNAME+1];
   char *user, *pass;
   int port, status, x;
   amqp_socket_t *socket = NULL;
@@ -239,7 +239,8 @@ static gboolean AMQPSend(const char *event, const char *msg) {
   if ((p = getenv("MON_AMQP_EXCHANGE")) != NULL) {
     exchange = p;
   }
-  routingkey = g_strdup_printf("tenant.%s.%s", getenv("MCP_TENANT"), event);
+  snprintf(routingkey,SIZE_LONGNAME,"tenant.%s.%s", getenv("MCP_TENANT"), event);
+  routingkey[SIZE_LONGNAME] = 0;
   user = "guest";
   if ((p = getenv("MON_AMQP_USER")) != NULL) {
     user = p;
@@ -289,7 +290,6 @@ static gboolean AMQPSend(const char *event, const char *msg) {
       goto AMQP_CONN_ERROR;
     }
   }
-  g_free(routingkey);
 
   reply = amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
   if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
