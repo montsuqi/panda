@@ -85,8 +85,8 @@ extern RecordStruct *GetWindow(char *name) {
   if (name != NULL) {
     rec = (RecordStruct *)g_hash_table_lookup(Records, name);
     if (rec == NULL) {
-      fname[SIZE_LONGNAME] = 0;
       snprintf(fname,SIZE_LONGNAME,"%s.rec", name);
+      fname[SIZE_LONGNAME] = 0;
       rec = ReadRecordDefine(fname,!GetScrRecMemSave());
       if (rec != NULL) {
         g_hash_table_insert(Records, g_strdup(name), rec);
@@ -133,8 +133,8 @@ static void ParWindow(CURFILE *in, LD_Struct *ld) {
         ld->windows = wn;
         ld->windows[ld->cWindow] = window;
         ld->windowsmeta = wnm;
-        rname[SIZE_LONGNAME] = 0;
         snprintf(rname,SIZE_LONGNAME,"%s.rec",wname);
+        rname[SIZE_LONGNAME] = 0;
         ld->windowsmeta[ld->cWindow] = NewRecordStructMeta(rname,NULL);
         ld->cWindow++;
         if (window != NULL) {
