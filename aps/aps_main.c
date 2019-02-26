@@ -305,6 +305,7 @@ retry:
     MemSaveEnd(node);
   }
   MessageLogPrintf("exiting APS (%s)", ThisLD->name);
+  MemSaveEnd(node);
   FinishSession(node);
 quit:
   if (fpWFC != NULL) {
