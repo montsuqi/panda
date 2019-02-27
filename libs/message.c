@@ -31,6 +31,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
@@ -323,4 +324,11 @@ extern void Time(char *str) {
   now = GetNowTime();
   fprintf(stderr, "%6ld(ms) %s\n", now - last, str);
   last = now;
+}
+
+extern void PrintRSS(const char *head) {
+  struct rusage r;
+  if (getrusage(RUSAGE_SELF, &r) == 0) {
+      fprintf(stderr,"%s maxrss:%ld\n",head,r.ru_maxrss);
+  }
 }

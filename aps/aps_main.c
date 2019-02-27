@@ -178,8 +178,11 @@ static void SetMCPEnv(ValueStruct *val) {
 
 static void MemSaveBegin(ProcessNode *node) {
   int i;
+#ifdef MON_MEM_SAVE_TRACE
   unsigned long st,ed;
   st = GetNowTime();
+  PrintRSS("MemSaveBegin1");
+#endif
   if (GetScrRecMemSave()) {
     for(i=0;i<node->cWindow;i++) {
       if (node->scrrec[i] == NULL) {
@@ -187,14 +190,20 @@ static void MemSaveBegin(ProcessNode *node) {
       }
     }
   }
+#ifdef MON_MEM_SAVE_TRACE
+  PrintRSS("MemSaveBegin2");
   ed = GetNowTime();
-  TimerPrintf(st, ed, "MemSaveBegin");
+  fprintf(stderr,"MemSaveBegin (%6ld)ms\n",ed-st);
+#endif
 }
 
 static void MemSaveEnd(ProcessNode *node) {
   int i;
+#ifdef MON_MEM_SAVE_TRACE
   unsigned long st,ed;
   st = GetNowTime();
+  PrintRSS("MemSaveEnd1");
+#endif
   if (GetScrRecMemSave()) {
     for(i=0;i<node->cWindow;i++) {
       if (node->scrrec[i] != NULL) {
@@ -211,8 +220,11 @@ static void MemSaveEnd(ProcessNode *node) {
       }
     }
   }
+#ifdef MON_MEM_SAVE_TRACE
+  PrintRSS("MemSaveEnd2");
   ed = GetNowTime();
-  TimerPrintf(st, ed, "MemSaveEnd");
+  fprintf(stderr,"MemSaveEnd (%6ld)ms\n",ed-st);
+#endif
 }
 
 static int ExecuteServer(void) {

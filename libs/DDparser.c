@@ -113,6 +113,10 @@ extern RecordStruct *ReadRecordDefine(const char *name,Bool use_cache) {
 }
 
 extern void FreeRecordStruct(RecordStruct *rec) {
+#ifdef MON_MEM_SAVE_TRACE
+  fprintf(stderr,"FreeRecordStruct %p name:%s ",rec,rec->name);
+  ResetTotalFreeSize();
+#endif
   if (rec == NULL) {
     return;
   }
@@ -126,6 +130,9 @@ extern void FreeRecordStruct(RecordStruct *rec) {
     FreeDB_Struct(RecordDB(rec));
   }
   xfree(rec);
+#ifdef MON_MEM_SAVE_TRACE
+  fprintf(stderr,"size:%lu\n",GetTotalFreeSize());
+#endif
 }
 
 extern RecordStructMeta *NewRecordStructMeta(const char *name, const char *gname) {
