@@ -74,7 +74,6 @@ static TokenTable tokentable[] = {{"data", T_DATA},
                                   {"", 0}};
 
 static GHashTable *Reserved;
-static GHashTable *DBParsed;
 
 static GHashTable *Records;
 
@@ -168,16 +167,11 @@ static void _ParDB(CURFILE *in, LD_Struct *ld, char *dbgname,
       *q = 0;
     }
     sprintf(name, "%s/%s.db", p, table_name);
-    if ((db = g_hash_table_lookup(DBParsed, name)) == NULL) {
-      dbgprintf("Parsed %s\n", table_name);
-      if (g_hash_table_lookup(ld->DB_Table, table_name) == NULL) {
-        db = DB_Parser(name, dbgname, TRUE);
-      } else {
-        ParError("same db appier");
-      }
-      g_hash_table_insert(DBParsed, StrDup(name), (void *)db);
+    dbgprintf("Parsed %s\n", table_name);
+    if (g_hash_table_lookup(ld->DB_Table, table_name) == NULL) {
+      db = DB_Parser(name, dbgname, TRUE);
     } else {
-      dbgprintf("Already Parsed %s\n", name);
+      ParError("same db appier");
     }
     if (db != NULL) {
       rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * (ld->cDB + 1));
@@ -458,6 +452,5 @@ extern void LD_ParserInit(void) {
   Reserved = MakeReservedTable(tokentable);
 
   Records = NewNameHash();
-  DBParsed = NewNameHash();
   MessageHandlerInit();
 }
