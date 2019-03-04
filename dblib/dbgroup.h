@@ -30,6 +30,8 @@
 #define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
 #define MONDB "mondb_"
 
+extern void DBGroup_Init(RecordStruct **db,RecordStructMeta **meta);
+
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl);
 
 extern int OpenRedirectDB(DBG_Struct *dbg);
@@ -75,6 +77,7 @@ extern void SetDBConfig(const char *config);
 #endif
 
 GLOBAL RecordStruct **ThisDB;
+GLOBAL RecordStructMeta **ThisDBMeta;
 
 GLOBAL char *DB_Host;
 GLOBAL char *DB_Port;

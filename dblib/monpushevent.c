@@ -220,7 +220,7 @@ json_object *push_event_conv_value(ValueStruct *v) {
 }
 
 static gboolean AMQPSend(const char *event, const char *msg) {
-  char *p, *hostname, *exchange, *routingkey;
+  char *p, *hostname, *exchange, routingkey[SIZE_LONGNAME+1];
   char *user, *pass;
   int port, status, x;
   amqp_socket_t *socket = NULL;
@@ -239,7 +239,8 @@ static gboolean AMQPSend(const char *event, const char *msg) {
   if ((p = getenv("MON_AMQP_EXCHANGE")) != NULL) {
     exchange = p;
   }
-  routingkey = g_strdup_printf("tenant.%s.%s", getenv("MCP_TENANT"), event);
+  snprintf(routingkey,SIZE_LONGNAME,"tenant.%s.%s", getenv("MCP_TENANT"), event);
+  routingkey[SIZE_LONGNAME] = 0;
   user = "guest";
   if ((p = getenv("MON_AMQP_USER")) != NULL) {
     user = p;
@@ -253,25 +254,25 @@ static gboolean AMQPSend(const char *event, const char *msg) {
   socket = amqp_tcp_socket_new(conn);
   if (!socket) {
     fprintf(stderr, "creating TCP socket\n");
-    return FALSE;
+    goto AMQP_CONN_ERROR;
   }
   status = amqp_socket_open(socket, hostname, port);
   if (status) {
     fprintf(stderr, "opening TCP socket\n");
-    return FALSE;
+    goto AMQP_CONN_ERROR;
   }
 
   reply =
       amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, user, pass);
   if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
     fprintf(stderr, "amqp_login\n");
-    return FALSE;
+    goto AMQP_CONN_ERROR;
   }
   amqp_channel_open(conn, 1);
   reply = amqp_get_rpc_reply(conn);
   if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
     fprintf(stderr, "amqp_get_rpc_reply\n");
-    return FALSE;
+    goto AMQP_CONN_ERROR;
   }
   {
     if (getenv("PUSHEVENT_LOGGING")) {
@@ -286,21 +287,20 @@ static gboolean AMQPSend(const char *event, const char *msg) {
                            amqp_cstring_bytes(msg));
     if (x < 0) {
       fprintf(stderr, "amqp_basic_publish\n");
-      return FALSE;
+      goto AMQP_CONN_ERROR;
     }
   }
-  g_free(routingkey);
 
   reply = amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
   if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
     fprintf(stderr, "amqp_channel_close\n");
-    return FALSE;
+    goto AMQP_CONN_ERROR;
   }
 
   reply = amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
   if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
     fprintf(stderr, "amqp_connection_close\n");
-    return FALSE;
+    goto AMQP_CONN_ERROR;
   }
 
   x = amqp_destroy_connection(conn);
@@ -309,23 +309,31 @@ static gboolean AMQPSend(const char *event, const char *msg) {
     return FALSE;
   }
   return TRUE;
+AMQP_CONN_ERROR:
+  fprintf(stderr, "amqp_destroy_connection\n");
+  x = amqp_destroy_connection(conn);
+  if (x < 0) {
+    fprintf(stderr, "amqp_destroy_connection failure\n");
+  }
+  return FALSE;
 }
 
 gboolean push_event_via_value(DBG_Struct *dbg, ValueStruct *val) {
-  json_object *obj, *body, *event;
+  ValueStruct *body, *event;
+  json_object *obj;
 
-  obj = push_event_conv_value(val);
-  if (!json_object_object_get_ex(obj, "body", &body)) {
-    fprintf(stderr, "invalid value\n");
+  event = GetItemLongName(val,"event");
+  if (event == NULL) {
+    Warning("no [event] record");
     return FALSE;
   }
-  if (!json_object_object_get_ex(obj, "event", &event)) {
-    fprintf(stderr, "invalid value\n");
+  body = GetItemLongName(val,"body");
+  if (body == NULL) {
+    Warning("no [body] record");
     return FALSE;
   }
-
-  return push_event_via_json(dbg, (const char *)json_object_get_string(event),
-                             body);
+  obj = push_event_conv_value(body);
+  return push_event_via_json(dbg,ValueToString(event, NULL),obj);
 }
 
 gboolean push_event_via_json(DBG_Struct *dbg, const char *event,

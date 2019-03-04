@@ -43,8 +43,14 @@
 #include "libmondai.h"
 #include "directory.h"
 #include "DDparser.h"
+#include "DBparser.h"
 #include "dbgroup.h"
 #include "debug.h"
+
+extern void DBGroup_Init(RecordStruct **db, RecordStructMeta **meta) {
+  ThisDB = db;
+  ThisDBMeta = meta;
+}
 
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl) {
   *ctrl->func = '\0';
@@ -614,7 +620,11 @@ extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
   ctrl->fDBOperation = FALSE;
   if ((rno = (int)(long)g_hash_table_lookup(DB_Table, ctrl->rname)) != 0) {
     ctrl->rno = rno - 1;
-    ctrl->rec = ThisDB[rno - 1];
+    ctrl->rec = ThisDB[ctrl->rno];
+    if (GetDBRecMemSave() && ThisDBMeta != NULL && ctrl->rec == NULL) {
+      ctrl->rec = DB_Parser(ThisDBMeta[ctrl->rno]->name,ThisDBMeta[ctrl->rno]->gname,TRUE);
+      ThisDB[ctrl->rno] = ctrl->rec;
+    }
     rc = TRUE;
   } else {
     Warning("The table name of [%s] is not found.\n", rname);

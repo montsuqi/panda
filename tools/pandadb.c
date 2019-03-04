@@ -386,7 +386,7 @@ static void InitSystem(char *name) {
     exit(1);
   }
 
-  ThisDB = ThisDBD->db;
+  DBGroup_Init(ThisDBD->db,NULL);
   DB_Table = ThisDBD->DBD_Table;
 
   if (ThisDBD->cDB > 0) {

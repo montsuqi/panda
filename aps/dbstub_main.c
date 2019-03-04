@@ -74,7 +74,7 @@ extern void InitSystem(char *name) {
   ThisLD = NULL;
   ThisDBD = NULL;
   InitiateBatchHandler();
-  ThisDB = ThisBD->db;
+  DBGroup_Init(ThisBD->db,NULL);
   DB_Table = ThisBD->DB_Table;
   TextSize = ThisBD->textsize;
   if (ThisEnv->mcprec != NULL) {

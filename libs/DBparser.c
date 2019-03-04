@@ -158,6 +158,71 @@ static DB_Struct *InitDB_Struct(char *gname) {
   return (ret);
 }
 
+static void FreeDB_Operation(DB_Operation *op) {
+  if (op->proc != NULL) {
+    FreeLBS(op->proc);
+  }
+  if (op->name != NULL) {
+    xfree(op->name);
+  }
+  if (op->args != NULL) {
+    FreeValueStruct(op->args);
+  }
+  xfree(op);
+}
+
+static void FreePathStruct(PathStruct *path) {
+  int i;
+  if (path == NULL) {
+    return;
+  }
+  if (path->name != NULL) {
+    xfree(path->name);
+  }
+  if (path->ops != NULL) {
+    for(i=0;i<path->ocount;i++) {
+      FreeDB_Operation(path->ops[i]);
+    }
+    xfree(path->ops);
+  }
+  DestroyHashTable(path->opHash);
+  if (path->args != NULL) {
+    FreeValueStruct(path->args);
+  }
+  xfree(path);
+}
+
+extern void FreeDB_Struct(DB_Struct *db) {
+  int i,j;
+  char **name;
+  if (db->gname != NULL) {
+    xfree(db->gname);
+  }
+  if (db->path != NULL) {
+    for(i=0;i<db->pcount;i++) {
+      FreePathStruct(db->path[i]);
+    }
+    xfree(db->path);
+  }
+  DestroyHashTable(db->paths);
+  if (db->pkey != NULL) {
+    if (db->pkey->item != NULL) {
+      for(i=0;db->pkey->item[i]!=NULL;i++) {
+        name = db->pkey->item[i];
+        for(j=0;name[j]!=NULL;j++) {
+          xfree(name[j]);
+        }
+        xfree(name);
+      }
+      xfree(db->pkey->item);
+    }
+    xfree(db->pkey);
+  }
+  DestroyHashTable(db->opHash);
+  DestroyHashTable(db->use);
+  xfree(db);
+}
+
 static DB_Operation *NewOperation(char *name) {
   DB_Operation *op;
 
@@ -437,11 +502,11 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
   PathStruct *path;
 
   dbgprintf("fScript = %d", fScript);
-  ret = DD_Parse(in);
+  ret = DD_Parse(in,name);
   if (ret == NULL) {
     Error("DB_Parse Error (%s).", name);
   }
-  if (!stricmp(strrchr(name, '.'), ".db")) {
+  if (strcasestr(name,".db")) {
     ret->type = RECORD_DB;
     RecordDB(ret) = InitDB_Struct(gname);
   } else {
@@ -454,7 +519,7 @@ static RecordStruct *DB_Parse(CURFILE *in, char *name, char *gname,
       switch (GetName) {
       case T_SYMBOL:
         sprintf(buff, "%s.db", ComSymbol);
-        use = ReadRecordDefine(buff);
+        use = ReadRecordDefine(buff,TRUE);
         if (use == NULL) {
           ParError("define not found");
         } else {
@@ -601,8 +666,6 @@ extern RecordStruct *DB_Parser(char *name, char *gname, Bool fScript) {
   CURFILE *in, root;
 
   root.next = NULL;
-  dbgprintf("name  = [%s]", name);
-  dbgprintf("gname = [%s]", gname);
   if (stat(name, &stbuf) == 0) {
     if ((in = PushLexInfo(&root, name, RecordDir, DB_Reserved)) != NULL) {
       ret = DB_Parse(in, name, gname, fScript);
