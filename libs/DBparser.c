@@ -259,7 +259,6 @@ static PathStruct *NewPathStruct(int usage) {
   return (ret);
 }
 
-
 static void EnterUse(RecordStruct *root, char *name, RecordStruct *rec) {
   if (g_hash_table_lookup(RecordDB(root)->use, name) == NULL) {
     g_hash_table_insert(RecordDB(root)->use, name, rec);

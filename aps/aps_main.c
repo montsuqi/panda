@@ -91,7 +91,7 @@ static void InitSystem(char *name) {
     }
     env = getenv("MON_SCR_REC_MEM_SAVE");
     if (env != NULL) {
-      SetScrRecMemSave(env[0]=='1');
+      SetScrRecMemSave(env[0] == '1');
     }
   }
   SetUpDirectory(Directory, name, "", "", P_ALL);
