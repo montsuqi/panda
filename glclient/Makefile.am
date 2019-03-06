@@ -42,7 +42,8 @@ base_sources =						\
 	widgetOPS.c		widgetOPS.h		\
 	tempdir.c		tempdir.h		\
 	logger.c		logger.h		\
-					icon.h
+					icon.h \
+  certificate.c certificate.h
 
 base_dependencies =					\
 	$(top_builddir)/libs/libpanda.la
