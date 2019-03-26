@@ -370,7 +370,7 @@ static int write_tmpfile(int std_in) {
 }
 
 #define SIZE_PCMDV (128)
-#define PUSH_EXEC_CMD ("push_exec_batch_queue")
+#define PUSH_EXEC_CMD ("/usr/local/bin/push_exec_batch_queue")
 
 static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
                                int argc, char **argv) {
