@@ -36,6 +36,7 @@ struct _BDComponent {
   GtkWidget *user;
   GtkWidget *password;
   GtkWidget *savepassword;
+  GtkWidget *sso;
   // other
   GtkWidget *othertable;
   GtkWidget *debug;

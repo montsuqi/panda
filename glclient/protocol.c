@@ -61,6 +61,7 @@
 #include "logger.h"
 #include "tempdir.h"
 #include "utils.h"
+#include "openid_connect.h"
 
 #define SIZE_URL_BUF 256
 #define TYPE_AUTH 0
@@ -499,6 +500,13 @@ void RPC_GetServerInfo(GLProtocol *ctx) {
 
 void RPC_StartSession(GLProtocol *ctx) {
   json_object *obj, *params, *child, *result, *meta;
+  OpenIdConnectProtocol *oip;
+
+  if (ctx->fSSO) {
+    oip = InitOpenIdConnectProtocol(ctx->AuthURI, ctx->User, ctx->Pass);
+    StartOpenIdConnect(oip);
+    ctx->AuthURI = oip->GetSessionURI;
+  }
 
   Info("start_session %s", ctx->AuthURI);
   params = json_object_new_object();
@@ -927,7 +935,7 @@ void GLP_SetSSL(GLProtocol *ctx, const char *cert, const char *key,
 
 #define DEFAULT_CURL_TIMEOUT_SEC (300)
 
-static CURL *InitCURL(const char *user, const char *pass) {
+static CURL *InitCURL(const char *user, const char *pass, gboolean fSSO) {
   CURL *Curl;
   char userpass[1024];
 
@@ -941,10 +949,12 @@ static CURL *InitCURL(const char *user, const char *pass) {
     curl_easy_setopt(Curl, CURLOPT_VERBOSE, 1);
   }
 
-  memset(userpass, 0, sizeof(userpass));
-  snprintf(userpass, sizeof(userpass) - 1, "%s:%s", user, pass);
+  if (fSSO) {
+    memset(userpass, 0, sizeof(userpass));
+    snprintf(userpass, sizeof(userpass) - 1, "%s:%s", user, pass);
+    curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+  }
   curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-  curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
   curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
   curl_easy_setopt(Curl, CURLOPT_TCP_KEEPALIVE, 0L);
 
@@ -982,6 +992,8 @@ extern GLProtocol *InitProtocol(const char *authuri, const char *user,
   ctx = g_new0(GLProtocol, 1);
 
   ctx->AuthURI = g_strdup(authuri);
+  ctx->User = g_strdup(user);
+  ctx->Pass = g_strdup(pass);
   ctx->RPCID = 0;
   ctx->fGinbee = FALSE;
 #ifdef USE_SSL
@@ -989,7 +1001,7 @@ extern GLProtocol *InitProtocol(const char *authuri, const char *user,
   ctx->fPKCS11 = FALSE;
 #endif
 
-  ctx->Curl = InitCURL(user, pass);
+  ctx->Curl = InitCURL(user, pass, ctx->fSSO);
   if (getenv("GLCLIENT_DO_JSONRPC_LOGGING") != NULL) {
     Logging = TRUE;
     LogDir = MakeTempSubDir("jsonrpc_log");

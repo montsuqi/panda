@@ -137,6 +137,7 @@ static void ShowStartupMessage() {
 
 static gboolean StartClient() {
   GLP(Session) = InitProtocol(AuthURI, User, Pass);
+  GLP(Session)->fSSO = fSSO;
 #if USE_SSL
   if (fPKCS11) {
     GLP_SetSSLPKCS11(GLP(Session), PKCS11Lib, PIN);
@@ -152,7 +153,6 @@ static gboolean StartClient() {
   SCREENDATA(Session) = NULL;
   InitTopWindow();
 
-  RPC_GetServerInfo(GLP(Session));
   RPC_StartSession(GLP(Session));
   if (SCREENDATA(Session) != NULL) {
     json_object_put(SCREENDATA(Session));
@@ -259,6 +259,7 @@ extern void LoadConfig(int n) {
   } else {
     Pass = g_strdup("");
   }
+  fSSO = gl_config_get_boolean(n, "sso");
   setenv("GLPRINTER_CONFIG", gl_config_get_string(n, "printer_config"), 1);
   fTimer = gl_config_get_boolean(n, "timer");
   TimerPeriod = gl_config_get_int(n, "timerperiod");

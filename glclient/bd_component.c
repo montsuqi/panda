@@ -117,6 +117,8 @@ void bd_component_set_value(BDComponent *self, int n) {
   } else {
     gtk_entry_set_text(GTK_ENTRY(self->password), "");
   }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->sso),
+                               gl_config_get_boolean(n, "sso"));
 
   // ssl
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->ssl),
@@ -226,6 +228,8 @@ void bd_component_value_to_config(BDComponent *self, int n) {
   }
   gl_config_set_string(n, "authuri", newuri);
   g_free(newuri);
+  gl_config_set_boolean(
+      n, "sso", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->sso)));
 
   gl_config_set_string(n, "user", gtk_entry_get_text(GTK_ENTRY(self->user)));
   password = gtk_entry_get_text(GTK_ENTRY(self->password));
@@ -391,6 +395,14 @@ BDComponent *bd_component_new() {
   self->savepassword = check;
   gtk_table_attach(GTK_TABLE(table), alignment, 0, 2, ypos, ypos + 1,
                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  alignment = gtk_alignment_new(0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label(_("Use Single Sign On"));
+  gtk_container_add(GTK_CONTAINER(alignment), check);
+  gtk_table_attach(GTK_TABLE(table), alignment, 0, 2, ypos, ypos + 1,
+                   GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  self->sso = check;
 
   // ssl
   table = gtk_table_new(3, 1, FALSE);
@@ -703,6 +715,7 @@ BDComponent *bd_component_new() {
   gtk_container_add(GTK_CONTAINER(alignment), label);
   gtk_table_attach(GTK_TABLE(table), alignment, 0, 2, ypos, ypos + 1,
                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
 
   return self;
 }
