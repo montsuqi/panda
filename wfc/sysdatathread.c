@@ -48,7 +48,6 @@
 #include "wfcdata.h"
 #include "wfc.h"
 #include "sysdatacom.h"
-#include "blobserv.h"
 #include "sysdbserv.h"
 #include "message.h"
 #include "debug.h"
@@ -64,11 +63,6 @@ static void SysDataThread(void *para) {
     c = RecvChar(fp);
     ON_IO_ERROR(fp, badio);
     switch (c) {
-    case SYSDATA_BLOB:
-      dbgmsg("Call ServeBLOB");
-      ServeBLOB(fp);
-      ON_IO_ERROR(fp, badio);
-      break;
     case SYSDATA_SYSDB:
       dbgmsg("Call ServeSysDB");
       ServeSysDB(fp);
@@ -105,5 +99,4 @@ extern pthread_t ConnectSysData(int _fhSysData) {
 }
 
 extern void InitSysData(void) {
-  InitServeBLOB();
 }

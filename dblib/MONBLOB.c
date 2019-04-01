@@ -56,18 +56,15 @@ static ValueStruct *_NewBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   DBG_Struct *mondbg;
   monblob_struct *monblob;
   mondbg = GetDBG_monsys();
-  monblob = new_monblob_struct(mondbg, NULL, 0);
+  monblob = new_monblob_struct(mondbg, NULL);
   sql = xmalloc(sql_len);
   snprintf(sql, sql_len,
            "INSERT INTO %s (id, blobid, status) VALUES('%s', '%u', '%d');",
-           MONBLOB, monblob->id, (unsigned int)monblob->blobid, 503);
-  rc = ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
+           MONBLOB, monblob->id, 1, 503);
+  rc = ExecDBOP(mondbg, sql, FALSE);
   xfree(sql);
   if ((val = GetItemLongName(args, "id")) != NULL) {
     SetValueString(val, monblob->id, dbg->coding);
-  }
-  if ((val = GetItemLongName(args, "blobid")) != NULL) {
-    ValueObjectId(val) = (MonObjectType)monblob->blobid;
   }
   free_monblob_struct(monblob);
   if (ctrl != NULL) {
@@ -178,72 +175,6 @@ static ValueStruct *_PersistBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return (ret);
 }
 
-static ValueStruct *_GETID(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
-                           RecordStruct *rec, ValueStruct *args) {
-  int rc;
-  ValueStruct *obj, *val;
-  ValueStruct *ret;
-  DBG_Struct *mondbg;
-  int blobid;
-  char *id = NULL;
-
-  mondbg = GetDBG_monsys();
-  ret = NULL;
-  if (rec->type != RECORD_DB) {
-    rc = MCP_BAD_ARG;
-  } else {
-    if ((obj = GetItemLongName(args, "blobid")) != NULL) {
-      blobid = (int)ValueObjectId(obj);
-      if ((id = monblob_get_id(mondbg, blobid)) != NULL) {
-        val = GetItemLongName(args, "id");
-        SetValueStringWithLength(val, id, strlen(id), NULL);
-        xfree(id);
-        ret = DuplicateValue(args, TRUE);
-        rc = MCP_OK;
-      } else {
-        rc = MCP_EOF;
-      }
-    } else {
-      rc = MCP_BAD_ARG;
-    }
-  }
-  if (ctrl != NULL) {
-    ctrl->rc = rc;
-  }
-  return (ret);
-}
-
-static ValueStruct *_GETBLOBID(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
-                               RecordStruct *rec, ValueStruct *args) {
-  int rc;
-  ValueStruct *obj, *val;
-  ValueStruct *ret;
-  DBG_Struct *mondbg;
-  char *id = NULL;
-  int oid;
-
-  mondbg = GetDBG_monsys();
-  ret = NULL;
-  if (rec->type != RECORD_DB) {
-    rc = MCP_BAD_ARG;
-  } else {
-    obj = GetItemLongName(args, "blobid");
-    if ((val = GetItemLongName(args, "id")) != NULL) {
-      id = ValueToString(val, dbg->coding);
-      oid = monblob_get_blobid(mondbg, id);
-      ValueObjectId(obj) = oid;
-      ret = DuplicateValue(args, TRUE);
-      rc = MCP_OK;
-    } else {
-      rc = MCP_EOF;
-    }
-  }
-  if (ctrl != NULL) {
-    ctrl->rc = rc;
-  }
-  return (ret);
-}
-
 static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                  RecordStruct *rec, ValueStruct *args) {
   DBG_Struct *mondbg;
@@ -280,8 +211,6 @@ static DB_OPS Operations[] = {
     {"MONBLOBIMPORT", _ImportBLOB},
     {"MONBLOBEXPORT", _ExportBLOB},
     {"MONBLOBPERSIST", _PersistBLOB},
-    {"MONBLOBGETID", _GETID},
-    {"MONBLOBBLOBID", _GETBLOBID},
     {"MONBLOBDESTROY", _DestroyBLOB},
     {NULL, NULL}};
 

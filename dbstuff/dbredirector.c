@@ -57,7 +57,6 @@
 #include "dbredirector.h"
 #include "option.h"
 #include "message.h"
-#include "dblog.h"
 #include "audit.h"
 #include "debug.h"
 
@@ -69,7 +68,6 @@ static char AppName[128];
 static DBG_Struct *ThisDBG;
 static DBG_Struct *AuditDBG;
 static pthread_t _FileThread;
-static int RedirectorMode;
 
 static pthread_mutex_t redlock;
 static pthread_mutex_t ticketlock;
@@ -84,8 +82,6 @@ volatile sig_atomic_t fReopen = FALSE;
 volatile static Bool fSync = FALSE;
 volatile static int LOCKFD = 0;
 volatile static int SYNCFD = 0;
-
-static DBLogCtx *DBLog;
 
 #define DBLOG_PROGRAM "dblogger"
 #define FILE_SEP '/'
@@ -372,7 +368,7 @@ static void LogThread(void *para) {
       SendPacketClass(fpLog, RED_PONG);
       break;
     case RED_STATUS:
-      SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
+      SendChar(fpLog, ThisDBG->dbstatus);
       break;
     case RED_LOCK:
       LockTicket(fpLog);
@@ -465,10 +461,10 @@ static Bool ConnectDB(void) {
   Bool rc = TRUE;
   DBG_Struct *rdbg;
   int retry = 0;
-  if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
+  if (GetDB_DBname(ThisDBG) == NULL) {
     return rc;
   }
-  if (ThisDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
+  if (ThisDBG->dbstatus != DB_STATUS_CONNECT) {
     OpenRedirectDB(ThisDBG);
     if (ThisDBG->redirect != NULL) {
       /* ReRedirect ReConnect */
@@ -487,7 +483,7 @@ static Bool ConnectDB(void) {
         Warning("ReRedirect Server (%s) not found.", rdbg->name);
       }
     }
-    if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+    if (ThisDBG->dbstatus == DB_STATUS_CONNECT) {
       Message("connect to database successed");
     } else {
       Message("connect to database failed");
@@ -506,15 +502,15 @@ void ReConnectDB(void) {
     }
     sleep(CONNECT_INTERVAL);
   }
-  if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT) {
-    ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+  if (ThisDBG->dbstatus == DB_STATUS_UNCONNECT) {
+    ThisDBG->dbstatus = DB_STATUS_FAILURE;
   }
 }
 
 static Bool DisConnectDB(void) {
   Bool rc = TRUE;
   CloseRedirectDB(ThisDBG);
-  if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_DISCONNECT) {
+  if (ThisDBG->dbstatus == DB_STATUS_DISCONNECT) {
     Message("disconnect to database successed");
   } else {
     rc = FALSE;
@@ -540,9 +536,9 @@ extern Bool ConnectAuditDB(void) {
   if (AuditDBG == NULL) {
     return rc;
   }
-  if (AuditDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT) {
+  if (AuditDBG->dbstatus != DB_STATUS_CONNECT) {
     OpenRedirectDB(AuditDBG);
-    if (AuditDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+    if (AuditDBG->dbstatus == DB_STATUS_CONNECT) {
       Message("connect to audit database successed");
     } else {
       Message("connect to audit database failed");
@@ -596,7 +592,7 @@ extern int WriteDB(LargeByteString *query, LargeByteString *orgcheck) {
   LBS_EmitStart(ThisDBG->checkData);
   rc = TransactionRedirectStart(ThisDBG);
   if (rc == MCP_OK) {
-    rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), TRUE, DB_UPDATE);
+    rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), TRUE);
     LBS_EmitEnd(ThisDBG->checkData);
     redcheck = ThisDBG->checkData;
   }
@@ -618,21 +614,21 @@ extern int WriteDB(LargeByteString *query, LargeByteString *orgcheck) {
 
 static int ExecDB(VeryfyData *veryfydata) {
   int rc = MCP_OK;
-  if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT) {
+  if (ThisDBG->dbstatus == DB_STATUS_UNCONNECT) {
     ReConnectDB();
   }
-  if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+  if (ThisDBG->dbstatus == DB_STATUS_CONNECT) {
     rc = WriteDB(veryfydata->redirectData, veryfydata->checkData);
   }
   if (rc != MCP_OK) {
     CloseRedirectDB(ThisDBG);
     if (rc == MCP_BAD_CONN) {
-      ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+      ThisDBG->dbstatus = DB_STATUS_UNCONNECT;
     } else {
-      ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+      ThisDBG->dbstatus = DB_STATUS_FAILURE;
     }
   }
-  return ThisDBG->process[PROCESS_UPDATE].dbstatus;
+  return ThisDBG->dbstatus;
 }
 
 static void ReRedirect(char *query, char *checkData) {
@@ -660,7 +656,7 @@ static void WriteRedirectAuditLog(void) {
 
 static void SyncMode(FILE *fp) {
   DisConnectDB();
-  ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_SYNC;
+  ThisDBG->dbstatus = DB_STATUS_SYNC;
   while (fSync) {
     sleep(1);
   }
@@ -671,10 +667,10 @@ static void SyncMode(FILE *fp) {
 
 static void CheckFailure(FILE *fp) {
   char *failure = "DB synchronous failure";
-  if (ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE) {
+  if (ThisDBG->dbstatus == DB_STATUS_FAILURE) {
     WriteLog(fp, failure);
     Warning(failure);
-    ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+    ThisDBG->dbstatus = DB_STATUS_DISCONNECT;
     fDbsyncstatus = FALSE;
   }
 }
@@ -698,7 +694,7 @@ extern void WriteAuditLog(FILE *afp, FILE *fp, Ticket *ticket) {
         LBS_EmitStart(AuditDBG->redirectData);
         LBS_EmitStart(AuditDBG->checkData);
         TransactionStart(AuditDBG);
-        rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), TRUE, DB_UPDATE);
+        rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), TRUE);
         TransactionEnd(AuditDBG);
         LBS_EmitEnd(AuditDBG->redirectData);
         LBS_EmitEnd(AuditDBG->checkData);
@@ -727,11 +723,6 @@ static void HandleRedirector(VeryfyData *veryfydata) {
   }
 }
 
-static void HandleLog(VeryfyData *veryfydata) {
-  Put_DBLog(DBLog, LBS_Body(veryfydata->redirectData),
-            LBS_Body(veryfydata->checkData));
-}
-
 static void FileThread(void *dummy) {
   VeryfyData *veryfydata;
   FILE *fp, *afp;
@@ -743,11 +734,11 @@ static void FileThread(void *dummy) {
   ConnectAuditDB();
 
   strncpy(header, "dbredirector start", sizeof(header));
-  if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
+  if (GetDB_DBname(ThisDBG) == NULL) {
     strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
     /* ReRedirect */
     OpenDB_RedirectPort(ThisDBG);
-    ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
+    ThisDBG->dbstatus = DB_STATUS_NOCONNECT;
   }
   if (fNoSumCheck) {
     strncat(header, "(No sum check)", sizeof(header) - strlen(header) - 1);
@@ -773,12 +764,8 @@ static void FileThread(void *dummy) {
       veryfydata = ticket->veryfydata;
       if (veryfydata != NULL) {
         if (LBS_Size(veryfydata->redirectData) > 0) {
-          if (RedirectorMode == REDIRECTOR_MODE_LOG) {
-            HandleLog(veryfydata);
-          } else {
-            HandleRedirector(veryfydata);
-            CheckFailure(fp);
-          }
+	  HandleRedirector(veryfydata);
+	  CheckFailure(fp);
           ReRedirect(LBS_Body(veryfydata->redirectData),
                      LBS_Body(veryfydata->checkData));
           WriteLogQuery(fp, LBS_Body(veryfydata->redirectData));
@@ -790,7 +777,7 @@ static void FileThread(void *dummy) {
     }
     xfree(ticket);
   }
-  if (GetDB_DBname(ThisDBG, DB_UPDATE) == NULL) {
+  if (GetDB_DBname(ThisDBG) == NULL) {
     /* ReRedirect */
     CloseDB_RedirectPort(ThisDBG);
   }
@@ -838,11 +825,10 @@ extern void ExecuteServer(void) {
 static void DumpDBG(char *name, DBG_Struct *dbg, void *dummy) {
   dbgprintf("name     = [%s]\n", dbg->name);
   dbgprintf("\ttype     = [%s]\n", dbg->type);
-  dbgprintf("\tDB name  = [%s]\n", GetDB_DBname(dbg, DB_UPDATE));
-  dbgprintf("\tDB user  = [%s]\n", GetDB_User(dbg, DB_UPDATE));
-  dbgprintf("\tDB pass  = [%s]\n", GetDB_Pass(dbg, DB_UPDATE));
-  dbgprintf("\tDB sslmode  = [%s]\n", GetDB_Sslmode(dbg, DB_UPDATE));
-  dbgprintf("\t   redirectorMode = [%d]\n", dbg->redirectorMode);
+  dbgprintf("\tDB name  = [%s]\n", GetDB_DBname(dbg));
+  dbgprintf("\tDB user  = [%s]\n", GetDB_User(dbg));
+  dbgprintf("\tDB pass  = [%s]\n", GetDB_Pass(dbg));
+  dbgprintf("\tDB sslmode  = [%s]\n", GetDB_Sslmode(dbg));
 
   if (dbg->file != NULL) {
     dbgprintf("\tlog file = [%s]\n", dbg->file);
@@ -862,12 +848,12 @@ static void _CheckDBG(char *name, DBG_Struct *dbg, char *red_name) {
   if (dbg->redirect != NULL) {
     red_dbg = dbg->redirect;
     if (strcmp(red_dbg->name, red_name) == 0) {
-      src_port = StrDup(StringPort(GetDB_Port(dbg, DB_UPDATE)));
-      dsc_port = StrDup(StringPort(GetDB_Port(red_dbg, DB_UPDATE)));
-      if ((dbname = GetDB_DBname(dbg, DB_UPDATE)) != NULL) {
+      src_port = StrDup(StringPort(GetDB_Port(dbg)));
+      dsc_port = StrDup(StringPort(GetDB_Port(red_dbg)));
+      if ((dbname = GetDB_DBname(dbg)) != NULL) {
         dbg_dbname = dbname;
       }
-      if ((dbname = GetDB_DBname(red_dbg, DB_UPDATE)) != NULL) {
+      if ((dbname = GetDB_DBname(red_dbg)) != NULL) {
         red_dbg_dbname = dbname;
       }
       if ((strcmp(dbg->type, red_dbg->type) == 0) &&
@@ -962,29 +948,8 @@ extern void InitSystem(char *name, char *program) {
   if (filename) {
     ++filename;
     dbgprintf("cmd filename => %s", filename);
-    RedirectorMode = strcasecmp(filename, DBLOG_PROGRAM) == 0
-                         ? REDIRECTOR_MODE_LOG
-                         : REDIRECTOR_MODE_PATCH;
-  } else {
-    RedirectorMode = strcasecmp(program, DBLOG_PROGRAM) == 0
-                         ? REDIRECTOR_MODE_LOG
-                         : REDIRECTOR_MODE_PATCH;
-  }
-
-  if (RedirectorMode == REDIRECTOR_MODE_LOG) {
-    dbgmsg("log mode");
-    if (stricmp(ThisDBG->type, "postgresql") != 0) {
-      Error("invalid db type");
-    }
-    DBLog = Open_DBLog(ThisDBG, ThisDBG->logTableName);
-    if (!DBLog) {
-      Error("open logdb failed");
-    }
-  } else {
-    dbgmsg("redirect mode");
   }
   //	TicketList = g_slist_alloc();
-
 }
 
 static ARG_TABLE option[] = {

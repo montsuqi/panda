@@ -103,12 +103,12 @@ static Bool list_print(ValueStruct *ret) {
   if (ret == NULL) {
     return FALSE;
   }
-  if (ValueType(ret) == GL_TYPE_ARRAY) {
+  if (IS_VALUE_ARRAY(ret)) {
     for (i = 0; i < ValueArraySize(ret); i++) {
       value = ValueArrayItem(ret, i);
       _list_print(value);
     }
-  } else if (ValueType(ret) == GL_TYPE_RECORD) {
+  } else if (IS_VALUE_RECORD(ret)) {
     _list_print(ret);
   }
   return TRUE;
@@ -117,7 +117,7 @@ static Bool list_print(ValueStruct *ret) {
 static Bool all_list_print(DBG_Struct *dbg) {
   Bool rc;
   ValueStruct *ret;
-  ret = blob_list(dbg);
+  ret = monblob_list(dbg);
   rc = list_print(ret);
   FreeValueStruct(ret);
   return rc;
@@ -133,28 +133,8 @@ static Bool monblob_info_print(DBG_Struct *dbg, char *id) {
   return rc;
 }
 
-static Bool blob_info_print(DBG_Struct *dbg, char *id) {
-  Bool rc;
-  ValueStruct *ret;
-
-  ret = blob_info(dbg, id);
-  rc = list_print(ret);
-  FreeValueStruct(ret);
-  return rc;
-}
-
 static void _monblob_check_id(DBG_Struct *dbg, char *id) {
   if (monblob_check_id(dbg, id)) {
-    printf("true");
-    exit(0);
-  } else {
-    printf("false");
-    exit(1);
-  }
-}
-
-static void _blob_check_id(DBG_Struct *dbg, char *id) {
-  if (blob_check_id(dbg, (MonObjectType)atoi(id))) {
     printf("true");
     exit(0);
   } else {
@@ -167,7 +147,6 @@ extern int main(int argc, char **argv) {
   DBG_Struct *dbg;
   char *id;
   Bool rc;
-  MonObjectType oid;
 
   setlocale(LC_CTYPE, "ja_JP.UTF-8");
   SetDefault();
@@ -203,55 +182,31 @@ extern int main(int argc, char **argv) {
     return 0;
   }
 
-  if (Blob) {
-    if (ImportFile) {
-      oid = blob_import(dbg, 0, ImportFile, NULL, 0);
-      printf("%d\n", (int)oid);
-    } else if (ExportID) {
-      oid = (MonObjectType)atoi(ExportID);
-      rc = blob_export(dbg, oid, OutputFile);
-      if (!rc) {
-        exit(1);
-      }
-      printf("export: %s\n", OutputFile);
-    } else if (DeleteID) {
-      oid = (MonObjectType)atoi(DeleteID);
-      if (!blob_delete(dbg, oid)) {
-        exit(1);
-      }
-    } else if (InfoID) {
-      if (!blob_info_print(dbg, InfoID)) {
-        exit(1);
-      }
-    } else if (CheckID) {
-      _blob_check_id(dbg, CheckID);
+  if (ImportFile) {
+    id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
+    if (!id) {
+      exit(1);
     }
-  } else {
-    if (ImportFile) {
-      id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
-      if (!id) {
-        exit(1);
-      }
-      printf("%s\n", id);
-      xfree(id);
-    } else if (ExportID) {
-      rc = monblob_export_file(dbg, ExportID, OutputFile);
-      if (!rc) {
-        exit(1);
-      }
-      printf("export: %s\n", OutputFile);
-    } else if (DeleteID) {
-      if (!monblob_delete(dbg, DeleteID)) {
-        exit(1);
-      }
-    } else if (InfoID) {
-      if (!monblob_info_print(dbg, InfoID)) {
-        exit(1);
-      }
-    } else if (CheckID) {
-      _monblob_check_id(dbg, CheckID);
+    printf("%s\n", id);
+    xfree(id);
+  } else if (ExportID) {
+    rc = monblob_export_file(dbg, ExportID, OutputFile);
+    if (!rc) {
+      exit(1);
     }
+    printf("export: %s\n", OutputFile);
+  } else if (DeleteID) {
+    if (!monblob_delete(dbg, DeleteID)) {
+      exit(1);
+    }
+  } else if (InfoID) {
+    if (!monblob_info_print(dbg, InfoID)) {
+      exit(1);
+    }
+  } else if (CheckID) {
+    _monblob_check_id(dbg, CheckID);
   }
+
   TransactionEnd(dbg);
   CloseDB(dbg);
 

@@ -353,7 +353,8 @@ static void CallAfter(ProcessNode *node) {
     }
     break;
   case SCREEN_CHANGE_WINDOW:
-    if (node->w.sp >= 1) {
+    /* ひとつ前のウィンドウをCLOSE  */
+    if (node->w.sp != -1) {
       node->w.s[node->w.sp-1].puttype = SCREEN_CLOSE_WINDOW;
     }
     break;
@@ -377,7 +378,7 @@ static void CallAfter(ProcessNode *node) {
         node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
       }
     }
-    break;
+  break;
   }
 #ifdef DEBUG
   fprintf(stderr, "---- callafter 2 ----\n");

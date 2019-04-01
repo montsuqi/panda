@@ -60,7 +60,9 @@ static ValueStruct *_PushEvent(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     Warning("PushData is wrong");
     return NULL;
   }
-
+  if (PushData == NULL) {
+    PushData = json_object_new_array();
+  }
   obj = push_event_conv_value(args);
   if (CheckJSONObject(obj, json_type_object)) {
     json_object_array_add(PushData, obj);
@@ -102,6 +104,8 @@ extern ValueStruct *_PushEventCommit(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     if (!json_object_object_get_ex(obj, "event", &event)) {
       continue;
     }
+    /* add ref count */
+    json_object_get(body);
     if (!push_event_via_json(
             mondbg, (const char *)json_object_get_string(event), body)) {
       ctrl->rc = MCP_BAD_OTHER;

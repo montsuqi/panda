@@ -76,6 +76,7 @@ monupload_LDFLAGS	=			\
 	-export-dynamic
 monupload_LDADD 		=				\
 	-lm									\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\

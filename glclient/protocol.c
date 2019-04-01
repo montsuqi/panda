@@ -138,9 +138,8 @@ size_t read_binary_data(void *buf, size_t size, size_t nmemb, void *userp) {
 }
 
 size_t HeaderPostBLOB(void *ptr, size_t size, size_t nmemb, void *userdata) {
-  size_t all = size * nmemb;
-  char *oid, *p, *q, *target = "X-BLOB-ID:";
-  int i;
+  size_t all = size * nmemb,left;
+  char *oid, *p, *target = "X-BLOB-ID:";
 
   oid = (char *)userdata;
   if (all <= strlen(target)) {
@@ -149,16 +148,12 @@ size_t HeaderPostBLOB(void *ptr, size_t size, size_t nmemb, void *userdata) {
   if (strncasecmp(ptr, target, strlen(target))) {
     return all;
   }
-  for (p = ptr + strlen(target); isspace(*p); p++)
-    ;
-  q = oid;
-  for (i = 0; isdigit(*p) && i < SIZE_NAME; p++, i++) {
-    *q = *p;
-    q++;
-    if (i == SIZE_NAME) {
-      return all;
-    }
+  for (p = ptr + strlen(target); isspace(*p); p++);
+  left = all - (p - (char*)ptr);
+  if (left > SIZE_UUID) {
+    left = SIZE_UUID;
   }
+  memcpy(oid,p,left);
 
   return all;
 }
@@ -169,8 +164,8 @@ char *REST_PostBLOB(GLProtocol *ctx, LargeByteString *lbs) {
   long http_code;
   CURLcode res;
 
-  oid = malloc(SIZE_NAME + 1);
-  memset(oid, 0, SIZE_NAME + 1);
+  oid = malloc(SIZE_UUID + 1);
+  memset(oid, 0, SIZE_UUID + 1);
   snprintf(url, sizeof(url) - 1, "%ssessions/%s/blob/", ctx->RESTURI,
            ctx->SessionID);
   url[sizeof(url) - 1] = 0;
@@ -856,6 +851,7 @@ void GLP_SetSSLPKCS11(GLProtocol *ctx, const char *p11lib, const char *pin) {
   }
   fprintf(stderr, "%s\n", certid);
 
+  ncerts = 0;
   /* get all certs */
   ncerts = 0;
   if (slot != NULL) {

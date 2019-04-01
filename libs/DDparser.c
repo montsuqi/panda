@@ -36,76 +36,115 @@
 #include <RecParser.h>
 #include "struct.h"
 #include "monstring.h"
+#include "directory.h"
 #include "DDparser.h"
+#include "DBparser.h"
 #include "debug.h"
 
-extern RecordStruct *DD_Parse(CURFILE *in) {
-  RecordStruct *ret;
+extern RecordStruct *DD_Parse(CURFILE *in,const char *filename) {
+  RecordStruct *rec;
   ValueStruct *value;
 
   if ((value = RecParseMain(in)) != NULL) {
-    ret = New(RecordStruct);
-    ret->value = value;
-    ret->name = StrDup(in->ValueName);
-    if (ValueName(value) == NULL) {
-      ValueName(value) = ret->name;
+    rec = New(RecordStruct);
+    rec->value = value;
+    InitializeValue(rec->value);
+    rec->name = StrDup(in->ValueName);
+    if (ValueRootRecordName(value) == NULL) {
+      ValueRootRecordName(value) = StrDup(in->ValueName);
     }
-    ret->type = RECORD_NULL;
+    rec->type = RECORD_NULL;
   } else {
-    ret = NULL;
+    rec = NULL;
   }
-  return (ret);
+  return (rec);
 }
 
-extern RecordStruct *ParseRecordFile(char *name) {
-  RecordStruct *ret;
-  ValueStruct *value;
-  char *ValueName;
-
-  dbgprintf("name = [%s]\n", name);
-  if ((value = RecParseValue(name, &ValueName)) != NULL) {
-    ret = New(RecordStruct);
-    ret->value = value;
-    ret->name = ValueName;
-    ret->type = RECORD_NULL;
-  } else {
-    ret = NULL;
-  }
-  return (ret);
-}
-
-extern RecordStruct *ParseRecordMem(char *mem) {
-  RecordStruct *ret;
+extern RecordStruct *ParseRecordMem(const char *mem) {
+  RecordStruct *rec;
   ValueStruct *value;
   char *ValueName;
 
   if ((value = RecParseValueMem(mem, &ValueName)) != NULL) {
-    ret = New(RecordStruct);
-    ret->value = value;
-    ret->name = ValueName;
-    ret->type = RECORD_NULL;
+    rec = New(RecordStruct);
+    rec->value = value;
+    rec->name = ValueName;
+    rec->type = RECORD_NULL;
   } else {
-    ret = NULL;
+    rec = NULL;
   }
-  return ret;
+  return rec;
 }
 
-extern RecordStruct *ReadRecordDefine(char *name) {
+extern RecordStruct *ReadRecordDefine(const char *name,Bool use_cache) {
+  RecordStruct *rec;
+  int i;
+  char *vname;
   gchar *fname;
   static gchar **dirs = NULL;
-  int i;
-  RecordStruct *rec;
-  rec = NULL;
-  dirs = g_strsplit_set(RecordDir, ":", -1);
+  rec = New(RecordStruct);
+  rec->value = NULL;
+  rec->name = NULL;
+  rec->type = RECORD_NULL;
+  if (dirs == NULL) {
+    dirs = g_strsplit_set(RecordDir, ":", -1);
+  }
   for (i = 0; dirs[i] != NULL; i++) {
     fname = g_strdup_printf("%s/%s", dirs[i], name);
-    if ((rec = ParseRecordFile(fname)) != NULL) {
+    if (use_cache) {
+      rec->value = RecParseValue(fname, &vname);
+    } else {
+      rec->value = RecParseValueNoCache(fname, &vname);
+    }
+    if (rec->value != NULL) {
+      InitializeValue(rec->value);
+      rec->name = vname;
       g_free(fname);
       break;
-    } else {
-      g_free(fname);
     }
+    g_free(fname);
   }
-  g_strfreev(dirs);
-  return rec;
+  if (rec->value != NULL) {
+    return rec;
+  } else {
+    Warning("ReadRecordDeifne failure");
+    return NULL;
+  }
+}
+
+extern void FreeRecordStruct(RecordStruct *rec) {
+#ifdef MON_MEM_SAVE_TRACE
+  fprintf(stderr,"FreeRecordStruct %p name:%s ",rec,rec->name);
+  ResetTotalFreeSize();
+#endif
+  if (rec == NULL) {
+    return;
+  }
+  if (rec->name != NULL) {
+    xfree(rec->name);
+  }
+  if (rec->value != NULL) {
+    FreeValueStruct(rec->value);
+  }
+  if (rec->type == RECORD_DB && RecordDB(rec) != NULL) {
+    FreeDB_Struct(RecordDB(rec));
+  }
+  xfree(rec);
+#ifdef MON_MEM_SAVE_TRACE
+  fprintf(stderr,"size:%lu\n",GetTotalFreeSize());
+#endif
+}
+
+extern RecordStructMeta *NewRecordStructMeta(const char *name, const char *gname) {
+  RecordStructMeta *meta;
+  meta = New(RecordStructMeta);
+  meta->name = NULL;
+  if (name != NULL) {
+    meta->name = StrDup(name);
+  }
+  meta->gname = NULL;
+  if (gname != NULL) {
+    meta->gname = StrDup(gname);
+  }
+  return meta;
 }

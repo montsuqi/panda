@@ -52,29 +52,28 @@ const char *PSQL = "psql";
 extern PGconn *pg_connect(DBG_Struct *dbg) {
   PGconn *conn = NULL;
 
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
     /* database is already connected. */
-    conn = PGCONN(dbg, DB_UPDATE);
+    conn = PGCONN(dbg);
   } else {
-    if ((conn = PgConnect(dbg, DB_UPDATE)) != NULL) {
-      dbg->process[PROCESS_UPDATE].conn = (void *)conn;
-      dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+    if ((conn = PgConnect(dbg)) != NULL) {
+      dbg->conn = (void*)conn;
+      dbg->dbstatus = DB_STATUS_CONNECT;
     }
   }
   return conn;
 }
 
 extern void pg_disconnect(DBG_Struct *dbg) {
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
-    PQfinish(PGCONN(dbg, DB_UPDATE));
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
+    PQfinish(PGCONN(dbg));
+    dbg->dbstatus = DB_STATUS_DISCONNECT;
   }
 }
 
 extern Bool pg_trans_begin(DBG_Struct *dbg) {
   Bool ret = FALSE;
   PGconn *conn = NULL;
-
   conn = pg_connect(dbg);
   ret = db_command(conn, "BEGIN;");
   return ret;
@@ -84,7 +83,7 @@ extern Bool pg_trans_commit(DBG_Struct *dbg) {
   Bool ret = FALSE;
   PGconn *conn = NULL;
 
-  conn = PGCONN(dbg, DB_UPDATE);
+  conn = PGCONN(dbg);
   ret = db_command(conn, "COMMIT;");
   return ret;
 }
@@ -92,7 +91,7 @@ extern Bool pg_trans_commit(DBG_Struct *dbg) {
 extern void pg_lockredirector(DBG_Struct *dbg) {
   PGconn *conn = NULL;
 
-  conn = PGCONN(dbg, DB_UPDATE);
+  conn = PGCONN(dbg);
   LockRedirectorConnect(conn);
 }
 
@@ -100,7 +99,7 @@ extern PGconn *template1_connect(DBG_Struct *dbg) {
   LargeByteString *conninfo;
   PGconn *conn;
 
-  conninfo = Template1Conninfo(dbg, DB_UPDATE);
+  conninfo = Template1Conninfo(dbg);
   conn = PQconnectdb(LBS_Body(conninfo));
   if (PQstatus(conn) != CONNECTION_OK) {
     conn = NULL;
@@ -156,15 +155,15 @@ char **make_pgopts(const char *command, DBG_Struct *dbg) {
   pgoptc = 0;
   pgoptv[pgoptc++] = strdup(command);
 
-  if ((option = GetDB_Host(dbg, DB_UPDATE)) != NULL) {
+  if ((option = GetDB_Host(dbg)) != NULL) {
     pgoptv[pgoptc++] = "-h";
     pgoptv[pgoptc++] = option;
   }
-  if ((option = GetDB_PortName(dbg, DB_UPDATE)) != NULL) {
+  if ((option = GetDB_PortName(dbg)) != NULL) {
     pgoptv[pgoptc++] = "-p";
     pgoptv[pgoptc++] = option;
   }
-  if ((option = GetDB_User(dbg, DB_UPDATE)) != NULL) {
+  if ((option = GetDB_User(dbg)) != NULL) {
     pgoptv[pgoptc++] = "-U";
     pgoptv[pgoptc++] = option;
   }
@@ -299,7 +298,7 @@ extern Bool dbexist(DBG_Struct *dbg) {
   if (conn) {
     snprintf(sql, SIZE_BUFF,
              "SELECT datname FROM pg_database WHERE datname = '%s';\n",
-             GetDB_DBname(dbg, DB_UPDATE));
+             GetDB_DBname(dbg));
     res = db_exec(conn, sql);
     if (PQntuples(res) == 1) {
       ret = TRUE;
@@ -322,7 +321,7 @@ extern int dbactivity(DBG_Struct *dbg) {
   if (conn) {
     snprintf(sql, SIZE_BUFF,
              "SELECT datname FROM pg_stat_activity WHERE datname = '%s';\n",
-             GetDB_DBname(dbg, DB_UPDATE));
+             GetDB_DBname(dbg));
     res = db_exec(conn, sql);
     ret = PQntuples(res);
     PQclear(res);
@@ -365,7 +364,7 @@ extern Bool dropdb(DBG_Struct *dbg) {
   conn = template1_connect(dbg);
   if (conn) {
     snprintf(sql, SIZE_BUFF, "DROP DATABASE \"%s\";\n",
-             GetDB_DBname(dbg, DB_UPDATE));
+             GetDB_DBname(dbg));
     ret = db_command(conn, sql);
     PQfinish(conn);
   }
@@ -443,7 +442,7 @@ extern Bool createdb(DBG_Struct *dbg, char *tablespace, char *template,
   if (conn) {
     LBS_EmitString(sql, "CREATE DATABASE ");
     LBS_EmitString(sql, "\"");
-    LBS_EmitString(sql, GetDB_DBname(dbg, DB_UPDATE));
+    LBS_EmitString(sql, GetDB_DBname(dbg));
     LBS_EmitString(sql, "\" ");
     if (tablespace) {
       LBS_EmitString(sql, " TABLESPACE ");
@@ -554,18 +553,18 @@ extern Bool all_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg,
   char **master_argv, **slave_argv;
 
   master_authinfo = NewAuthInfo();
-  master_authinfo->pass = GetDB_Pass(master_dbg, DB_UPDATE);
-  master_authinfo->sslcert = GetDB_Sslcert(master_dbg, DB_UPDATE);
-  master_authinfo->sslkey = GetDB_Sslkey(master_dbg, DB_UPDATE);
-  master_authinfo->sslrootcert = GetDB_Sslrootcert(master_dbg, DB_UPDATE);
-  master_authinfo->sslcrl = GetDB_Sslcrl(master_dbg, DB_UPDATE);
+  master_authinfo->pass = GetDB_Pass(master_dbg);
+  master_authinfo->sslcert = GetDB_Sslcert(master_dbg);
+  master_authinfo->sslkey = GetDB_Sslkey(master_dbg);
+  master_authinfo->sslrootcert = GetDB_Sslrootcert(master_dbg);
+  master_authinfo->sslcrl = GetDB_Sslcrl(master_dbg);
 
   slave_authinfo = NewAuthInfo();
-  slave_authinfo->pass = GetDB_Pass(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslcert = GetDB_Sslcert(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslkey = GetDB_Sslkey(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslrootcert = GetDB_Sslrootcert(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslcrl = GetDB_Sslcrl(slave_dbg, DB_UPDATE);
+  slave_authinfo->pass = GetDB_Pass(slave_dbg);
+  slave_authinfo->sslcert = GetDB_Sslcert(slave_dbg);
+  slave_authinfo->sslkey = GetDB_Sslkey(slave_dbg);
+  slave_authinfo->sslrootcert = GetDB_Sslrootcert(slave_dbg);
+  slave_authinfo->sslcrl = GetDB_Sslcrl(slave_dbg);
 
   master_argv = make_pgopts(PG_DUMP, master_dbg);
   moptc = optsize(master_argv);
@@ -578,7 +577,7 @@ extern Bool all_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg,
   if (verbose) {
     master_argv[moptc++] = "-v";
   }
-  master_argv[moptc++] = GetDB_DBname(master_dbg, DB_UPDATE);
+  master_argv[moptc++] = GetDB_DBname(master_dbg);
   master_argv[moptc] = NULL;
 
   slave_argv = make_pgopts(PSQL, slave_dbg);
@@ -587,7 +586,7 @@ extern Bool all_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg,
     slave_argv[soptc++] = "-q";
   }
   /*	slave_argv[soptc++] = "ON_ERROR_STOP=1"; */
-  slave_argv[soptc++] = GetDB_DBname(slave_dbg, DB_UPDATE);
+  slave_argv[soptc++] = GetDB_DBname(slave_dbg);
   slave_argv[soptc] = NULL;
 
   return db_sync(master_argv, master_authinfo, slave_argv, slave_authinfo,
@@ -601,25 +600,25 @@ extern Bool table_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg,
   char **master_argv, **slave_argv;
 
   master_authinfo = NewAuthInfo();
-  master_authinfo->pass = GetDB_Pass(master_dbg, DB_UPDATE);
-  master_authinfo->sslcert = GetDB_Sslcert(master_dbg, DB_UPDATE);
-  master_authinfo->sslkey = GetDB_Sslkey(master_dbg, DB_UPDATE);
-  master_authinfo->sslrootcert = GetDB_Sslrootcert(master_dbg, DB_UPDATE);
-  master_authinfo->sslcrl = GetDB_Sslcrl(master_dbg, DB_UPDATE);
+  master_authinfo->pass = GetDB_Pass(master_dbg);
+  master_authinfo->sslcert = GetDB_Sslcert(master_dbg);
+  master_authinfo->sslkey = GetDB_Sslkey(master_dbg);
+  master_authinfo->sslrootcert = GetDB_Sslrootcert(master_dbg);
+  master_authinfo->sslcrl = GetDB_Sslcrl(master_dbg);
 
   slave_authinfo = NewAuthInfo();
-  slave_authinfo->pass = GetDB_Pass(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslcert = GetDB_Sslcert(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslkey = GetDB_Sslkey(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslrootcert = GetDB_Sslrootcert(slave_dbg, DB_UPDATE);
-  slave_authinfo->sslcrl = GetDB_Sslcrl(slave_dbg, DB_UPDATE);
+  slave_authinfo->pass = GetDB_Pass(slave_dbg);
+  slave_authinfo->sslcert = GetDB_Sslcert(slave_dbg);
+  slave_authinfo->sslkey = GetDB_Sslkey(slave_dbg);
+  slave_authinfo->sslrootcert = GetDB_Sslrootcert(slave_dbg);
+  slave_authinfo->sslcrl = GetDB_Sslcrl(slave_dbg);
 
   master_argv = make_pgopts(PG_DUMP, master_dbg);
   moptc = optsize(master_argv);
   master_argv[moptc++] = "-a";
   master_argv[moptc++] = "-t";
   master_argv[moptc++] = table_name;
-  master_argv[moptc++] = GetDB_DBname(master_dbg, DB_UPDATE);
+  master_argv[moptc++] = GetDB_DBname(master_dbg);
   master_argv[moptc] = NULL;
 
   slave_argv = make_pgopts(PSQL, slave_dbg);
@@ -627,7 +626,7 @@ extern Bool table_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg,
   slave_argv[soptc++] = "-q";
   slave_argv[soptc++] = "-v";
   slave_argv[soptc++] = "ON_ERROR_STOP=1";
-  slave_argv[soptc++] = GetDB_DBname(slave_dbg, DB_UPDATE);
+  slave_argv[soptc++] = GetDB_DBname(slave_dbg);
   slave_argv[soptc] = NULL;
 
   return db_sync(master_argv, master_authinfo, slave_argv, slave_authinfo,
@@ -773,7 +772,7 @@ extern TableList *get_table_info(DBG_Struct *dbg, char opt) {
   PGconn *conn;
   TableList *tablelist;
 
-  conn = PGCONN(dbg, DB_UPDATE);
+  conn = PGCONN(dbg);
 
   tablelist = getTableList(conn);
 

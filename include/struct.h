@@ -77,8 +77,8 @@ typedef struct {
   char *gname;
 } DB_Struct;
 
-#define RECORD_NULL 0
-#define RECORD_DB 1
+#define RECORD_NULL    0
+#define RECORD_DB      1
 
 typedef struct _RecordStruct {
   char *name;
@@ -90,6 +90,11 @@ typedef struct _RecordStruct {
 } RecordStruct;
 
 #define RecordDB(rec) ((rec)->opt.db)
+
+typedef struct _RecordStructMeta {
+  char *name;
+  char *gname;
+} RecordStructMeta;
 
 typedef struct {
   char func[SIZE_FUNC];
@@ -113,8 +118,6 @@ typedef struct {
 } DBCOMM_CTRL;
 
 typedef struct {
-  int usage;
-  /*	DB depend	*/
   Port *port;
   char *dbname;
   char *user;
@@ -136,8 +139,6 @@ typedef struct {
 #define DB_STATUS_SYNC 0x07
 
 typedef struct {
-  void *conn;
-  int dbstatus;
 } DB_Process;
 
 #define PROCESS_UPDATE 0
@@ -174,18 +175,18 @@ typedef struct _DBG_Struct {
   int sumcheck;
   char *appname;
   DB_Server *server;
-  DB_Process process[2];
-  int nServer;
+  void *conn;
+  int dbstatus;
 } DBG_Struct;
 
 typedef ValueStruct *(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *,
                                 ValueStruct *);
 
 typedef struct {
-  int (*exec)(DBG_Struct *, char *, Bool, int);
+  int (*exec)(DBG_Struct *, char *, Bool);
   ValueStruct *(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *,
                          ValueStruct *);
-  ValueStruct *(*query)(DBG_Struct *, char *, Bool, int);
+  ValueStruct *(*query)(DBG_Struct *, char *, Bool);
   Bool (*record)(DBG_Struct *, char *, RecordStruct *);
 } DB_Primitives;
 
@@ -289,10 +290,12 @@ typedef struct {
   size_t cDB;
   GHashTable *DB_Table;
   RecordStruct **db;
+  RecordStructMeta **dbmeta;
   size_t nports;
   Port **ports;
   RecordStruct *sparec;
   RecordStruct **windows;
+  RecordStructMeta **windowsmeta;
   size_t cWindow;
   GHashTable *whash;
   WindowBind **binds;

@@ -69,12 +69,12 @@ static char *QueryAuditTable(void) {
 static Bool CreateCommand(DBG_Struct *dbg, char *sql) {
   Bool ret = FALSE;
   PGresult *res;
-  res = PQexec(PGCONN(dbg, DB_UPDATE), sql);
+  res = PQexec(PGCONN(dbg), sql);
   if ((res != NULL) && (PQresultStatus(res) == PGRES_COMMAND_OK)) {
     ret = TRUE;
   } else {
     ret = FALSE;
-    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, DB_UPDATE)));
+    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
   }
   PQclear(res);
   return ret;
@@ -90,10 +90,10 @@ extern void CheckAuditTable(DBG_Struct *dbg) {
   snprintf(buff, SIZE_SQL,
            "SELECT tablename FROM pg_tables WHERE tablename ='%s';",
            AUDITLOG_TABLE);
-  res = PQexec(PGCONN(dbg, DB_UPDATE), buff);
+  res = PQexec(PGCONN(dbg), buff);
   xfree(buff);
   if ((res == NULL) || (PQresultStatus(res) != PGRES_TUPLES_OK)) {
-    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg, DB_UPDATE)));
+    Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
     PQclear(res);
     return;
   }

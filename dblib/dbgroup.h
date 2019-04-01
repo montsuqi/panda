@@ -30,29 +30,31 @@
 #define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
 #define MONDB "mondb_"
 
+extern void DBGroup_Init(RecordStruct **db,RecordStructMeta **meta);
+
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl);
 
 extern int OpenRedirectDB(DBG_Struct *dbg);
 extern int CloseRedirectDB(DBG_Struct *dbg);
-extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed, int usage);
+extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed);
 extern int TransactionRedirectStart(DBG_Struct *dbg);
 extern int TransactionRedirectEnd(DBG_Struct *dbg);
 
 extern void CloseDB_RedirectPort(DBG_Struct *dbg);
 
-extern Port *GetDB_Port(DBG_Struct *dbg, int usage);
-extern char *GetDB_Host(DBG_Struct *dbg, int usage);
-extern char *GetDB_PortName(DBG_Struct *dbg, int usage);
-extern char *GetDB_DBname(DBG_Struct *dbg, int usage);
-extern char *GetDB_User(DBG_Struct *dbg, int usage);
-extern char *GetDB_Pass(DBG_Struct *dbg, int usage);
-extern char *GetDB_Sslmode(DBG_Struct *dbg, int usage);
-extern char *GetDB_Sslcert(DBG_Struct *dbg, int usage);
-extern char *GetDB_Sslkey(DBG_Struct *dbg, int usage);
-extern char *GetDB_Sslrootcert(DBG_Struct *dbg, int usage);
-extern char *GetDB_Sslcrl(DBG_Struct *dbg, int usage);
-extern char *GetDB_Crypt(DBG_Struct *dbg, int usage);
-extern int GetDB_PortMode(DBG_Struct *dbg, int usage);
+extern Port *GetDB_Port(DBG_Struct *dbg);
+extern char *GetDB_Host(DBG_Struct *dbg);
+extern char *GetDB_PortName(DBG_Struct *dbg);
+extern char *GetDB_DBname(DBG_Struct *dbg);
+extern char *GetDB_User(DBG_Struct *dbg);
+extern char *GetDB_Pass(DBG_Struct *dbg);
+extern char *GetDB_Sslmode(DBG_Struct *dbg);
+extern char *GetDB_Sslcert(DBG_Struct *dbg);
+extern char *GetDB_Sslkey(DBG_Struct *dbg);
+extern char *GetDB_Sslrootcert(DBG_Struct *dbg);
+extern char *GetDB_Sslcrl(DBG_Struct *dbg);
+extern char *GetDB_Crypt(DBG_Struct *dbg);
+extern int GetDB_PortMode(DBG_Struct *dbg);
 extern int GetTableFuncData(RecordStruct **rec, ValueStruct **value,
                             DBCOMM_CTRL *ctrl);
 extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname);
@@ -75,6 +77,7 @@ extern void SetDBConfig(const char *config);
 #endif
 
 GLOBAL RecordStruct **ThisDB;
+GLOBAL RecordStructMeta **ThisDBMeta;
 
 GLOBAL char *DB_Host;
 GLOBAL char *DB_Port;

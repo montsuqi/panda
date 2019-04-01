@@ -45,7 +45,7 @@
 #include "redirect.h"
 #include "debug.h"
 
-#define NBCONN(dbg) (NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
+#define NBCONN(dbg) (NETFILE *)((dbg)->conn)
 
 extern ValueStruct *SYSDATA_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int fh, rc;
@@ -58,10 +58,9 @@ extern ValueStruct *SYSDATA_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     fp = SocketToNet(fh);
   }
   OpenDB_RedirectPort(dbg);
-  dbg->process[PROCESS_UPDATE].conn = (void *)fp;
+  dbg->conn = (void *)fp;
   if (fp != NULL) {
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-    dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+    dbg->dbstatus = DB_STATUS_CONNECT;
     rc = MCP_OK;
   }
   if (ctrl != NULL) {
@@ -71,11 +70,11 @@ extern ValueStruct *SYSDATA_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 }
 
 extern ValueStruct *SYSDATA_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+  if (dbg->dbstatus == DB_STATUS_CONNECT) {
     SendPacketClass(NBCONN(dbg), SYSDATA_END);
     CloseNet(NBCONN(dbg));
     CloseDB_RedirectPort(dbg);
-    dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+    dbg->dbstatus = DB_STATUS_DISCONNECT;
     if (ctrl != NULL) {
       ctrl->rc = MCP_OK;
     }

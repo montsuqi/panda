@@ -191,10 +191,6 @@ static void LookupSession(SessionCtrl *ctrl) {
 
   ctrl->rc = SESSION_CONTROL_NG;
   ctrl->session = NULL;
-  if (ctrl->id == NULL) {
-    Warning("ctrl->id is NULL");
-    return;
-  }
   p = head;
   while (p != NULL) {
     if (!strcmp(p->hdr->uuid, ctrl->id)) {

@@ -196,10 +196,4 @@ extern void SendBool(NETFILE *fp, Bool data) {
   Send(fp, buf, 1);
 }
 
-extern void SendObject(NETFILE *fp, MonObjectType obj) { SendUInt64(fp, obj); }
-
-extern MonObjectType RecvObject(NETFILE *fp) {
-  return ((MonObjectType)RecvUInt64(fp));
-}
-
 extern void InitComm(void) {}

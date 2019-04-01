@@ -42,14 +42,13 @@
 #include "debug.h"
 
 extern ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-  dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+  dbg->dbstatus = DB_STATUS_CONNECT;
   ctrl->rc = MCP_OK;
   return (NULL);
 }
 
 extern ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+  dbg->dbstatus = DB_STATUS_DISCONNECT;
   ctrl->rc = MCP_OK;
   return (NULL);
 }
@@ -64,11 +63,11 @@ extern ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   return (NULL);
 }
 
-extern int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+extern int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
   return (MCP_OK);
 }
 
-extern ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+extern ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
   return NULL;
 }
 

@@ -43,6 +43,8 @@
 #include <libgen.h>
 #include <gtk/gtk.h>
 #include <gtkpanda/gtkpanda.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #define MAIN
 #include "glclient.h"
@@ -59,6 +61,7 @@
 #include "utils.h"
 #include "tempdir.h"
 #include "dialogs.h"
+#include "certificate.h"
 
 extern void SetSessionTitle(const char *title) {
   if (TITLE(Session)) {
@@ -140,6 +143,9 @@ static gboolean StartClient() {
     GLP_SetSSLPKCS11(GLP(Session), PKCS11Lib, PIN);
   } else if (fSSL) {
     GLP_SetSSL(GLP(Session), CertFile, CertKeyFile, CertPass, CAFile);
+  }
+  if (fSSL) {
+    checkCertificateExpire(AuthURI, CertFile, CertKeyFile, CertPass, CAFile);
   }
 #endif
   THISWINDOW(Session) = NULL;

@@ -38,7 +38,6 @@
 #include "socket.h"
 #include "wfcdata.h"
 #include "sysdatacom.h"
-#include "blobreq.h"
 #include "sysdbreq.h"
 #include "sysdataio.h"
 #include "enum.h"
@@ -68,24 +67,6 @@ static void DisconnectSysData(NETFILE *fp) {
   }
 }
 
-void GLExportBLOB(MonObjectType obj, char **out, size_t *size) {
-  NETFILE *fp;
-
-  fp = ConnectSysData();
-  RequestExportBLOBMem(fp, obj, out, size);
-  DisconnectSysData(fp);
-}
-
-MonObjectType GLImportBLOB(char *in, size_t size) {
-  NETFILE *fp;
-  MonObjectType ret;
-
-  fp = ConnectSysData();
-  ret = RequestImportBLOBMem(fp, in, size);
-  DisconnectSysData(fp);
-  return ret;
-}
-
 static ValueStruct *val = NULL;
 
 extern gboolean CheckSession(const char *term) {
@@ -108,7 +89,6 @@ extern gboolean CheckSession(const char *term) {
     Error("GetSessionMessage failure");
   }
   DisconnectSysData(fp);
-
   return ret;
 }
 

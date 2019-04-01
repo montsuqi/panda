@@ -52,6 +52,11 @@ extern DB_Func *EnterDB_Function(char *name, DB_OPS *ops, int type,
                                  char *commentEnd);
 extern RecordStruct *GetTableDBG(char *gname, char *tname);
 
+extern void SetScrRecMemSave(Bool enabled);
+extern void SetDBRecMemSave(Bool enabled);
+extern Bool GetScrRecMemSave();
+extern Bool GetDBRecMemSave();
+
 #define P_NONE 0
 #define P_LD 1
 #define P_ALL 2

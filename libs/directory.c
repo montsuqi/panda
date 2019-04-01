@@ -48,6 +48,9 @@
 static GHashTable *DBMS_Table;
 static char *MONDB_LoadPath;
 
+static Bool ScrRecMemSave;
+static Bool DBRecMemSave;
+
 typedef struct {
   char *name;
   char *type;
@@ -97,6 +100,8 @@ extern void InitDirectory(void) {
   BD_ParserInit();
   DBD_ParserInit();
   DI_ParserInit();
+  ScrRecMemSave = FALSE;
+  DBRecMemSave = FALSE;
 }
 
 extern DBG_Struct *GetDBG(char *name) {
@@ -266,4 +271,20 @@ extern RecordStruct *GetTableDBG(char *gname, char *tname) {
     db = NULL;
   }
   return (db);
+}
+
+extern void SetScrRecMemSave(Bool enabled) {
+  ScrRecMemSave = enabled;
+}
+
+extern void SetDBRecMemSave(Bool enabled) {
+  DBRecMemSave = enabled;
+}
+
+extern Bool GetScrRecMemSave(void) {
+  return ScrRecMemSave;
+}
+
+extern Bool GetDBRecMemSave(void) {
+  return DBRecMemSave;
 }

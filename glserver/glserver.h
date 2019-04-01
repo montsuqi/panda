@@ -34,8 +34,9 @@
 #define GL_TIMEOUT_SEC 60
 
 GLOBAL char *PortNumber;
-GLOBAL int Back;
 GLOBAL char *PortSysData;
+GLOBAL int Back;
+GLOBAL char *Directory;
 #ifdef USE_SSL
 GLOBAL Bool fSsl;
 GLOBAL Bool fVerifyPeer;

@@ -94,6 +94,7 @@ static void _DumpItems(ValueStruct *value) {
     _DumpItems(ValueArrayItem(value, 0));
     printf("[%d]", (int)ValueArraySize(value));
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     printf("{\n");
     nTab++;
@@ -265,16 +266,18 @@ static void _DumpHandler(char *name, WindowBind *bind, void *dummy) {
     printf("\t\tlocale    \"%s\";\n", ConvCodeset(handler->conv));
     printf("\t\tstart     \"%s\";\n", handler->start);
     printf("\t\tencoding  ");
-    switch (handler->conv->encode) {
-    case STRING_ENCODING_URL:
-      printf("\"URL\";\n");
-      break;
-    case STRING_ENCODING_BASE64:
-      printf("\"BASE64\";\n");
-      break;
-    default:
-      printf("\"NULL\";\n");
-      break;
+    if (handler->conv != NULL) {
+      switch (handler->conv->encode) {
+      case STRING_ENCODING_URL:
+        printf("\"URL\";\n");
+        break;
+      case STRING_ENCODING_BASE64:
+        printf("\"BASE64\";\n");
+        break;
+      default:
+        printf("\"NULL\";\n");
+        break;
+      }
     }
 
     printf("\t};\n");
@@ -295,16 +298,18 @@ static void _DumpBatchHandler(char *name, BatchBind *bind, void *dummy) {
     printf("\t\tlocale    \"%s\";\n", ConvCodeset(handler->conv));
     printf("\t\tstart     \"%s\";\n", handler->start);
     printf("\t\tencoding  ");
-    switch (handler->conv->encode) {
-    case STRING_ENCODING_URL:
-      printf("\"URL\";\n");
-      break;
-    case STRING_ENCODING_BASE64:
-      printf("\"BASE64\";\n");
-      break;
-    default:
-      printf("\"NULL\";\n");
-      break;
+    if (handler->conv != NULL) {
+      switch (handler->conv->encode) {
+      case STRING_ENCODING_URL:
+        printf("\"URL\";\n");
+        break;
+      case STRING_ENCODING_BASE64:
+        printf("\"BASE64\";\n");
+        break;
+      default:
+        printf("\"NULL\";\n");
+        break;
+      }
     }
 
     printf("\t};\n");
@@ -383,27 +388,21 @@ static void DumpDBD(DBD_Struct *dbd) {
 }
 
 static void DumpDBG(char *name, DBG_Struct *dbg, void *dummy) {
-  int i;
-
   printf("name     = [%s]\n", dbg->name);
   fflush(stdout);
   printf("\ttype    = [%s]\n", dbg->type);
   fflush(stdout);
-  printf("\tnServer = [%d]\n", dbg->nServer);
-  fflush(stdout);
-  for (i = 0; i < dbg->nServer; i++) {
-    if (dbg->server[i].port != NULL) {
-      printf("\t\thost     = [%s]\n", IP_HOST(dbg->server[i].port));
-      fflush(stdout);
-      printf("\t\tport     = [%s]\n", IP_PORT(dbg->server[i].port));
-      fflush(stdout);
-    }
-    printf("\t\tDB name  = [%s]\n", dbg->server[i].dbname);
-    printf("\t\tDB user  = [%s]\n", dbg->server[i].user);
-    printf("\t\tDB pass  = [%s]\n", dbg->server[i].pass);
-    printf("\t\tDB sslmode = [%s]\n", dbg->server[i].sslmode);
+  if (dbg->server->port != NULL) {
+    printf("\t\thost     = [%s]\n", IP_HOST(dbg->server->port));
+    fflush(stdout);
+    printf("\t\tport     = [%s]\n", IP_PORT(dbg->server->port));
     fflush(stdout);
   }
+  printf("\t\tDB name  = [%s]\n", dbg->server->dbname);
+  printf("\t\tDB user  = [%s]\n", dbg->server->user);
+  printf("\t\tDB pass  = [%s]\n", dbg->server->pass);
+  printf("\t\tDB sslmode = [%s]\n", dbg->server->sslmode);
+  fflush(stdout);
   printf("\tDB locale= [%s]\n", dbg->coding);
   if (dbg->file != NULL) {
     printf("\tlog file = [%s]\n", dbg->file);

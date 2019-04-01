@@ -43,9 +43,14 @@
 #include "libmondai.h"
 #include "directory.h"
 #include "DDparser.h"
+#include "DBparser.h"
 #include "dbgroup.h"
-#include "blobreq.h"
 #include "debug.h"
+
+extern void DBGroup_Init(RecordStruct **db, RecordStructMeta **meta) {
+  ThisDB = db;
+  ThisDBMeta = meta;
+}
 
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl) {
   *ctrl->func = '\0';
@@ -210,22 +215,21 @@ extern ValueStruct *ExecDBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return ret;
 }
 
-extern int ExecDBOP(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+extern int ExecDBOP(DBG_Struct *dbg, char *sql, Bool fRed) {
   int rc;
-  rc = dbg->func->primitive->exec(dbg, sql, fRed, usage);
+  rc = dbg->func->primitive->exec(dbg, sql, fRed);
   return (rc);
 }
 
-extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed, int usage) {
+extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed) {
   int rc;
-  rc = dbg->func->primitive->exec(dbg, sql, fRed, usage);
+  rc = dbg->func->primitive->exec(dbg, sql, fRed);
   return (rc);
 }
 
-extern ValueStruct *ExecDBQuery(DBG_Struct *dbg, char *sql, Bool fRed,
-                                int usage) {
+extern ValueStruct *ExecDBQuery(DBG_Struct *dbg, char *sql, Bool fRed) {
   ValueStruct *ret;
-  ret = dbg->func->primitive->query(dbg, sql, fRed, usage);
+  ret = dbg->func->primitive->query(dbg, sql, fRed);
   return ret;
 }
 
@@ -298,8 +302,8 @@ extern int GetDBRedirectStatus(int newstatus) {
     dbg = ThisEnv->DBG[i];
     if (dbg->redirect != NULL) {
       rdbg = dbg->redirect;
-      if (dbstatus < rdbg->process[PROCESS_UPDATE].dbstatus) {
-        dbstatus = rdbg->process[PROCESS_UPDATE].dbstatus;
+      if (dbstatus < rdbg->dbstatus) {
+        dbstatus = rdbg->dbstatus;
       }
     }
   }
@@ -341,16 +345,6 @@ extern int CloseDB(DBG_Struct *dbg) {
   return ExecDBG_Operation(dbg, "DBDISCONNECT");
 }
 
-/*	utility	*/
-static int UsageNum(DBG_Struct *dbg, int usage) {
-  int i;
-  for (i = 0; i < dbg->nServer; i++) {
-    if (dbg->server[i].usage == usage)
-      break;
-  }
-  return i;
-};
-
 static void to_upperstr(char *org) {
   char ustr[SIZE_OTHER];
   char *str, *up;
@@ -374,33 +368,27 @@ static char *GetMONDB_ENV(DBG_Struct *dbg, char *itemname) {
   return str;
 }
 
-extern Port *GetDB_Port(DBG_Struct *dbg, int usage) {
+extern Port *GetDB_Port(DBG_Struct *dbg) {
   Port *port;
-  int num;
 
-  num = UsageNum(dbg, usage);
-  if (num == dbg->nServer) {
-    port = NULL;
-  } else {
-    port = dbg->server[num].port;
-  }
+  port = dbg->server->port;
   return (port);
 }
 
-extern char *GetDB_Host(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Host(DBG_Struct *dbg) {
   char *host;
 
   if (DB_Host != NULL) {
     host = DB_Host;
   } else {
     if ((host = GetMONDB_ENV(dbg, "HOST")) == NULL) {
-      host = IP_HOST((GetDB_Port(dbg, usage)));
+      host = IP_HOST((GetDB_Port(dbg)));
     }
   }
   return (host);
 }
 
-extern char *GetDB_PortName(DBG_Struct *dbg, int usage) {
+extern char *GetDB_PortName(DBG_Struct *dbg) {
   Port *port;
   char *portname;
 
@@ -408,7 +396,7 @@ extern char *GetDB_PortName(DBG_Struct *dbg, int usage) {
     portname = DB_Port;
   } else {
     if ((portname = GetMONDB_ENV(dbg, "PORT")) == NULL) {
-      port = GetDB_Port(dbg, usage);
+      port = GetDB_Port(dbg);
       if ((port != NULL) && (port->type == PORT_IP)) {
         portname = IP_PORT(port);
       } else {
@@ -419,11 +407,11 @@ extern char *GetDB_PortName(DBG_Struct *dbg, int usage) {
   return (portname);
 }
 
-extern int GetDB_PortMode(DBG_Struct *dbg, int usage) {
+extern int GetDB_PortMode(DBG_Struct *dbg) {
   Port *port;
   int mode;
 
-  port = GetDB_Port(dbg, usage);
+  port = GetDB_Port(dbg);
   if ((port != NULL) && port->type == PORT_UNIX) {
     mode = UNIX_MODE(port);
   } else {
@@ -432,57 +420,43 @@ extern int GetDB_PortMode(DBG_Struct *dbg, int usage) {
   return (mode);
 }
 
-extern char *GetDB_DBname(DBG_Struct *dbg, int usage) {
+extern char *GetDB_DBname(DBG_Struct *dbg) {
   char *name = NULL;
-  int num;
   if (DB_Name != NULL) {
     name = DB_Name;
   } else {
     if ((name = GetMONDB_ENV(dbg, "NAME")) == NULL) {
-      num = UsageNum(dbg, usage);
-      if (num < dbg->nServer) {
-        name = dbg->server[num].dbname;
-      }
+      name = dbg->server->dbname;
     }
   }
   return (name);
 }
 
-extern char *GetDB_User(DBG_Struct *dbg, int usage) {
+extern char *GetDB_User(DBG_Struct *dbg) {
   char *user = NULL;
-  int num;
-
   if (DB_User != NULL) {
     user = DB_User;
   } else {
     if ((user = GetMONDB_ENV(dbg, "USER")) == NULL) {
-      num = UsageNum(dbg, usage);
-      if (num < dbg->nServer) {
-        user = dbg->server[num].user;
-      }
+      user = dbg->server->user;
     }
   }
   return (user);
 }
 
-extern char *GetDB_Pass(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Pass(DBG_Struct *dbg) {
   char *pass = NULL;
-  int num;
-
   if (DB_Pass != NULL) {
     pass = DB_Pass;
   } else {
     if ((pass = GetMONDB_ENV(dbg, "PASS")) == NULL) {
-      num = UsageNum(dbg, usage);
-      if (num < dbg->nServer) {
-        pass = dbg->server[num].pass;
-      }
+      pass = dbg->server->pass;
     }
   }
   return (pass);
 }
 
-extern char *GetDB_Crypt(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Crypt(DBG_Struct *dbg) {
   char *crypto = NULL;
 
   if (ThisEnv->CryptoPass != NULL) {
@@ -493,67 +467,42 @@ extern char *GetDB_Crypt(DBG_Struct *dbg, int usage) {
   return (crypto);
 }
 
-extern char *GetDB_Sslmode(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Sslmode(DBG_Struct *dbg) {
   char *sslmode = NULL;
-  int num;
-
-  num = UsageNum(dbg, usage);
-  if (num < dbg->nServer) {
-    if ((sslmode = GetMONDB_ENV(dbg, "SSLMODE")) == NULL) {
-      sslmode = dbg->server[num].sslmode;
-    }
+  if ((sslmode = GetMONDB_ENV(dbg, "SSLMODE")) == NULL) {
+    sslmode = dbg->server->sslmode;
   }
   return (sslmode);
 }
 
-extern char *GetDB_Sslcert(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Sslcert(DBG_Struct *dbg) {
   char *sslcert = NULL;
-  int num;
-
-  num = UsageNum(dbg, usage);
-  if (num < dbg->nServer) {
-    if ((sslcert = GetMONDB_ENV(dbg, "SSLCERT")) == NULL) {
-      sslcert = dbg->server[num].sslcert;
-    }
+  if ((sslcert = GetMONDB_ENV(dbg, "SSLCERT")) == NULL) {
+    sslcert = dbg->server->sslcert;
   }
   return (sslcert);
 }
 
-extern char *GetDB_Sslkey(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Sslkey(DBG_Struct *dbg) {
   char *sslkey = NULL;
-  int num;
-
-  num = UsageNum(dbg, usage);
-  if (num < dbg->nServer) {
-    if ((sslkey = GetMONDB_ENV(dbg, "SSLKEY")) == NULL) {
-      sslkey = dbg->server[num].sslkey;
-    }
+  if ((sslkey = GetMONDB_ENV(dbg, "SSLKEY")) == NULL) {
+    sslkey = dbg->server->sslkey;
   }
   return (sslkey);
 }
 
-extern char *GetDB_Sslrootcert(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Sslrootcert(DBG_Struct *dbg) {
   char *sslrootcert = NULL;
-  int num;
-
-  num = UsageNum(dbg, usage);
-  if (num < dbg->nServer) {
-    if ((sslrootcert = GetMONDB_ENV(dbg, "SSLROOTCERT")) == NULL) {
-      sslrootcert = dbg->server[num].sslrootcert;
-    }
+  if ((sslrootcert = GetMONDB_ENV(dbg, "SSLROOTCERT")) == NULL) {
+    sslrootcert = dbg->server->sslrootcert;
   }
   return (sslrootcert);
 }
 
-extern char *GetDB_Sslcrl(DBG_Struct *dbg, int usage) {
+extern char *GetDB_Sslcrl(DBG_Struct *dbg) {
   char *sslcrl = NULL;
-  int num;
-
-  num = UsageNum(dbg, usage);
-  if (num < dbg->nServer) {
-    if ((sslcrl = GetMONDB_ENV(dbg, "SSLCRL")) == NULL) {
-      sslcrl = dbg->server[num].sslcrl;
-    }
+  if ((sslcrl = GetMONDB_ENV(dbg, "SSLCRL")) == NULL) {
+    sslcrl = dbg->server->sslcrl;
   }
   return (sslcrl);
 }
@@ -671,7 +620,11 @@ extern Bool SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname) {
   ctrl->fDBOperation = FALSE;
   if ((rno = (int)(long)g_hash_table_lookup(DB_Table, ctrl->rname)) != 0) {
     ctrl->rno = rno - 1;
-    ctrl->rec = ThisDB[rno - 1];
+    ctrl->rec = ThisDB[ctrl->rno];
+    if (GetDBRecMemSave() && ThisDBMeta != NULL && ctrl->rec == NULL) {
+      ctrl->rec = DB_Parser(ThisDBMeta[ctrl->rno]->name,ThisDBMeta[ctrl->rno]->gname,TRUE);
+      ThisDB[ctrl->rno] = ctrl->rec;
+    }
     rc = TRUE;
   } else {
     Warning("The table name of [%s] is not found.\n", rname);

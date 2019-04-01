@@ -40,21 +40,28 @@
 #include <glib.h>
 #include <signal.h>
 
+#include "glserver.h"
 #include "gettext.h"
 #include "const.h"
-#include "glserver.h"
+#include "enum.h"
 #include "dirs.h"
 #include "net.h"
 #include "RecParser.h"
+#include "directory.h"
+#include "dbgroup.h"
+#include "dbutils.h"
+#include "monsys.h"
 #include "option.h"
 #include "http.h"
+#include "directory.h"
 #include "message.h"
 #include "debug.h"
 
 static char *AuthURL;
 static ARG_TABLE option[] = {
     {"port", STRING, TRUE, (void *)&PortNumber, N_("waiting port name")},
-    {"sysdata", STRING, TRUE, (void *)&PortSysData, N_("sysdata port")},
+    {"portsysdata", STRING, TRUE, (void *)&PortSysData, N_("sysdata port name")},
+    {"dir", STRING, TRUE, (void *)&Directory, N_("environment file name")},
     {"back", INTEGER, TRUE, (void *)&Back,
      N_("connection waiting queue number")},
     {"screen", STRING, TRUE, (void *)&ScreenDir, N_("screen directory")},
@@ -77,6 +84,7 @@ static ARG_TABLE option[] = {
 static void SetDefault(void) {
   PortNumber = PORT_GLTERM;
   PortSysData = SYSDATA_PORT;
+  Directory = "./directory";
   Back = 5;
   AuthURL = "glauth://localhost:" PORT_GLAUTH;
   fAPI = FALSE;
@@ -93,7 +101,7 @@ static void SetDefault(void) {
 }
 
 static void StopProcess(int ec) {
-  // kill process group
+  //kill process group
   kill(0,SIGINT);
 }
 
@@ -161,11 +169,24 @@ static void ExecuteServer(void) {
   DestroyPort(port);
 }
 
+static void InitSystem(void) {
+  InitMessage("glserver", NULL);
+  InitDirectory();
+  SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
+  if (ThisEnv == NULL) {
+    Error("DI file parse error.");
+  }
+  ParseURL(&Auth, AuthURL, "file");
+  InitNET();
+  RecParserInit();
+}
+
 extern int main(int argc, char **argv) {
   struct sigaction sa;
 
-  // PGIDの変更
+  // PGID変更
   setsid();
+
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;
   sa.sa_flags |= SA_RESTART;
@@ -186,16 +207,11 @@ extern int main(int argc, char **argv) {
 
   SetDefault();
   (void)GetOption(option, argc, argv, NULL);
-  InitMessage("glserver", NULL);
-
   if (getenv("GLSERVER_DEBUG") != NULL) {
     fDebug = TRUE;
   }
 
-  ParseURL(&Auth, AuthURL, "file");
-
-  InitNET();
-  RecParserInit();
+  InitSystem();
 
 #ifdef USE_SSL
   if (fSsl) {

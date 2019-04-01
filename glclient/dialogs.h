@@ -28,5 +28,6 @@ extern void WarnDialog(const char *format, ...);
 extern void ErrorDialog(const char *format, ...);
 extern char *AskPassDialog(const char *prompt);
 extern char *AskPINDialog();
+extern Bool ConfirmDialog(const char *message);
 
 #endif

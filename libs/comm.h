@@ -42,8 +42,6 @@ extern int RecvChar(NETFILE *fp);
 extern void SendChar(NETFILE *fp, int data);
 extern Bool RecvBool(NETFILE *fp);
 extern void SendBool(NETFILE *fp, Bool data);
-extern void SendObject(NETFILE *fp, MonObjectType obj);
-extern MonObjectType RecvObject(NETFILE *fp);
 
 extern void InitComm(void);
 

@@ -168,3 +168,14 @@ char *AskPINDialog() {
   gtk_widget_destroy(dialog);
   return ret;
 }
+
+Bool ConfirmDialog(const char *message) {
+  GtkWidget *dialog;
+  gint response;
+
+  dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_OTHER,
+                                  GTK_BUTTONS_OK_CANCEL, "%s", message);
+  response = gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
+  return(response == GTK_RESPONSE_OK);
+}

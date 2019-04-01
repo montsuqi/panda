@@ -17,14 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef _DBS_MAIN_H
-#define _DBS_MAIN_H
+#ifndef _GLBLOB_H
+#define _GLBLOB_H
 
-#undef GLOBAL
-#ifdef MAIN
-#define GLOBAL /*	*/
-#else
-#define GLOBAL extern
-#endif
+void GLExportBLOB(char *id, char **out, size_t *size);
+char *GLImportBLOB(char *in, size_t size);
 
 #endif

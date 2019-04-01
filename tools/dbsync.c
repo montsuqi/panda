@@ -109,12 +109,12 @@ static void info_print(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
   ms_print("", "Master", "Slave");
   separator();
   ms_print("type", master_dbg->type, slave_dbg->type);
-  ms_print("host", GetDB_Host(master_dbg, DB_UPDATE),
-           GetDB_Host(slave_dbg, DB_UPDATE));
-  ms_print("name", GetDB_DBname(master_dbg, DB_UPDATE),
-           GetDB_DBname(slave_dbg, DB_UPDATE));
-  ms_print("user", GetDB_User(master_dbg, DB_UPDATE),
-           GetDB_User(slave_dbg, DB_UPDATE));
+  ms_print("host", GetDB_Host(master_dbg),
+           GetDB_Host(slave_dbg));
+  ms_print("name", GetDB_DBname(master_dbg),
+           GetDB_DBname(slave_dbg));
+  ms_print("user", GetDB_User(master_dbg),
+           GetDB_User(slave_dbg));
   separator();
 }
 
@@ -147,10 +147,10 @@ static Bool all_allsync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
   ret = dbexist(master_dbg);
   if (!ret) {
     Warning("ERROR: database \"%s\" does not exist.",
-            GetDB_DBname(master_dbg, DB_UPDATE));
+            GetDB_DBname(master_dbg));
     return FALSE;
   }
-  dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg, DB_UPDATE));
+  dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg));
   if (slave_dbg->coding != NULL) {
     encoding = slave_dbg->coding;
   } else {
@@ -183,7 +183,7 @@ static Bool all_allsync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
                    lc_ctype);
     if (!ret) {
       Warning("ERROR: create database \"%s\" failed.",
-              GetDB_DBname(slave_dbg, DB_UPDATE));
+              GetDB_DBname(slave_dbg));
       return FALSE;
     }
   }
@@ -237,7 +237,7 @@ static char table_relkind(TableList *table_list, int num) {
 }
 
 static TableList *table_check(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
-  int i, m, s, cmp, rcmp;
+  int i, m, s, cmp, rcmp, cnt;
   TableList *master_list, *slave_list, *ng_list;
 
   pg_trans_begin(master_dbg);
@@ -247,7 +247,12 @@ static TableList *table_check(DBG_Struct *master_dbg, DBG_Struct *slave_dbg) {
   pg_trans_commit(master_dbg);
   pg_trans_commit(slave_dbg);
 
-  ng_list = NewTableList(master_list->count + slave_list->count);
+  cnt = master_list->count + slave_list->count;
+  if (cnt <= 0) {
+    Error("master_list->count + slave_list->count <= 0; empty dbs?");
+  }
+
+  ng_list = NewTableList(cnt);
   m = s = 0;
   for (i = 0; (master_list->count > m) || (slave_list->count > s); i++) {
     cmp = strcmp(table_name(master_list, m), table_name(slave_list, s));
@@ -422,7 +427,7 @@ extern int main(int argc, char **argv) {
   }
   if (!template1_check(master_dbg)) {
     Error("ERROR: database can not access server %s",
-          GetDB_Host(master_dbg, DB_UPDATE));
+          GetDB_Host(master_dbg));
   }
   if (!template1_check(slave_dbg)) {
     /*		Error("ERROR: database can not access server %s",
@@ -433,7 +438,7 @@ extern int main(int argc, char **argv) {
   }
   if (!dbexist(master_dbg)) {
     Error("ERROR: database \"%s\" does not exist.",
-          GetDB_DBname(master_dbg, DB_UPDATE));
+          GetDB_DBname(master_dbg));
   }
   if (!fTablecheck && !dbexist(slave_dbg)) {
     fAllsync = TRUE;

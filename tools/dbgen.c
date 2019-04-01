@@ -162,7 +162,7 @@ static void TableBody(ValueStruct *val, size_t arraysize, size_t textsize) {
     break;
   case GL_TYPE_OBJECT:
     PutItemName();
-    printf("oid");
+    printf("varchar(%d)", SIZE_UUID);
     PutDim();
     break;
   case GL_TYPE_ARRAY:
@@ -172,6 +172,7 @@ static void TableBody(ValueStruct *val, size_t arraysize, size_t textsize) {
     TableBody(tmp, arraysize, textsize);
     alevel--;
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     fComm = FALSE;
@@ -282,6 +283,7 @@ static void TableInsert(ValueStruct *val, size_t arraysize, size_t textsize,
     else
       printf("\t''");
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     level++;
     fComm = FALSE;
@@ -367,6 +369,7 @@ PutItemNames(
 		PutItemNames(tmp);
 		alevel --;
 		break;
+	  case	GL_TYPE_ROOT_RECORD:
 	  case	GL_TYPE_RECORD:
 		level ++;
 		fComm = FALSE;

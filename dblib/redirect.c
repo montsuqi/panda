@@ -83,7 +83,7 @@ static void ChangeDBStatus_Redirect(DBG_Struct *dbg, int dbstatus) {
   DBG_Struct *rdbg;
   if (dbg->redirect != NULL) {
     rdbg = dbg->redirect;
-    rdbg->process[PROCESS_UPDATE].dbstatus = dbstatus;
+    rdbg->dbstatus = dbstatus;
   }
 }
 

@@ -142,6 +142,7 @@ static int XMLNode2Value(ValueStruct *val, xmlNodePtr root) {
       i++;
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     if (xmlStrcmp(type, "record") != 0) {
       break;
@@ -191,6 +192,7 @@ static gboolean IsEmptyValue(ValueStruct *val) {
       }
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     for (i = 0; i < ValueRecordSize(val); i++) {
       ret = IsEmptyValue(ValueRecordItem(val, i));
@@ -272,6 +274,7 @@ static xmlNodePtr Value2XMLNode(char *name, ValueStruct *val) {
       g_free(childname);
     }
     break;
+  case GL_TYPE_ROOT_RECORD:
   case GL_TYPE_RECORD:
     have_data = FALSE;
     for (i = 0; i < ValueRecordSize(val); i++) {
@@ -396,7 +399,7 @@ static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     return NULL;
   }
   mondbg = GetDBG_monsys();
-  if (blob_export_mem(mondbg, ValueObjectId(obj), &buff, &size)) {
+  if (monblob_export_mem(mondbg, ValueObjectId(obj), &buff, &size)) {
     ret = DuplicateValue(args, TRUE);
     switch (type) {
     case MSG_XML:
@@ -411,7 +414,7 @@ static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     }
     xfree(buff);
   } else {
-    Warning("RequestReadBLOB failure");
+    Warning("monblob_export_mem failure");
     ret = NULL;
   }
   return ret;
@@ -424,6 +427,7 @@ static int _WriteMSG_XML(DBG_Struct *dbg, ValueStruct *ret) {
   unsigned char *buff;
   int rc, size;
   DBG_Struct *mondbg;
+  char *id;
 
   rc = MCP_BAD_OTHER;
   obj = GetItemLongName(ret, "object");
@@ -440,9 +444,10 @@ static int _WriteMSG_XML(DBG_Struct *dbg, ValueStruct *ret) {
   xmlDocDumpFormatMemoryEnc(doc, &buff, &size, "UTF-8", TRUE);
   if (buff != NULL) {
     mondbg = GetDBG_monsys();
-    ValueObjectId(obj) = blob_import_mem(mondbg, 0, "MSGIO.xml",
-                                         "application/xml", 0, buff, size);
-    if (ValueObjectId(obj) != GL_OBJ_NULL) {
+    id = monblob_import_mem(mondbg, NULL, 0, "MSGIO.xml", "application/xml", 0, buff, size);
+    if (id != NULL) {
+      SetValueString(obj,id,NULL);
+      xfree(id);
       rc = MCP_OK;
     } else {
       Warning("monblob_import_mem failure");
@@ -460,6 +465,7 @@ static int _WriteMSG_JSON(DBG_Struct *dbg, ValueStruct *ret) {
   size_t size;
   int rc;
   DBG_Struct *mondbg;
+  char *id;
 
   obj = GetItemLongName(ret, "object");
   val = GetRecordItem(ret, "data");
@@ -468,9 +474,10 @@ static int _WriteMSG_JSON(DBG_Struct *dbg, ValueStruct *ret) {
   JSON_PackValueOmmitString(NULL, buff, val);
 
   mondbg = GetDBG_monsys();
-  ValueObjectId(obj) = blob_import_mem(mondbg, 0, "MSGIO.json",
-                                       "application/json", 0, buff, size);
-  if (ValueObjectId(obj) != GL_OBJ_NULL) {
+  id = monblob_import_mem(mondbg, NULL, 0, "MSGIO.json", "application/json", 0, buff, size);
+  if (id != NULL) {
+    SetValueString(obj,id,NULL);
+    xfree(id);
     rc = MCP_OK;
   } else {
     Warning("_WriteMSG_JSON failure");

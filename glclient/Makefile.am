@@ -43,7 +43,8 @@ base_sources =						\
 	tempdir.c		tempdir.h		\
 	openid_connect.c openid_connect.h \
 	logger.c		logger.h		\
-					icon.h
+					icon.h \
+  certificate.c certificate.h
 
 base_dependencies =					\
 	$(top_builddir)/libs/libpanda.la

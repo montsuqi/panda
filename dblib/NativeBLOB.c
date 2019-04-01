@@ -57,7 +57,8 @@ static ValueStruct *_ExportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (file != NULL && obj != NULL) {
     filename = ValueToString(file, dbg->coding);
     mondbg = GetDBG_monsys();
-    if (blob_export(mondbg, ValueObjectId(obj), filename)) {
+    if (monblob_export_file(mondbg, ValueObjectId(obj), filename)) {
+      monblob_delete(mondbg,ValueObjectId(obj));
       rc = MCP_OK;
     } else {
       rc = MCP_BAD_OTHER;
@@ -77,20 +78,28 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   ValueStruct *file, *obj;
   DBG_Struct *mondbg;
   int rc;
-  char *filename;
+  char *filename,*id;
+
   mondbg = GetDBG_monsys();
   file = GetItemLongName(args, "file");
   obj = GetItemLongName(args, "object");
   if (file != NULL && obj != NULL) {
     filename = ValueToString(file, dbg->coding);
-    ValueObjectId(obj) = blob_import(mondbg, 0, filename, NULL, 0);
-    rc = MCP_OK;
+    id = monblob_import(mondbg, NULL, 0, filename, NULL, MON_LIFE_SHORT);
+    if (id != NULL) {
+      SetValueString(obj,id,NULL);
+      xfree(id);
+      rc = MCP_OK;
+    } else {
+      rc = MCP_BAD_ARG;
+    }
   } else {
     rc = MCP_BAD_ARG;
   }
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
+
   return DuplicateValue(args, TRUE);
 }
 
@@ -99,16 +108,14 @@ static ValueStruct *_CheckBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   int rc;
   ValueStruct *obj;
   DBG_Struct *mondbg;
-  char *id;
+
   if (rec->type != RECORD_DB) {
     rc = MCP_BAD_ARG;
   } else {
     if ((obj = GetItemLongName(args, "object")) != NULL) {
       mondbg = GetDBG_monsys();
-      id = monblob_get_id(mondbg, ValueObjectId(obj));
-      if (id != NULL) {
+      if (monblob_check_id(mondbg, ValueObjectId(obj))) {
         rc = MCP_OK;
-        xfree(id);
       } else {
         rc = MCP_EOF;
       }
@@ -119,6 +126,7 @@ static ValueStruct *_CheckBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (ctrl != NULL) {
     ctrl->rc = rc;
   }
+
   return NULL;
 }
 
@@ -133,10 +141,10 @@ static ValueStruct *_PersistBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     obj = GetItemLongName(args, "object");
     if (obj != NULL) {
       mondbg = GetDBG_monsys();
-      blob_persist(mondbg, ValueObjectId(obj));
+      monblob_persist(mondbg, ValueObjectId(obj), NULL, NULL, MON_LIFE_LONG);
       rc = MCP_OK;
     } else {
-      rc = MCP_BAD_ARG;
+      rc = MCP_BAD_OTHER;
     }
   }
   if (ctrl != NULL) {
@@ -156,8 +164,11 @@ static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     obj = GetItemLongName(args, "object");
     if (obj != NULL) {
       mondbg = GetDBG_monsys();
-      blob_delete(mondbg, ValueObjectId(obj));
-      rc = MCP_OK;
+      if (monblob_delete(mondbg, ValueObjectId(obj))) {
+        rc = MCP_OK;
+      } else {
+        rc = MCP_BAD_OTHER;
+      }
     } else {
       rc = MCP_BAD_ARG;
     }
