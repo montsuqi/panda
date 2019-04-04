@@ -506,11 +506,16 @@ void RPC_GetServerInfo(GLProtocol *ctx) {
 void RPC_StartSession(GLProtocol *ctx) {
   json_object *obj, *params, *child, *result, *meta;
   OpenIdConnectProtocol *oip;
+  char userpass[1024];
 
   if (ctx->fSSO) {
     oip = InitOpenIdConnectProtocol(ctx->AuthURI, ctx->User, ctx->Pass);
     StartOpenIdConnect(oip);
     ctx->AuthURI = oip->GetSessionURI;
+  } else {
+    memset(userpass, 0, sizeof(userpass));
+    snprintf(userpass, sizeof(userpass) - 1, "%s:%s", ctx->User, ctx->Pass);
+    curl_easy_setopt(ctx->Curl, CURLOPT_USERPWD, userpass);
   }
 
   Info("start_session %s", ctx->AuthURI);
@@ -941,7 +946,6 @@ void GLP_SetSSL(GLProtocol *ctx, const char *cert, const char *key,
 
 static CURL *InitCURL(const char *user, const char *pass, gboolean fSSO) {
   CURL *Curl;
-  char userpass[1024];
 
   curl_global_init(CURL_GLOBAL_ALL);
   Curl = curl_easy_init();
@@ -951,12 +955,6 @@ static CURL *InitCURL(const char *user, const char *pass, gboolean fSSO) {
   }
   if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
     curl_easy_setopt(Curl, CURLOPT_VERBOSE, 1);
-  }
-
-  if (fSSO) {
-    memset(userpass, 0, sizeof(userpass));
-    snprintf(userpass, sizeof(userpass) - 1, "%s:%s", user, pass);
-    curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
   }
   curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
   curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
