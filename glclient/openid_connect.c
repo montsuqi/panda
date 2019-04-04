@@ -69,7 +69,7 @@ json_object *parse_header_text(char *header_text) {
 
 json_object *request(CURL *curl, char *uri, int method, json_object *params, char *cookie) {
   LargeByteString *body, *headers;
-  json_object *res, *res_headers;
+  json_object *res = NULL, *res_headers;
   struct curl_slist *request_headers = NULL;
   int response_code;
 
@@ -95,7 +95,9 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params, cha
 
   curl_easy_perform(curl);
 
-  res = json_tokener_parse(LBS_Body(body));
+  if(LBS_Body(body) != NULL) {
+    res = json_tokener_parse(LBS_Body(body));
+  }
   if (res == NULL) {
     res = json_object_new_object();
   }
