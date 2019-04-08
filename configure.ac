@@ -178,7 +178,10 @@ if test "x$enable_client" = "xyes"; then
 	PKG_CHECK_MODULES(CHECK_LWS, libwebsockets >= 2.0.3,
 	[
 		AC_DEFINE(LWS_2,1,"")
-	], [])
+	], [
+		PKG_CHECK_MODULES(CHECK_GTK_VER,libwebsockets >= 1.7.1,
+		[])
+    ])
 fi
 
 if test "x$enable_client" = "xyes"
