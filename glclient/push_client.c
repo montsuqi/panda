@@ -334,6 +334,9 @@ static void Execute() {
   path[sizeof(path) - 1] = '\0';
   i.path = path;
 
+#ifdef LWS_2
+  info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+#endif
   info.port = CONTEXT_PORT_NO_LISTEN;
   info.protocols = protocols;
   info.gid = -1;
