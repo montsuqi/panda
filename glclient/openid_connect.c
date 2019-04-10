@@ -101,8 +101,10 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params, cha
   if (res == NULL) {
     res = json_object_new_object();
   }
-  res_headers = parse_header_text(LBS_Body(headers));
-  json_object_object_add(res, "headers", res_headers);
+  if(LBS_Body(headers) != NULL) {
+    res_headers = parse_header_text(LBS_Body(headers));
+    json_object_object_add(res, "headers", res_headers);
+  }
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
   json_object_object_add(res, "response_code", json_object_new_int(response_code));
 
