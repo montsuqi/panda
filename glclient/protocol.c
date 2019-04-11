@@ -498,13 +498,11 @@ void RPC_GetServerInfo(GLProtocol *ctx) {
   json_object_put(obj);
 }
 
-void RPC_StartSession(GLProtocol *ctx) {
+void RPC_StartSession(GLProtocol *ctx, OpenIdConnectProtocol *oip) {
   json_object *obj, *params, *child, *result, *meta;
-  OpenIdConnectProtocol *oip;
   char userpass[1024];
 
   if (ctx->fSSO) {
-    oip = InitOpenIdConnectProtocol(ctx->AuthURI, ctx->User, ctx->Pass);
     StartOpenIdConnect(oip);
     ctx->AuthURI = oip->GetSessionURI;
   } else {
