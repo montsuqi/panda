@@ -67,7 +67,8 @@ json_object *parse_header_text(char *header_text) {
   return result;
 }
 
-json_object *request(CURL *curl, char *uri, int method, json_object *params, char *cookie) {
+json_object *request(OpenIdConnectProtocol *oip, char *uri, int method, json_object *params, char *cookie) {
+  CURL *curl = oip->Curl;
   LargeByteString *body, *headers;
   json_object *res = NULL, *res_headers;
   struct curl_slist *request_headers = NULL;
@@ -76,6 +77,22 @@ json_object *request(CURL *curl, char *uri, int method, json_object *params, cha
   body = NewLBS();
   headers = NewLBS();
 
+  if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+  }
+  if (oip->fSSL) {
+    curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
+    if (strlen(oip->CertFile) > 0 && strlen(oip->CertKeyFile) > 0) {
+      curl_easy_setopt(curl, CURLOPT_SSLCERT, oip->CertFile);
+      curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+      curl_easy_setopt(curl, CURLOPT_SSLKEY, oip->CertKeyFile);
+      curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
+      curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, oip->CertPass);
+    }
+    curl_easy_setopt(curl, CURLOPT_CAINFO, oip->CAFile);
+  }
   curl_easy_setopt(curl, CURLOPT_URL, uri);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)body);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, open_id_write_data);
@@ -119,7 +136,7 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
   json_object *obj, *result, *headers;
   obj = json_object_new_object();
 
-  result = request(oip->Curl, oip->SP_URI, OPENID_HTTP_POST, obj, NULL);
+  result = request(oip, oip->SP_URI, OPENID_HTTP_POST, obj, NULL);
 
   if (!json_object_object_get_ex(result, "client_id", &obj)) {
     Error(_("no client_id object"));
@@ -163,7 +180,7 @@ void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
   json_object_object_add(params, "redirect_uri", json_object_new_string(oip->RedirectURI));
   json_object_object_add(params, "nonce", json_object_new_string(oip->Nonce));
 
-  result = request(oip->Curl, oip->AuthenticationRequestURI, OPENID_HTTP_POST, params, NULL);
+  result = request(oip, oip->AuthenticationRequestURI, OPENID_HTTP_POST, params, NULL);
 
   json_object_object_get_ex(result, "headers", &headers);
   if (!json_object_object_get_ex(headers, "Location", &obj)) {
@@ -172,7 +189,7 @@ void doAuthenticationRequestToIp(OpenIdConnectProtocol *oip) {
   redirect_uri = g_strdup(json_object_get_string(obj));
 
   params = json_object_new_object();
-  result = request(oip->Curl, redirect_uri, OPENID_HTTP_GET, params, NULL);
+  result = request(oip, redirect_uri, OPENID_HTTP_GET, params, NULL);
 
   if (!json_object_object_get_ex(result, "request_url", &obj)) {
     Error(_("no request_url object"));
@@ -195,7 +212,7 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
   json_object_object_add(params, "login_id", json_object_new_string(oip->User));
   json_object_object_add(params, "password", json_object_new_string(oip->Password));
 
-  result = request(oip->Curl, oip->RequestURL, OPENID_HTTP_POST, params, NULL);
+  result = request(oip, oip->RequestURL, OPENID_HTTP_POST, params, NULL);
 
   json_object_object_get_ex(result, "response_code", &obj);
   if (json_object_get_int(obj) == 403) {
@@ -215,7 +232,7 @@ void doLoginToIP(OpenIdConnectProtocol *oip) {
   ip_cookie = g_strdup(json_object_get_string(obj));
 
   params = json_object_new_object();
-  result = request(oip->Curl, redirect_uri, OPENID_HTTP_GET, params, ip_cookie);
+  result = request(oip, redirect_uri, OPENID_HTTP_GET, params, ip_cookie);
 
   json_object_object_get_ex(result, "headers", &headers);
   if (!json_object_object_get_ex(headers, "Location", &obj)) {
@@ -238,6 +255,13 @@ extern OpenIdConnectProtocol *InitOpenIdConnectProtocol(const char *sso_sp_uri, 
   oip->Curl = OpenIdConnectInitCURL();
 
   return oip;
+}
+
+extern void OpenIdConnectSetSSL(OpenIdConnectProtocol *oip, const char *CertFile, const char *CertKeyFile, const char *CertPass, const char *CAFile) {
+  oip->CertFile = g_strdup(CertFile);
+  oip->CertKeyFile= g_strdup(CertKeyFile);
+  oip->CertPass = g_strdup(CertPass);
+  oip->CAFile = g_strdup(CAFile);
 }
 
 extern void StartOpenIdConnect(OpenIdConnectProtocol *oip) {

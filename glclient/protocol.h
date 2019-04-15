@@ -27,6 +27,7 @@
 #include <openssl/engine.h>
 #endif
 #include <libmondai.h>
+#include "openid_connect.h"
 
 typedef struct {
   CURL *Curl;
@@ -58,7 +59,7 @@ typedef struct {
 } GLProtocol;
 
 void RPC_GetServerInfo(GLProtocol *);
-void RPC_StartSession(GLProtocol *);
+void RPC_StartSession(GLProtocol *, OpenIdConnectProtocol *);
 json_object *RPC_GetScreenDefine(GLProtocol *, const char *);
 void RPC_EndSession(GLProtocol *);
 json_object *RPC_GetWindow(GLProtocol *);

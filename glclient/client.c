@@ -62,6 +62,7 @@
 #include "tempdir.h"
 #include "dialogs.h"
 #include "certificate.h"
+#include "openid_connect.h"
 
 extern void SetSessionTitle(const char *title) {
   if (TITLE(Session)) {
@@ -138,6 +139,7 @@ static void ShowStartupMessage() {
 static gboolean StartClient() {
   GLP(Session) = InitProtocol(AuthURI, User, Pass);
   GLP(Session)->fSSO = fSSO;
+  OpenIdConnectProtocol *oip = InitOpenIdConnectProtocol(AuthURI, User, Pass);
 #if USE_SSL
   if (fPKCS11) {
     GLP_SetSSLPKCS11(GLP(Session), PKCS11Lib, PIN);
@@ -146,14 +148,16 @@ static gboolean StartClient() {
   }
   if (fSSL) {
     checkCertificateExpire(AuthURI, CertFile, CertKeyFile, CertPass, CAFile);
+    OpenIdConnectSetSSL(oip, CertFile, CertKeyFile, CertPass, CAFile);
   }
+  oip->fSSL = fSSL;
 #endif
   THISWINDOW(Session) = NULL;
   WINDOWTABLE(Session) = NewNameHash();
   SCREENDATA(Session) = NULL;
   InitTopWindow();
 
-  RPC_StartSession(GLP(Session));
+  RPC_StartSession(GLP(Session), oip);
   if (SCREENDATA(Session) != NULL) {
     json_object_put(SCREENDATA(Session));
   }
