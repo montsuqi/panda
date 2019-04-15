@@ -65,7 +65,7 @@ static char *CAFILE;
 static void StartSession(GLProtocol *ctx) {
   json_object *obj;
 
-  RPC_StartSession(ctx);
+  RPC_StartSession(ctx, NULL);
   obj = json_object_new_object();
   json_object_object_add(obj, "session_id",
                          json_object_new_string(GLP_GetSessionID(ctx)));
