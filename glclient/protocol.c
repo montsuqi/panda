@@ -401,6 +401,7 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   headers = curl_slist_append(headers, buf);
   snprintf(buf, sizeof(buf), "Expect:");
   headers = curl_slist_append(headers, buf);
+  headers = curl_slist_append(headers, "X-Support-SSO: 1");
 
   curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
   curl_easy_setopt(ctx->Curl, CURLOPT_POST, 1);
