@@ -70,6 +70,10 @@ static Bool create_monpushevent(DBG_Struct *dbg) {
 
   sql = "DROP SEQUENCE IF EXISTS " SEQMONPUSHEVENT ";";
   rc = ExecDBOP(dbg, sql, FALSE);
+  if (rc != MCP_OK) {
+    Warning("SQL Error:%s", sql);
+    return FALSE;
+  }
   sql = "DROP INDEX IF EXISTS " MONPUSHEVENT "_pkey;";
   rc = ExecDBOP(dbg, sql, FALSE);
   if (rc != MCP_OK) {
