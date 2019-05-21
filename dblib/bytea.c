@@ -105,6 +105,10 @@ static Bool create_monblob(DBG_Struct *dbg) {
   int i;
 
   sql = (char *)xmalloc(SIZE_BUFF);
+  sprintf(sql, "DROP SEQUENCE IF EXISTS %s;", SEQMONBLOB);
+  rc = ExecDBOP(dbg, sql, FALSE);
+  sprintf(sql, "DROP INDEX IF EXISTS %s_pkey;", MONBLOB);
+  rc = ExecDBOP(dbg, sql, FALSE);
   p = sql;
   p += sprintf(p, "CREATE TABLE %s (", MONBLOB);
   for (i = 0; columns[i][0] != NULL; i++) {
