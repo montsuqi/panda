@@ -104,6 +104,7 @@ json_object *request(OpenIdConnectProtocol *oip, char *uri, int method, json_obj
     request_headers = curl_slist_append(request_headers, buf);
   }
   request_headers = curl_slist_append(request_headers, "Accept: application/json");
+  request_headers = curl_slist_append(request_headers, "X-Support-SSO: 1");
   if (method == OPENID_HTTP_POST) {
     request_headers = curl_slist_append(request_headers, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_object_to_json_string_ext(params, JSON_C_TO_STRING_PLAIN));
