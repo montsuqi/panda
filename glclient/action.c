@@ -766,13 +766,36 @@ extern void UI_Init(int argc, char **argv) {
   glade_init();
   SetErrorFunc(ErrorDialog);
 
-  rcstr = ""
-          "style \"glclient2\" {"
-          "  bg[NORMAL] = @bg_color"
-          "}"
-          "widget_class \"*.*\" style \"glclient2\"";
+  rcstr = g_strdup_printf(
+      "style \"glclient2\" {"
+      "  font_name = \"%s\""
+      "  fg[NORMAL] = \"#000000\""
+      "  fg[PRELIGHT] = \"#000000\""
+      "  text[NORMAL] = \"#000000\""
+      "  text[PRELIGHT] = \"#000000\""
+      "  bg[NORMAL] = @bg_color"
+      "}"
+      "style \"tooltip\" {"
+      "  fg[NORMAL] = \"#000000\""
+      "  bg[NORMAL] = \"#ffffaf\""
+      "}"
+      "style \"panda-entry\" = \"entry\" {"
+      "  text[INSENSITIVE] = @text_color"
+      "  base[INSENSITIVE] = \"#ffffff\""
+      "}"
+      "style \"panda-clist\" {"
+      "  text[ACTIVE] = @selected_fg_color"
+      "  base[ACTIVE] = @selected_bg_color"
+      "}"
+      "widget_class \"*.*\" style \"glclient2\""
+      "widget_class \"*<GtkPandaEntry>\" style \"panda-entry\""
+      "widget_class \"*<GtkNumberEntry>\" style \"panda-entry\""
+      "widget_class \"*<GtkPandaCList>\" style \"panda-clist\""
+      "widget \"gtk-tooltip*\" style \"tooltip\"",
+      FontName);
   gtk_rc_parse_string(rcstr);
   gtk_rc_reset_styles(gtk_settings_get_default());
+  g_free(rcstr);
 }
 
 extern void UI_Main(void) {
@@ -796,37 +819,6 @@ extern void InitStyle(void) {
   }
   if (Gtkrc != NULL && strlen(Gtkrc)) {
     gtk_rc_parse(Gtkrc);
-  } else {
-    rcstr = g_strdup_printf(
-        "style \"glclient2\" {"
-        "  font_name = \"%s\""
-        "  fg[NORMAL] = \"#000000\""
-        "  fg[PRELIGHT] = \"#000000\""
-        "  text[NORMAL] = \"#000000\""
-        "  text[PRELIGHT] = \"#000000\""
-        "  bg[NORMAL] = @bg_color"
-        "}"
-        "style \"tooltip\" {"
-        "  fg[NORMAL] = \"#000000\""
-        "  bg[NORMAL] = \"#ffffaf\""
-        "}"
-        "style \"panda-entry\" = \"entry\" {"
-        "  text[INSENSITIVE] = @text_color"
-        "  base[INSENSITIVE] = \"#ffffff\""
-        "}"
-        "style \"panda-clist\" {"
-        "  text[ACTIVE] = @selected_fg_color"
-        "  base[ACTIVE] = @selected_bg_color"
-        "}"
-        "widget_class \"*.*\" style \"glclient2\""
-        "widget_class \"*<GtkPandaEntry>\" style \"panda-entry\""
-        "widget_class \"*<GtkNumberEntry>\" style \"panda-entry\""
-        "widget_class \"*<GtkPandaCList>\" style \"panda-clist\""
-        "widget \"gtk-tooltip*\" style \"tooltip\"",
-        FontName);
-    gtk_rc_parse_string(rcstr);
-    gtk_rc_reset_styles(gtk_settings_get_default());
-    g_free(rcstr);
   }
 }
 
