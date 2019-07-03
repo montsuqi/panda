@@ -64,7 +64,7 @@ static void SetDefault(void) {
   CheckID = NULL;
   OutputFile = NULL;
   DBConfig = NULL;
-  LifeType = 1;
+  LifeType = MON_LIFE_LONG;
   List = FALSE;
   Blob = FALSE;
   fTimer = TRUE;
@@ -183,6 +183,9 @@ extern int main(int argc, char **argv) {
   }
 
   if (ImportFile) {
+    if (Blob) {
+      LifeType = MON_LIFE_SHORT;
+    }
     id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
     if (!id) {
       exit(1);
@@ -193,6 +196,11 @@ extern int main(int argc, char **argv) {
     rc = monblob_export_file(dbg, ExportID, OutputFile);
     if (!rc) {
       exit(1);
+    }
+    if (Blob) {
+      if (!monblob_delete(dbg, ExportID)) {
+        exit(1);
+      }
     }
     printf("export: %s\n", OutputFile);
   } else if (DeleteID) {
