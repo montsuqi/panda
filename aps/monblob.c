@@ -183,10 +183,12 @@ extern int main(int argc, char **argv) {
   }
 
   if (ImportFile) {
+    int persist = 1;
     if (Blob) {
       LifeType = MON_LIFE_SHORT;
+      persist = 0;
     }
-    id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
+    id = monblob_import(dbg, NULL, persist, ImportFile, NULL, LifeType);
     if (!id) {
       exit(1);
     }
