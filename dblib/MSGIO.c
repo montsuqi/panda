@@ -400,6 +400,7 @@ static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   }
   mondbg = GetDBG_monsys();
   if (monblob_export_mem(mondbg, ValueObjectId(obj), &buff, &size)) {
+    monblob_delete(mondbg, ValueObjectId(obj));
     ret = DuplicateValue(args, TRUE);
     switch (type) {
     case MSG_XML:

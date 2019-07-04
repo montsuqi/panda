@@ -159,6 +159,7 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   }
   mondbg = GetDBG_monsys();
   if (monblob_export_mem(mondbg, oid, &buff, &size)) {
+    monblob_delete(mondbg, oid);
     ret = DuplicateValue(args, TRUE);
     if (size > 0) {
       switch (CheckFormat(buff, size)) {
