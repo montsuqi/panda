@@ -355,6 +355,7 @@ static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
   case MODE_READ:
     mondbg = GetDBG_monsys();
     if (monblob_export_mem(mondbg, ValueObjectId(oid), &buf, &size)) {
+      monblob_delete(mondbg, ValueObjectId(oid));
       if (size > 0) {
         CTX.format = CheckFormat(buf, size);
         switch (CTX.format) {

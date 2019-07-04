@@ -59,6 +59,7 @@ void GLExportBLOB(char* id, char **out, size_t *size) {
   TransactionStart(dbg);
 
   monblob_export_mem(dbg, id, out, size);
+  monblob_delete(dbg, id);
 
   TransactionEnd(dbg);
   CloseDB(dbg);
