@@ -345,6 +345,7 @@ extern int main(int argc, char **argv) {
   g_option_context_add_main_entries(ctx, entries, NULL);
   g_option_context_parse(ctx, &argc, &argv, NULL);
 
+  memset(path,0,PATH_MAX);
   if (readlink("/proc/self/exe", path, sizeof(path)) <= 0) {
     exit(1);
   }
