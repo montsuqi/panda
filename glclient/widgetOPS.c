@@ -125,7 +125,11 @@ static void SetPandaPDF(GtkWidget *widget, json_object *obj) {
   SetCommon(widget, obj);
   if (json_object_object_get_ex(obj, "objectdata", &child)) {
     oid = (const char *)json_object_get_string(child);
-    lbs = REST_GetBLOB(GLP(Session), oid);
+    if (oid != NULL && strlen(oid) > 0) {
+      lbs = REST_GetBLOB(GLP(Session), oid);
+    } else {
+      lbs = NULL;
+    }
     if (lbs != NULL) {
       gtk_panda_pdf_set(GTK_PANDA_PDF(widget), LBS_Size(lbs), LBS_Body(lbs));
       FreeLBS(lbs);
@@ -169,7 +173,7 @@ static void SetPandaDownload(GtkWidget *widget, json_object *obj) {
 
   if (json_object_object_get_ex(obj, "objectdata", &child)) {
     oid = json_object_get_string(child);
-    if (oid != NULL && strlen(oid) > 0 && strcmp(oid, "0")) {
+    if (oid != NULL && strlen(oid) > 0) {
       lbs = REST_GetBLOB(GLP(Session), oid);
       if (lbs != NULL && LBS_Size(lbs) > 0) {
         ShowDownloadDialog((char *)filename, (char *)desc, lbs);
@@ -973,7 +977,11 @@ static void SetPixmap(GtkWidget *widget, json_object *obj) {
 
   if (json_object_object_get_ex(obj, "objectdata", &child)) {
     oid = (const char *)json_object_get_string(child);
-    lbs = REST_GetBLOB(GLP(Session), oid);
+    if (oid != NULL && strlen(oid) > 0) {
+      lbs = REST_GetBLOB(GLP(Session), oid);
+    } else {
+      lbs = NULL;
+    }
     if (lbs != NULL && LBS_Size(lbs) > 0) {
       gtk_widget_show(widget);
       gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget),
