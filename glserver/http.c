@@ -65,7 +65,7 @@
 #include "message.h"
 #include "debug.h"
 
-#define MAX_REQ_SIZE 1024 * 1024 + 1
+#define MAX_REQ_SIZE 10 * 1024 * 1024 + 1
 
 #define REQUEST_TYPE_NONE 0
 #define REQUEST_TYPE_JSONRPC 1
