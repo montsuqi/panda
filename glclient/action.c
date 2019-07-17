@@ -968,17 +968,15 @@ extern void SetPingTimerFunc() {
   char *p;
   int period;
 
-  if (!GINBEE(Session)) {
-    period = DEFAULT_PING_TIMER_PERIOD;
-    if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
-      period = atoi(p) * 1000;
-      if (period < DEFAULT_PING_TIMER_PERIOD) {
-        period = DEFAULT_PING_TIMER_PERIOD;
-      }
+  period = DEFAULT_PING_TIMER_PERIOD;
+  if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
+    period = atoi(p) * 1000;
+    if (period < DEFAULT_PING_TIMER_PERIOD) {
+      period = DEFAULT_PING_TIMER_PERIOD;
     }
-    Debug("ping timer set:%d\n",period);
-    g_timeout_add(period, PingTimerFunc, NULL);
   }
+  Debug("ping timer set:%d\n",period);
+  g_timeout_add(period, PingTimerFunc, NULL);
 }
 
 extern WindowData *GetWindowData(const char *wname) {
