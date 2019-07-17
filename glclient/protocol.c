@@ -762,7 +762,7 @@ LargeByteString *REST_GetBLOB_via_ENV() {
   CAFile = getenv("GLPUSH_CA_FILE");
 
   OID = getenv("GLPUSH_OID");
-  if (OID == NULL) {
+  if (OID == NULL || strlen(OID) <= 0) {
     _Error("set env GLPUSH_OID\n");
   }
 
