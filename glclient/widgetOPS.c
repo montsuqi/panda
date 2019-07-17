@@ -127,12 +127,14 @@ static void SetPandaPDF(GtkWidget *widget, json_object *obj) {
     oid = (const char *)json_object_get_string(child);
     if (oid != NULL && strlen(oid) > 0) {
       lbs = REST_GetBLOB(GLP(Session), oid);
-      if (lbs != NULL) {
-        gtk_panda_pdf_set(GTK_PANDA_PDF(widget), LBS_Size(lbs), LBS_Body(lbs));
-        FreeLBS(lbs);
-      } else {
-        gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 0, NULL);
-      }
+    } else {
+      lbs = NULL;
+    }
+    if (lbs != NULL) {
+      gtk_panda_pdf_set(GTK_PANDA_PDF(widget), LBS_Size(lbs), LBS_Body(lbs));
+      FreeLBS(lbs);
+    } else {
+      gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 0, NULL);
     }
   }
 }
@@ -977,14 +979,16 @@ static void SetPixmap(GtkWidget *widget, json_object *obj) {
     oid = (const char *)json_object_get_string(child);
     if (oid != NULL && strlen(oid) > 0) {
       lbs = REST_GetBLOB(GLP(Session), oid);
-      if (lbs != NULL && LBS_Size(lbs) > 0) {
-        gtk_widget_show(widget);
-        gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget),
-                                   (gchar *)LBS_Body(lbs), (gsize)LBS_Size(lbs));
-        FreeLBS(lbs);
-      } else {
-        gtk_widget_hide(widget);
-      }
+    } else {
+      lbs = NULL;
+    }
+    if (lbs != NULL && LBS_Size(lbs) > 0) {
+      gtk_widget_show(widget);
+      gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget),
+                                 (gchar *)LBS_Body(lbs), (gsize)LBS_Size(lbs));
+      FreeLBS(lbs);
+    } else {
+      gtk_widget_hide(widget);
     }
   }
 }
