@@ -117,8 +117,8 @@ json_object *request(OpenIdConnectProtocol *oip, char *uri, int method, json_obj
   LBS_EmitEnd(headers);
 
   res = json_tokener_parse(LBS_Body(body));
-  if (is_error(res)) {
-    Error(_("invalid json"));
+  if (res == NULL || is_error(res)) {
+    res = json_object_new_object();
   }
   res_headers = parse_header_text(LBS_Body(headers));
   json_object_object_add(res, "headers", res_headers);
