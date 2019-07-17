@@ -508,10 +508,12 @@ void RPC_StartSession(GLProtocol *ctx, OpenIdConnectProtocol *oip) {
   if (ctx->fSSO) {
     StartOpenIdConnect(oip);
     ctx->AuthURI = oip->GetSessionURI;
+    ctx->fGinbee = TRUE;
   } else {
     memset(userpass, 0, sizeof(userpass));
     snprintf(userpass, sizeof(userpass) - 1, "%s:%s", ctx->User, ctx->Pass);
     curl_easy_setopt(ctx->Curl, CURLOPT_USERPWD, userpass);
+    RPC_GetServerInfo(ctx);
   }
 
   Info("start_session %s", ctx->AuthURI);

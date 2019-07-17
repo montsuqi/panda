@@ -976,6 +976,7 @@ extern void SetPingTimerFunc() {
         period = DEFAULT_PING_TIMER_PERIOD;
       }
     }
+    Debug("ping timer set:%d\n",period);
     g_timeout_add(period, PingTimerFunc, NULL);
   }
 }
