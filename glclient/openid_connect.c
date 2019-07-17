@@ -8,6 +8,7 @@
 
 #define OPENID_HTTP_GET 1
 #define OPENID_HTTP_POST 2
+#define PANDA_CLIENT_VERSION "2.0.1"
 
 CURL *OpenIdConnectInitCURL() {
   CURL *Curl;
@@ -112,17 +113,15 @@ json_object *request(OpenIdConnectProtocol *oip, char *uri, int method, json_obj
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, request_headers);
 
   curl_easy_perform(curl);
+  LBS_EmitEnd(body);
+  LBS_EmitEnd(headers);
 
-  if(LBS_Body(body) != NULL) {
-    res = json_tokener_parse(LBS_Body(body));
-  }
-  if (res == NULL) {
+  res = json_tokener_parse(LBS_Body(body));
+  if (res == NULL || is_error(res)) {
     res = json_object_new_object();
   }
-  if(LBS_Body(headers) != NULL) {
-    res_headers = parse_header_text(LBS_Body(headers));
-    json_object_object_add(res, "headers", res_headers);
-  }
+  res_headers = parse_header_text(LBS_Body(headers));
+  json_object_object_add(res, "headers", res_headers);
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
   json_object_object_add(res, "response_code", json_object_new_int(response_code));
 
@@ -130,13 +129,18 @@ json_object *request(OpenIdConnectProtocol *oip, char *uri, int method, json_obj
   curl_slist_free_all(request_headers);
   curl_easy_reset(curl);
 
+  FreeLBS(body);
+  FreeLBS(headers);
+
   return res;
 }
 
 void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
-  json_object *obj, *result, *headers;
+  json_object *obj, *meta, *result, *headers;
   obj = json_object_new_object();
-
+  meta = json_object_new_object();
+  json_object_object_add(obj,"meta",meta);
+  json_object_object_add(meta,"client_version",json_object_new_string(PANDA_CLIENT_VERSION));
   result = request(oip, oip->SP_URI, OPENID_HTTP_POST, obj, NULL);
 
   if (!json_object_object_get_ex(result, "client_id", &obj)) {
@@ -159,8 +163,9 @@ void doAuthenticationRequestToRP(OpenIdConnectProtocol *oip) {
   }
   oip->Nonce = g_strdup(json_object_get_string(obj));
 
-  json_object_object_get_ex(result, "headers", &headers);
-
+  if (!json_object_object_get_ex(result, "headers", &headers)) {
+    Error(_("no headers object"));
+  }
   if (!json_object_object_get_ex(headers, "Location", &obj)) {
     Error(_("no Location object"));
   }

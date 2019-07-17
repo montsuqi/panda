@@ -7,10 +7,10 @@ typedef struct {
   gchar *new_cert_name;
   gchar *new_p12_name;
   gchar *APIDomain;
-  char *CertFile;
-  char *CertKeyFile;
-  char *CertPass;
-  char *CAFile;
+  const char *CertFile;
+  const char *CertKeyFile;
+  const char *CertPass;
+  const char *CAFile;
   char *GetURI;
   char *NewCertPass;
 } Certificate;
