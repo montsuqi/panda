@@ -158,14 +158,13 @@ static gboolean StartClient() {
   InitTopWindow();
 
   RPC_StartSession(GLP(Session), oip);
-  if (SCREENDATA(Session) != NULL) {
-    json_object_put(SCREENDATA(Session));
-  }
   StartPushClient();
   SCREENDATA(Session) = RPC_GetWindow(GLP(Session));
   UpdateScreen();
   ShowStartupMessage();
-  SetPingTimerFunc();
+  if (!GLP_GetfGinbee(GLP(Session))) {
+    SetPingTimerFunc();
+  }
   UI_Main();
 
   return FALSE;
