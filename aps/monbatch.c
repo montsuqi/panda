@@ -55,7 +55,7 @@ static char *Directory;
 
 static volatile int child_exit_flag = FALSE;
 static volatile Bool exit_flag = FALSE;
-extern char **environ;
+extern char **environ = NULL;
 
 typedef struct {
   DBG_Struct *dbg;
