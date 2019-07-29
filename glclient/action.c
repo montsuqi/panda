@@ -750,8 +750,6 @@ static void GrabFocus(const char *windowName, const char *widgetName) {
 }
 
 extern void UI_Init(int argc, char **argv) {
-  gchar *rcstr;
-
   gtk_init(&argc, &argv);
 #if 1
   /* set gtk-entry-select-on-focus */
@@ -766,9 +764,8 @@ extern void UI_Init(int argc, char **argv) {
   glade_init();
   SetErrorFunc(ErrorDialog);
 
-  rcstr = g_strdup_printf(
+  const char *rcstr = ""
       "style \"glclient2\" {"
-      "  font_name = \"%s\""
       "  fg[NORMAL] = \"#000000\""
       "  fg[PRELIGHT] = \"#000000\""
       "  text[NORMAL] = \"#000000\""
@@ -791,11 +788,9 @@ extern void UI_Init(int argc, char **argv) {
       "widget_class \"*<GtkPandaEntry>\" style \"panda-entry\""
       "widget_class \"*<GtkNumberEntry>\" style \"panda-entry\""
       "widget_class \"*<GtkPandaCList>\" style \"panda-clist\""
-      "widget \"gtk-tooltip*\" style \"tooltip\"",
-      FontName);
+      "widget \"gtk-tooltip*\" style \"tooltip\"";
   gtk_rc_parse_string(rcstr);
   gtk_rc_reset_styles(gtk_settings_get_default());
-  g_free(rcstr);
 }
 
 extern void UI_Main(void) {
@@ -818,6 +813,15 @@ extern void InitStyle(void) {
   }
   if (Gtkrc != NULL && strlen(Gtkrc)) {
     gtk_rc_parse(Gtkrc);
+  } else {
+    gchar *rcstr = g_strdup_printf(
+        "style \"glclient2\" {"
+        "  font_name = \"%s\""
+        "}",
+        FontName);
+    gtk_rc_parse_string(rcstr);
+    gtk_rc_reset_styles(gtk_settings_get_default());
+    g_free(rcstr);
   }
 }
 
