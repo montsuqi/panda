@@ -31,6 +31,7 @@
 #define GLOBAL extern
 #endif
 GLOBAL DI_Struct *ThisEnv;
+GLOBAL unsigned long DbExecTime;
 #undef GLOBAL
 
 #define AUDITLOG_TABLE "montsuqi_auditlog"
