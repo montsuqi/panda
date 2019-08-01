@@ -44,6 +44,7 @@
 #include "dbgroup.h"
 #include "directory.h"
 #include "redirect.h"
+#include "message.h"
 #include "debug.h"
 #include "PostgreSQLlib.h"
 
@@ -1012,9 +1013,13 @@ static Bool IsRedirectQuery(PGresult *res) {
 
 static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed) {
   PGresult *res;
+  unsigned long t1,t2;
 
   dbgprintf("%s", sql);
+  t1 = GetNowTime();
   res = PQexecParams(PGCONN(dbg), sql, 0, NULL, NULL, NULL, NULL, 0);
+  t2 = GetNowTime();
+  DbExecTime += (t2 - t1);
   if (res != NULL) {
     if ((fRed) && (IsRedirectQuery(res))) {
       PutDB_Redirect(dbg, sql);
@@ -1317,6 +1322,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   PGresult *res;
   int rc;
 
+  DbExecTime = 0;
   rc = 0;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     LockDB_Redirect(dbg);
