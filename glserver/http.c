@@ -1086,7 +1086,7 @@ static gboolean _HTTP_Method(HTTP_REQUEST *req) {
   if (req->require_auth) {
     if (!GLAuth(req)) {
       MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
-      req->status = HTTP_FORBIDDEN;
+      req->status = HTTP_UNAUTHORIZED;
       SendResponse(req, req->status, NULL, 0, NULL);
       return FALSE;
     }
