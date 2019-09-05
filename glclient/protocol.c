@@ -446,11 +446,12 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   case 200:
     break;
   case 401:
+    Error(_("authentication error:incorrect user or password"));
   case 403:
     if (!strcmp("NOT PERMITTED CERTIFICATE", LBS_Body(writebuf))) {
       Error(_("NOT PERMITTED CERTIFICATE"));
     } else {
-      Error(_("authentication error:incorrect user or password"));
+      Error(_("http status code[%d]"), http_code);
     }
     break;
   case 503:
