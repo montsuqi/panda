@@ -204,7 +204,6 @@ char *REST_PostBLOB(GLProtocol *ctx, LargeByteString *lbs) {
   case 200:
     break;
   case 401:
-  case 403:
     Error(_("authentication error:incorrect user or password"));
     break;
   case 503:
@@ -261,7 +260,6 @@ LargeByteString *REST_GetBLOB(GLProtocol *ctx, const char *oid) {
   case 200:
     break;
   case 401:
-  case 403:
     Warning(_("authentication error:incorrect user or password"));
     return NULL;
   case 503:
@@ -447,6 +445,7 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
     break;
   case 401:
     Error(_("authentication error:incorrect user or password"));
+    break;
   case 403:
     if (!strcmp("NOT PERMITTED CERTIFICATE", LBS_Body(writebuf))) {
       Error(_("NOT PERMITTED CERTIFICATE"));
