@@ -662,7 +662,7 @@ static void StopServers(void) {
 static void StopSystem(void) {
   fLoop = FALSE;
   fRestart = FALSE;
-  StopServers(); 
+  StopServers();
   Message("stop system");
 }
 
