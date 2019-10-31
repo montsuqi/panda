@@ -663,7 +663,6 @@ static void StopSystem(void) {
   fLoop = FALSE;
   fRestart = FALSE;
   StopServers(); 
-  sleep(5);
   Message("stop system");
 }
 
