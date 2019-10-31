@@ -229,11 +229,15 @@ void SendResponse(HTTP_REQUEST *req, int status, char *body, size_t body_size,
     Send(req->fp, (char *)str, strlen(str));
   }
 
+  char have_ctype = 0;
   va_start(ap, body_size);
   while (1) {
     h = va_arg(ap, char *);
     if (h == NULL) {
       break;
+    }
+    if (strcasecmp(h,"Content-Type") == 0) {
+      have_ctype = 1;
     }
     v = va_arg(ap, char *);
     if (v == NULL) {
@@ -244,6 +248,10 @@ void SendResponse(HTTP_REQUEST *req, int status, char *body, size_t body_size,
     g_free(header);
   }
   va_end(ap);
+  if (have_ctype == 0) {
+    header = "Content-Type: text/plain\r\n";
+    Send(req->fp, header, strlen(header));
+  }
 
   Send(req->fp, "\r\n", strlen("\r\n"));
   if (body != NULL && body_size > 0) {
@@ -741,7 +749,7 @@ static gboolean BLOBExportHandler(HTTP_REQUEST *req) {
     SendResponse(req, HTTP_NOT_FOUND, NULL, 0, NULL);
     return TRUE;
   } else {
-    SendResponse(req, HTTP_OK, body, size, NULL);
+    SendResponse(req, HTTP_OK, body, size, "Content-Type", "application/octet-stream", NULL);
     xfree(body);
   }
   return TRUE;
