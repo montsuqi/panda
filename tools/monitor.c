@@ -662,13 +662,15 @@ static void StopServers(void) {
 static void StopSystem(void) {
   fLoop = FALSE;
   fRestart = FALSE;
-  StopServers();
+  StopServers(); 
+  sleep(5);
   Message("stop system");
 }
 
 static void RestartSystem(void) {
   fRestart = FALSE;
-  StopServers();
+  sleep(10);
+  StopServers(); 
   Message("restart system");
   WfcRestartCount = 0;
 }
