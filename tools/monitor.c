@@ -656,6 +656,7 @@ static void StopServers(void) {
   KillProcess(PTYPE_GLS, SIGHUP);
   KillProcess(PTYPE_APS, SIGHUP);
   KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST), SIGHUP);
+  /*再起動したglserverやapsがkill中のwfcに接続するのを防ぐ*/
   sleep(5);
 }
 
@@ -668,6 +669,8 @@ static void StopSystem(void) {
 
 static void RestartSystem(void) {
   fRestart = FALSE;
+  /*シグナルを受けて10秒待って再起動する(クライアント強制停止処理のため)*/
+  sleep(10);
   StopServers();
   Message("restart system");
   WfcRestartCount = 0;
