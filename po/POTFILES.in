@@ -12,5 +12,6 @@ glclient/desktop.c
 glclient/widgetcache.c
 glclient/protocol.c
 glclient/push_action.c
+glclient/certificate.c
 libs/option.c
 libs/net.c

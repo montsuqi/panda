@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2019-01-07 19:11+0900\n"
+"POT-Creation-Date: 2019-11-25 13:03+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -247,11 +247,11 @@ msgstr ""
 msgid "Now loading..."
 msgstr "読み込み中..."
 
-#: glclient/action.c:849
+#: glclient/action.c:844
 msgid "glclient message notify"
 msgstr "glclientメッセージ通知"
 
-#: glclient/action.c:944
+#: glclient/action.c:939
 msgid "invalid list_report response"
 msgstr ""
 
@@ -281,7 +281,7 @@ msgstr ""
 msgid "glclient print notify"
 msgstr "glclient印刷通知"
 
-#: glclient/client.c:131 glclient/push_action.c:152
+#: glclient/client.c:134 glclient/push_action.c:152
 msgid "orca cloud announce"
 msgstr "日レセクラウドからのお知らせ"
 
@@ -302,104 +302,126 @@ msgstr "アプリケーション起動失敗"
 msgid "can't execute command.\\n\"%s\""
 msgstr "コマンドを実行できません\\n\"%s\""
 
-#: glclient/protocol.c:198 glclient/protocol.c:203 glclient/protocol.c:255
-#: glclient/protocol.c:260 glclient/protocol.c:426 glclient/protocol.c:433
-#: glclient/protocol.c:437
+#: glclient/protocol.c:81
+msgid "comm error:other error"
+msgstr "その他の通信エラー"
+
+#: glclient/protocol.c:85
+msgid "Peer certificate cannot be authenticated with given CA certificates"
+msgstr ""
+"サーバが認証できませんでした。\n"
+"サーバURLまたはCA証明書を確認してください。"
+
+#: glclient/protocol.c:87
+msgid "Problem with the SSL CA cert (path? access rights?)"
+msgstr "CA証明書の読み込みに失敗しました。"
+
+#: glclient/protocol.c:89
+msgid "SSL connect error"
+msgstr "SSL通信エラー"
+
+#: glclient/protocol.c:91
+msgid "Problem with the local SSL certificate"
+msgstr ""
+"証明書に問題があります。\n"
+"証明書ファイルまたは秘密鍵ファイル、パスフレーズを確認してください。"
+
+#: glclient/protocol.c:93
 #, c-format
 msgid "comm error:%s"
 msgstr "通信エラー:%s"
 
-#: glclient/protocol.c:212 glclient/protocol.c:269 glclient/protocol.c:459
+#: glclient/protocol.c:228 glclient/protocol.c:284 glclient/protocol.c:468
 msgid "authentication error:incorrect user or password"
 msgstr "認証エラー:ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:215 glclient/protocol.c:272 glclient/protocol.c:463
+#: glclient/protocol.c:231 glclient/protocol.c:287 glclient/protocol.c:478
 msgid "server maintenance error"
 msgstr "サーバメンテナンス中です"
 
-#: glclient/protocol.c:218 glclient/protocol.c:275
+#: glclient/protocol.c:234 glclient/protocol.c:290
 #, c-format
 msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:304
+#: glclient/protocol.c:319
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:307
+#: glclient/protocol.c:322
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:311 glclient/protocol.c:315
+#: glclient/protocol.c:326 glclient/protocol.c:330
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:327
+#: glclient/protocol.c:342
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:340
+#: glclient/protocol.c:355
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:440 glclient/protocol.c:446
+#: glclient/protocol.c:453 glclient/protocol.c:459
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:457
+#: glclient/protocol.c:472
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 "この証明書による接続は許可されていません。\n"
 "証明書を確認してください。"
 
-#: glclient/protocol.c:466
+#: glclient/protocol.c:474 glclient/protocol.c:481
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:472
+#: glclient/protocol.c:487
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:489
+#: glclient/protocol.c:504
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:494
+#: glclient/protocol.c:509
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:499
+#: glclient/protocol.c:514
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:523
+#: glclient/protocol.c:550
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:534
+#: glclient/protocol.c:561
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:543
+#: glclient/protocol.c:570
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:548
+#: glclient/protocol.c:575
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:652
+#: glclient/protocol.c:679
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:657
+#: glclient/protocol.c:684
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:662
+#: glclient/protocol.c:689
 msgid "invalid message data:abort"
 msgstr ""
 
@@ -423,6 +445,34 @@ msgstr ""
 "PUSH通知接続が切断されました。\n"
 "切断中はクライアント印刷ができません。\n"
 "接続回復後に再印刷等による印刷処理を行ってください。"
+
+#: glclient/certificate.c:179
+msgid "no uri object"
+msgstr ""
+
+#: glclient/certificate.c:184
+msgid "no pass object"
+msgstr ""
+
+#: glclient/certificate.c:248
+msgid "Failure update certificate."
+msgstr "証明書更新に失敗しました。"
+
+#: glclient/certificate.c:265
+msgid "does not open cert"
+msgstr "証明書ファイルが開けません。"
+
+#: glclient/certificate.c:269
+msgid "cert read failure"
+msgstr "証明書ファイルの読み込みに失敗しました。"
+
+#: glclient/certificate.c:279
+msgid ""
+"Certificate Expiration is Approaching.\n"
+"expiration: %Y/%m/%d/ %H:%M:%S"
+msgstr ""
+"証明書の有効期限切れが近づいています。\n"
+"有効期限: %Y/%m/%d/ %H:%M:%S"
 
 #: libs/net.c:259
 #, c-format
@@ -731,9 +781,6 @@ msgstr ""
 #~ msgid "Output Logfile"
 #~ msgstr "ログ出力"
 
-#~ msgid "mkdtemp failure"
-#~ msgstr "mkdtemp に失敗しました"
-
 #~ msgid "Use SSL"
 #~ msgstr "SSLを使う"
 
@@ -829,9 +876,6 @@ msgstr ""
 
 #~ msgid "connection start\n"
 #~ msgstr "connection start\n"
-
-#~ msgid "can not connect server"
-#~ msgstr "サーバに接続できません"
 
 #~ msgid "can not connect server(version not match)"
 #~ msgstr "サーバに接続できません(サーバのバージョンが違います)"
