@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 3.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2019-11-25 13:03+0900\n"
+"POT-Creation-Date: 2019-11-25 13:56+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -311,99 +311,107 @@ msgid "Problem with the local SSL certificate"
 msgstr ""
 
 #: glclient/protocol.c:93
+msgid "Couldn't resolve host name"
+msgstr ""
+
+#: glclient/protocol.c:95
+msgid "Couldn't connect to server"
+msgstr ""
+
+#: glclient/protocol.c:97
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:228 glclient/protocol.c:284 glclient/protocol.c:468
+#: glclient/protocol.c:232 glclient/protocol.c:288 glclient/protocol.c:472
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:231 glclient/protocol.c:287 glclient/protocol.c:478
+#: glclient/protocol.c:235 glclient/protocol.c:291 glclient/protocol.c:482
 msgid "server maintenance error"
 msgstr ""
 
-#: glclient/protocol.c:234 glclient/protocol.c:290
+#: glclient/protocol.c:238 glclient/protocol.c:294
 #, c-format
 msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:319
+#: glclient/protocol.c:323
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:322
+#: glclient/protocol.c:326
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:326 glclient/protocol.c:330
+#: glclient/protocol.c:330 glclient/protocol.c:334
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:342
+#: glclient/protocol.c:346
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:355
+#: glclient/protocol.c:359
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:453 glclient/protocol.c:459
+#: glclient/protocol.c:457 glclient/protocol.c:463
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:472
+#: glclient/protocol.c:476
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 
-#: glclient/protocol.c:474 glclient/protocol.c:481
+#: glclient/protocol.c:478 glclient/protocol.c:485
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:487
+#: glclient/protocol.c:491
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:504
+#: glclient/protocol.c:508
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:509
+#: glclient/protocol.c:513
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:514
+#: glclient/protocol.c:518
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:550
+#: glclient/protocol.c:554
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:561
+#: glclient/protocol.c:565
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:570
+#: glclient/protocol.c:574
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:575
+#: glclient/protocol.c:579
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:679
+#: glclient/protocol.c:683
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:684
+#: glclient/protocol.c:688
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:689
+#: glclient/protocol.c:693
 msgid "invalid message data:abort"
 msgstr ""
 

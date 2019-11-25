@@ -89,6 +89,10 @@ static void CommError(CURLcode res) {
     Error(_("SSL connect error"));
   } else if (strncasecmp(msg,"Problem with the local SSL certificate",ERR_MSG_MAX_LEN) == 0) {
     Error(_("Problem with the local SSL certificate"));
+  } else if (strncasecmp(msg,"Couldn't resolve host name",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Couldn't resolve host name"));
+  } else if (strncasecmp(msg,"Couldn't connect to server",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Couldn't connect to server"));
   }
   Error(_("comm error:%s"),msg);
 }
