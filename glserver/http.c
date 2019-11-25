@@ -687,8 +687,12 @@ void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
 
   if (status == 200 && id != NULL) {
     GLExportBLOB(id, &blob, &blob_size);
-    SendResponse(req, status, blob, blob_size, "Content-Type", ctype, NULL);
-    xfree(blob);
+    if (blob == NULL || blob_size <= 0) {
+      SendResponse(req, HTTP_INTERNAL_SERVER_ERROR, NULL, 0, NULL);
+    } else {
+      SendResponse(req, status, blob, blob_size, "Content-Type", ctype, NULL);
+      xfree(blob);
+    }
   } else {
     SendResponse(req, status, NULL, 0, NULL);
   }
@@ -745,7 +749,7 @@ static gboolean BLOBExportHandler(HTTP_REQUEST *req) {
     return TRUE;
   }
   GLExportBLOB(req->oid, &body, &size);
-  if (body == NULL || size == 0) {
+  if (body == NULL || size <= 0) {
     SendResponse(req, HTTP_NOT_FOUND, NULL, 0, NULL);
     return TRUE;
   } else {
