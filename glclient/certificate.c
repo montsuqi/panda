@@ -262,9 +262,12 @@ void checkCertificateExpire(const char *AuthURI, const char *CertFile, const cha
   int day, sec;
 
   if ((fp = fopen(CertFile, "rb")) == NULL) {
-    Error("Error open file");
+    Error(_("does not open cert"));
   }
   cert = PEM_read_X509_AUX(fp, NULL, NULL, NULL);
+  if (cert == NULL) {
+    Error(_("cert read failure"));
+  }
 
   not_after = X509_get_notAfter(cert);
   ASN1_TIME_diff(&day, &sec, NULL, not_after);

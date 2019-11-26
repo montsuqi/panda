@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: panda 2.0.0\n"
+"Project-Id-Version: panda 3.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2018-12-21 15:33+0900\n"
+"POT-Creation-Date: 2019-11-25 13:56+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -239,11 +239,11 @@ msgstr ""
 msgid "Now loading..."
 msgstr ""
 
-#: glclient/action.c:849
+#: glclient/action.c:844
 msgid "glclient message notify"
 msgstr ""
 
-#: glclient/action.c:944
+#: glclient/action.c:939
 msgid "invalid list_report response"
 msgstr ""
 
@@ -269,7 +269,7 @@ msgstr ""
 msgid "glclient print notify"
 msgstr ""
 
-#: glclient/client.c:131 glclient/push_action.c:152
+#: glclient/client.c:134 glclient/push_action.c:152
 msgid "orca cloud announce"
 msgstr ""
 
@@ -290,102 +290,128 @@ msgstr ""
 msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
-#: glclient/protocol.c:198 glclient/protocol.c:203 glclient/protocol.c:255
-#: glclient/protocol.c:260 glclient/protocol.c:426 glclient/protocol.c:433
-#: glclient/protocol.c:437
+#: glclient/protocol.c:81
+msgid "comm error:other error"
+msgstr ""
+
+#: glclient/protocol.c:85
+msgid "Peer certificate cannot be authenticated with given CA certificates"
+msgstr ""
+
+#: glclient/protocol.c:87
+msgid "Problem with the SSL CA cert (path? access rights?)"
+msgstr ""
+
+#: glclient/protocol.c:89
+msgid "SSL connect error"
+msgstr ""
+
+#: glclient/protocol.c:91
+msgid "Problem with the local SSL certificate"
+msgstr ""
+
+#: glclient/protocol.c:93
+msgid "Couldn't resolve host name"
+msgstr ""
+
+#: glclient/protocol.c:95
+msgid "Couldn't connect to server"
+msgstr ""
+
+#: glclient/protocol.c:97
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:212 glclient/protocol.c:269 glclient/protocol.c:459
+#: glclient/protocol.c:232 glclient/protocol.c:288 glclient/protocol.c:472
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:215 glclient/protocol.c:272 glclient/protocol.c:463
+#: glclient/protocol.c:235 glclient/protocol.c:291 glclient/protocol.c:482
 msgid "server maintenance error"
 msgstr ""
 
-#: glclient/protocol.c:218 glclient/protocol.c:275
+#: glclient/protocol.c:238 glclient/protocol.c:294
 #, c-format
 msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:304
+#: glclient/protocol.c:323
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:307
+#: glclient/protocol.c:326
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:311 glclient/protocol.c:315
+#: glclient/protocol.c:330 glclient/protocol.c:334
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:327
+#: glclient/protocol.c:346
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:340
+#: glclient/protocol.c:359
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:440 glclient/protocol.c:446
+#: glclient/protocol.c:457 glclient/protocol.c:463
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:457
+#: glclient/protocol.c:476
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 
-#: glclient/protocol.c:466
+#: glclient/protocol.c:478 glclient/protocol.c:485
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:472
+#: glclient/protocol.c:491
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:489
+#: glclient/protocol.c:508
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:494
+#: glclient/protocol.c:513
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:499
+#: glclient/protocol.c:518
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:523
+#: glclient/protocol.c:554
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:534
+#: glclient/protocol.c:565
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:543
+#: glclient/protocol.c:574
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:548
+#: glclient/protocol.c:579
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:652
+#: glclient/protocol.c:683
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:657
+#: glclient/protocol.c:688
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:662
+#: glclient/protocol.c:693
 msgid "invalid message data:abort"
 msgstr ""
 
@@ -403,6 +429,32 @@ msgstr ""
 
 #: glclient/push_action.c:157
 msgid "websocket_disconnect_message"
+msgstr ""
+
+#: glclient/certificate.c:179
+msgid "no uri object"
+msgstr ""
+
+#: glclient/certificate.c:184
+msgid "no pass object"
+msgstr ""
+
+#: glclient/certificate.c:248
+msgid "Failure update certificate."
+msgstr ""
+
+#: glclient/certificate.c:265
+msgid "does not open cert"
+msgstr ""
+
+#: glclient/certificate.c:269
+msgid "cert read failure"
+msgstr ""
+
+#: glclient/certificate.c:279
+msgid ""
+"Certificate Expiration is Approaching.\n"
+"expiration: %Y/%m/%d/ %H:%M:%S"
 msgstr ""
 
 #: libs/net.c:259

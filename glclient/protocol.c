@@ -72,6 +72,31 @@
 #define JSONRPC_AUTH(ctx, obj) JSONRPC(ctx, TYPE_AUTH, obj)
 #define JSONRPC_APP(ctx, obj) JSONRPC(ctx, TYPE_APP, obj)
 
+#define ERR_MSG_MAX_LEN (1024)
+
+static void CommError(CURLcode res) {
+  const char *msg;
+  msg = curl_easy_strerror(res);
+  if (msg == NULL) {
+    Error(_("comm error:other error"));
+  }
+  Warning(msg);
+  if (strncasecmp(msg,"Peer certificate cannot be authenticated with given CA certificates",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Peer certificate cannot be authenticated with given CA certificates"));
+  } else if (strncasecmp(msg,"Problem with the SSL CA cert (path? access rights?)",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Problem with the SSL CA cert (path? access rights?)"));
+  } else if (strncasecmp(msg,"SSL connect error",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("SSL connect error"));
+  } else if (strncasecmp(msg,"Problem with the local SSL certificate",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Problem with the local SSL certificate"));
+  } else if (strncasecmp(msg,"Couldn't resolve host name",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Couldn't resolve host name"));
+  } else if (strncasecmp(msg,"Couldn't connect to server",ERR_MSG_MAX_LEN) == 0) {
+    Error(_("Couldn't connect to server"));
+  }
+  Error(_("comm error:%s"),msg);
+}
+
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
 static gboolean Logging = FALSE;
@@ -191,12 +216,12 @@ char *REST_PostBLOB(GLProtocol *ctx, LargeByteString *lbs) {
 
   res = curl_easy_perform(ctx->Curl);
   if (res != CURLE_OK) {
-    Error(_("comm error:%s"), curl_easy_strerror(res));
+    CommError(res);
   }
   http_code = 0;
   res = curl_easy_getinfo(ctx->Curl, CURLINFO_RESPONSE_CODE, &http_code);
   if (res != CURLE_OK) {
-    Error(_("comm error:%s"), curl_easy_strerror(res));
+    CommError(res);
   }
   curl_slist_free_all(headers);
 
@@ -247,12 +272,12 @@ LargeByteString *REST_GetBLOB(GLProtocol *ctx, const char *oid) {
 
   res = curl_easy_perform(ctx->Curl);
   if (res != CURLE_OK) {
-    Error(_("comm error:%s"), curl_easy_strerror(res));
+    CommError(res);
   }
   http_code = 0;
   res = curl_easy_getinfo(ctx->Curl, CURLINFO_RESPONSE_CODE, &http_code);
   if (res != CURLE_OK) {
-    Error(_("comm error:%s"), curl_easy_strerror(res));
+    CommError(res);
   }
   curl_slist_free_all(headers);
 
@@ -415,18 +440,18 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
     ctx->RPCExecTime = now();
     res = curl_easy_perform(ctx->Curl);
     if (res != CURLE_OK) {
-      Error(_("comm error:%s"), curl_easy_strerror(res));
+      CommError(res);
     }
     ctx->RPCExecTime = now() - ctx->RPCExecTime;
   }
   http_code = 0;
   res = curl_easy_getinfo(ctx->Curl, CURLINFO_RESPONSE_CODE, &http_code);
   if (res != CURLE_OK) {
-    Error(_("comm error:%s"), curl_easy_strerror(res));
+    CommError(res);
   }
   res = curl_easy_getinfo(ctx->Curl, CURLINFO_CONTENT_TYPE, &ctype);
   if (res != CURLE_OK) {
-    Error(_("comm error:%s"), curl_easy_strerror(res));
+    CommError(res);
   }
   if (ctype == NULL) {
     Error(_("invalid content type:%s"), ctype);
