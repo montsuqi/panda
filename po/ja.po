@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2019-11-25 13:56+0900\n"
+"POT-Creation-Date: 2019-11-27 09:58+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -481,6 +481,61 @@ msgid ""
 msgstr ""
 "証明書の有効期限切れが近づいています。\n"
 "有効期限: %Y/%m/%d/ %H:%M:%S"
+
+#: glclient/openid_connect.c:147
+msgid "no client_id object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no client_id object"
+
+#: glclient/openid_connect.c:152
+msgid "no state object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no state object"
+
+#: glclient/openid_connect.c:157
+msgid "no redirect_uri object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no redirect_uri object"
+
+#: glclient/openid_connect.c:162
+msgid "no nonce object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no nonce object"
+
+#: glclient/openid_connect.c:167
+msgid "no headers object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no headers object"
+
+#: glclient/openid_connect.c:170 glclient/openid_connect.c:193
+#: glclient/openid_connect.c:231 glclient/openid_connect.c:245
+msgid "no Location object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no Location object"
+
+#: glclient/openid_connect.c:201
+msgid "no request_url object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no request_url object"
+
+#: glclient/openid_connect.c:225
+msgid "User ID or Password Incorrect"
+msgstr ""
+"シングルサインオンエラー\n"
+"ユーザIDまたはパスワードが不正です。"
+
+#: glclient/openid_connect.c:236
+msgid "no Set-Cookie object"
+msgstr ""
+"シングルサインオンエラー\n"
+"no Set-Cookie object"
 
 #: libs/net.c:259
 #, c-format

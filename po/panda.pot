@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 3.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2019-11-25 13:56+0900\n"
+"POT-Creation-Date: 2019-11-27 09:58+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -455,6 +455,43 @@ msgstr ""
 msgid ""
 "Certificate Expiration is Approaching.\n"
 "expiration: %Y/%m/%d/ %H:%M:%S"
+msgstr ""
+
+#: glclient/openid_connect.c:147
+msgid "no client_id object"
+msgstr ""
+
+#: glclient/openid_connect.c:152
+msgid "no state object"
+msgstr ""
+
+#: glclient/openid_connect.c:157
+msgid "no redirect_uri object"
+msgstr ""
+
+#: glclient/openid_connect.c:162
+msgid "no nonce object"
+msgstr ""
+
+#: glclient/openid_connect.c:167
+msgid "no headers object"
+msgstr ""
+
+#: glclient/openid_connect.c:170 glclient/openid_connect.c:193
+#: glclient/openid_connect.c:231 glclient/openid_connect.c:245
+msgid "no Location object"
+msgstr ""
+
+#: glclient/openid_connect.c:201
+msgid "no request_url object"
+msgstr ""
+
+#: glclient/openid_connect.c:225
+msgid "User ID or Password Incorrect"
+msgstr ""
+
+#: glclient/openid_connect.c:236
+msgid "no Set-Cookie object"
 msgstr ""
 
 #: libs/net.c:259
