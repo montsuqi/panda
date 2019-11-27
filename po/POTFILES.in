@@ -13,5 +13,6 @@ glclient/widgetcache.c
 glclient/protocol.c
 glclient/push_action.c
 glclient/certificate.c
+glclient/openid_connect.c
 libs/option.c
 libs/net.c

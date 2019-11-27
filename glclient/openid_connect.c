@@ -1,10 +1,13 @@
 #include <glib.h>
 #include <json.h>
 #include <ctype.h>
+
+
+#include "glclient.h"
+#include "gettext.h"
 #include "openid_connect.h"
 #include "logger.h"
 #include "libmondai.h"
-#include "gettext.h"
 
 #define OPENID_HTTP_GET 1
 #define OPENID_HTTP_POST 2
