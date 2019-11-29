@@ -472,14 +472,22 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
     Error(_("authentication error:incorrect user or password"));
     break;
   case 403:
-    if (!strcmp("NOT PERMITTED CERTIFICATE", LBS_Body(writebuf))) {
+    if (!strncasecmp("NOT PERMITTED CERTIFICATE", LBS_Body(writebuf), ERR_MSG_MAX_LEN)) {
       Error(_("NOT PERMITTED CERTIFICATE"));
+    } else if (!strncasecmp("USER NOT IN TENANTDB", LBS_Body(writebuf), ERR_MSG_MAX_LEN)) {
+      Error(_("USER NOT IN TENANTDB"));
+    } else if (!strncasecmp("ON PREMISES ONLY TENANT", LBS_Body(writebuf), ERR_MSG_MAX_LEN)) {
+      Error(_("ON PREMISES ONLY TENANT"));
     } else {
       Error(_("http status code[%d]"), http_code);
     }
     break;
   case 503:
-    Error(_("server maintenance error"));
+    if (!strncasecmp("GINBEE_MAINTENANCE", LBS_Body(writebuf), ERR_MSG_MAX_LEN)) {
+      Error(_("server maintenance error"));
+    } else {
+      Error(_("http status code[%d]"), http_code);
+    }
     break;
   default:
     Error(_("http status code[%d]"), http_code);

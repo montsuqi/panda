@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 3.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2019-11-27 09:58+0900\n"
+"POT-Creation-Date: 2019-11-29 15:42+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -327,7 +327,7 @@ msgstr ""
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:235 glclient/protocol.c:291 glclient/protocol.c:482
+#: glclient/protocol.c:235 glclient/protocol.c:291 glclient/protocol.c:487
 msgid "server maintenance error"
 msgstr ""
 
@@ -366,52 +366,60 @@ msgstr ""
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 
-#: glclient/protocol.c:478 glclient/protocol.c:485
+#: glclient/protocol.c:478
+msgid "USER NOT IN TENANTDB"
+msgstr ""
+
+#: glclient/protocol.c:480
+msgid "ON PREMISES ONLY TENANT"
+msgstr ""
+
+#: glclient/protocol.c:482 glclient/protocol.c:489 glclient/protocol.c:493
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:491
+#: glclient/protocol.c:499
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:508
+#: glclient/protocol.c:516
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:513
+#: glclient/protocol.c:521
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:518
+#: glclient/protocol.c:526
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:554
+#: glclient/protocol.c:562
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:565
+#: glclient/protocol.c:573
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:574
+#: glclient/protocol.c:582
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:579
+#: glclient/protocol.c:587
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:683
+#: glclient/protocol.c:691
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:688
+#: glclient/protocol.c:696
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:693
+#: glclient/protocol.c:701
 msgid "invalid message data:abort"
 msgstr ""
 
@@ -457,40 +465,40 @@ msgid ""
 "expiration: %Y/%m/%d/ %H:%M:%S"
 msgstr ""
 
-#: glclient/openid_connect.c:147
+#: glclient/openid_connect.c:150
 msgid "no client_id object"
 msgstr ""
 
-#: glclient/openid_connect.c:152
+#: glclient/openid_connect.c:155
 msgid "no state object"
 msgstr ""
 
-#: glclient/openid_connect.c:157
+#: glclient/openid_connect.c:160
 msgid "no redirect_uri object"
 msgstr ""
 
-#: glclient/openid_connect.c:162
+#: glclient/openid_connect.c:165
 msgid "no nonce object"
 msgstr ""
 
-#: glclient/openid_connect.c:167
+#: glclient/openid_connect.c:170
 msgid "no headers object"
 msgstr ""
 
-#: glclient/openid_connect.c:170 glclient/openid_connect.c:193
-#: glclient/openid_connect.c:231 glclient/openid_connect.c:245
+#: glclient/openid_connect.c:173 glclient/openid_connect.c:196
+#: glclient/openid_connect.c:234 glclient/openid_connect.c:248
 msgid "no Location object"
 msgstr ""
 
-#: glclient/openid_connect.c:201
+#: glclient/openid_connect.c:204
 msgid "no request_url object"
 msgstr ""
 
-#: glclient/openid_connect.c:225
+#: glclient/openid_connect.c:228
 msgid "User ID or Password Incorrect"
 msgstr ""
 
-#: glclient/openid_connect.c:236
+#: glclient/openid_connect.c:239
 msgid "no Set-Cookie object"
 msgstr ""
 
