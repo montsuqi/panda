@@ -976,7 +976,7 @@ void GLP_SetSSL(GLProtocol *ctx, const char *cert, const char *key,
 
 #define DEFAULT_CURL_TIMEOUT_SEC (300)
 
-static CURL *InitCURL(const char *user, const char *pass, gboolean fSSO) {
+static CURL *InitCURL() {
   CURL *Curl;
 
   curl_global_init(CURL_GLOBAL_ALL);
@@ -989,7 +989,6 @@ static CURL *InitCURL(const char *user, const char *pass, gboolean fSSO) {
     curl_easy_setopt(Curl, CURLOPT_VERBOSE, 1);
   }
   curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-  curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
   curl_easy_setopt(Curl, CURLOPT_TCP_KEEPALIVE, 0L);
 
   long to = DEFAULT_CURL_TIMEOUT_SEC;
@@ -1019,6 +1018,14 @@ void FinalCURL(GLProtocol *ctx) {
   curl_global_cleanup();
 }
 
+static gboolean CheckGinbeeVpnHost(const char *url)
+{
+  if (url == NULL) {
+    return FALSE;
+  }
+  return strstr(url,"sms.orca.orcamo.jp") != NULL || strstr(url,"sms-stg.orca.orcamo.jp") != NULL;
+}
+
 extern GLProtocol *InitProtocol(const char *authuri, const char *user,
                                 const char *pass) {
   GLProtocol *ctx;
@@ -1034,8 +1041,10 @@ extern GLProtocol *InitProtocol(const char *authuri, const char *user,
   ctx->fSSL = FALSE;
   ctx->fPKCS11 = FALSE;
 #endif
-
-  ctx->Curl = InitCURL(user, pass, ctx->fSSO);
+  ctx->Curl = InitCURL();
+  if (CheckGinbeeVpnHost(authuri)) {
+    curl_easy_setopt(ctx->Curl, CURLOPT_NOPROXY, "*");
+  }
   if (getenv("GLCLIENT_DO_JSONRPC_LOGGING") != NULL) {
     Logging = TRUE;
     LogDir = MakeTempSubDir("jsonrpc_log");
