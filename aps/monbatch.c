@@ -369,14 +369,11 @@ static int write_tmpfile(int std_in) {
   return logfd;
 }
 
-#define SIZE_PCMDV (128)
-#define PUSH_EXEC_CMD ("/usr/local/bin/push_exec_batch_queue")
-
 static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
                                int argc, char **argv) {
   pid_t pid1, wpid;
   char starttime[50], endtime[50];
-  int i, j, rc = 0, rrc = 0;
+  int i, rc = 0, rrc = 0;
   int status;
   char *cmdv[4];
   char *sh;
@@ -385,15 +382,6 @@ static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
   char *repos_name, *repos_names, *repos_p;
   json_object *cmd_results, *result, *child;
   int std_io[2], logfd;
-  Bool is_ginbee;
-  char *mw_name;
-  char *pcmdv[SIZE_PCMDV+2];
-
-  mw_name = getenv("MCP_MIDDLEWARE_NAME");
-  if (mw_name == NULL) { 
-    mw_name = "";
-  }
-  is_ginbee = !strcmp(mw_name,"ginbee");
 
   cmd_results = json_object_new_object();
   json_object_object_add(cmd_results, "pgid", json_object_new_int((int)pgid));
@@ -405,8 +393,11 @@ static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
     repos_names = "";
   }
   repos_name = NULL;
-  pcmdv[0] = PUSH_EXEC_CMD;
-  for (i = 1,j = 1; i < argc; i++) {
+  for (i = 1; i < argc; i++) {
+    if (pipe(std_io) == -1) {
+      error = strerror(errno);
+      break;
+    }
     if (repos_name == NULL) {
       /* first */
       repos_name = repos_names;
@@ -426,118 +417,59 @@ static json_object *exec_shell(DBG_Struct *dbg, pid_t pgid, char *batch_id,
     } else {
       setenv("GINBEE_CUSTOM_BATCH_REPOS_NAME", "", 1);
     }
-    if (is_ginbee && strstr(argv[i],"execshell.sh") != NULL) {
-      /****
-       ginbeeかつexecshell.shの実行
-       複数のexecshell.shをまとめてpush_exec_batch_queueに渡して実行する 
-       まとめて実行するので標準出力、標準エラー出力の保存と
-       cmd_resultsへの結果の書き込みをしない 
-      ****/
-      if (j >= SIZE_PCMDV) {
-        Error("push_exec_bach_queue exec error,over SIZE_PCMDV");
-      }
-      /* 意図的なリーク、単発コマンドなのでリークを気にしない */
-      pcmdv[j] = g_strdup_printf("%d",i);
-      j++;
-      pcmdv[j] = argv[i];
-      j++;
-      /* 最後のコマンド、または次がexecshell.shではない場合 */
-      if (i == (argc - 1) || strstr(argv[i+1],"execshell.sh") == NULL) {
-        pcmdv[j] = NULL;
-        j = 1;
-        if ((pid1 = fork()) == 0) {
-          { /* for debug */
-            int k;
-            printf("exec ");
-            for(k=0;pcmdv[k] != NULL;k++) {
-              printf("%s ",pcmdv[k]);
-            }
-            printf("\n");
-          }
-          execve(PUSH_EXEC_CMD, pcmdv, environ);
-        } else if (pid1 < 0) {
-          error = strerror(errno);
-          rrc = -1;
-          break;
-        }
-        wpid = waitpid(pid1, &status, 0);
-        if (wpid < 0) {
-          error = strerror(errno);
-          rrc = -1;
-          break;
-        }
-        if (WIFEXITED(status)) {
-          rc = WEXITSTATUS(status);
-          if (rc >= CANCEL_CODE) {
-            exit_flag = TRUE;
-            Warning("Processing is canceled. Because child exit code is %d", rc);
-          }
-        } else if (WIFSIGNALED(status)) {
-          rc = -WTERMSIG(status);
-        } else {
-          rc = status;
-        }
-      }
-    } else {
-      /* 非ginbeeか、execshell.shの実行ではない場合 */
-      if (pipe(std_io) == -1) {
-        error = strerror(errno);
-        break;
-      }
-      child_exit_flag = FALSE;
-      child = json_object_new_object();
-      timestamp(starttime, sizeof(starttime));
-      json_object_object_add(child, "starttime",
-                             json_object_new_string(starttime));
-      if ((pid1 = fork()) == 0) {
-        close(std_io[0]);
-        close(STDOUT_FILENO);
-        close(STDERR_FILENO);
-        dup2(std_io[1], STDOUT_FILENO);
-        dup2(std_io[1], STDERR_FILENO);
-        close(std_io[1]);
-        sh = "/bin/sh";
-        cmdv[0] = sh;
-        cmdv[1] = "-c";
-        cmdv[2] = argv[i];
-        cmdv[3] = NULL;
-        execve(sh, cmdv, environ);
-      } else if (pid1 < 0) {
-        error = strerror(errno);
-        rrc = -1;
-        break;
-      }
+    child_exit_flag = FALSE;
+    child = json_object_new_object();
+    timestamp(starttime, sizeof(starttime));
+    json_object_object_add(child, "starttime",
+                           json_object_new_string(starttime));
+    if ((pid1 = fork()) == 0) {
+      close(std_io[0]);
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
+      dup2(std_io[1], STDOUT_FILENO);
+      dup2(std_io[1], STDERR_FILENO);
       close(std_io[1]);
-      logfd = write_tmpfile(std_io[0]);
-      clog_db(dbg, batch_id, logfd);
-      close(logfd);
-      wpid = waitpid(pid1, &status, 0);
-      if (wpid < 0) {
-        error = strerror(errno);
-        rrc = -1;
-        break;
+      sh = "/bin/sh";
+      cmdv[0] = sh;
+      cmdv[1] = "-c";
+      cmdv[2] = argv[i];
+      cmdv[3] = NULL;
+      execve(sh, cmdv, environ);
+    } else if (pid1 < 0) {
+      error = strerror(errno);
+      rrc = -1;
+      break;
+    }
+    close(std_io[1]);
+    logfd = write_tmpfile(std_io[0]);
+    clog_db(dbg, batch_id, logfd);
+    close(logfd);
+    wpid = waitpid(pid1, &status, 0);
+    if (wpid < 0) {
+      error = strerror(errno);
+      rrc = -1;
+      break;
+    }
+    if (WIFEXITED(status)) {
+      rc = WEXITSTATUS(status);
+      if (rc >= CANCEL_CODE) {
+        exit_flag = TRUE;
+        Warning("Processing is canceled. Because child exit code is %d", rc);
       }
-      if (WIFEXITED(status)) {
-        rc = WEXITSTATUS(status);
-        if (rc >= CANCEL_CODE) {
-          exit_flag = TRUE;
-          Warning("Processing is canceled. Because child exit code is %d", rc);
-        }
-      } else if (WIFSIGNALED(status)) {
-        rc = -WTERMSIG(status);
-      } else {
-        rc = status;
-      }
-      rrc += rc;
-      timestamp(endtime, sizeof(endtime));
-      json_object_object_add(child, "pid", json_object_new_int((int)pid1));
-      json_object_object_add(child, "name", json_object_new_string(argv[i]));
-      json_object_object_add(child, "result", json_object_new_int(rc));
-      json_object_object_add(child, "endtime", json_object_new_string(endtime));
-      json_object_array_add(result, child);
-      if (exit_flag) {
-        break;
-      }
+    } else if (WIFSIGNALED(status)) {
+      rc = -WTERMSIG(status);
+    } else {
+      rc = status;
+    }
+    rrc += rc;
+    timestamp(endtime, sizeof(endtime));
+    json_object_object_add(child, "pid", json_object_new_int((int)pid1));
+    json_object_object_add(child, "name", json_object_new_string(argv[i]));
+    json_object_object_add(child, "result", json_object_new_int(rc));
+    json_object_object_add(child, "endtime", json_object_new_string(endtime));
+    json_object_array_add(result, child);
+    if (exit_flag) {
+      break;
     }
   }
   if (error) {
