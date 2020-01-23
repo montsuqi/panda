@@ -802,6 +802,7 @@ extern int main(int argc, char **argv) {
   sigaddset(&sigmask, SIGUSR2);
   sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
 
+  memset(&sa, 0, sizeof(sa));
   sa.sa_handler = (void *)RestartSystem;
   sa.sa_flags |= SA_RESTART;
   if (sigaction(SIGHUP, &sa, NULL) != 0) {
