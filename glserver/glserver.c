@@ -81,6 +81,8 @@ static ARG_TABLE option[] = {
 
     {NULL, 0, FALSE, NULL, NULL}};
 
+static sigset_t SigMask;
+
 static void SetDefault(void) {
   PortNumber = PORT_GLTERM;
   PortSysData = SYSDATA_PORT;
@@ -183,9 +185,15 @@ static void InitSystem(void) {
 
 extern int main(int argc, char **argv) {
   struct sigaction sa;
+  sigset_t sigmask;
 
   // PGID変更
   setsid();
+
+  // SIGINTをUNBLOCK
+  sigemptyset(&sigmask);
+  sigaddset(&sigmask, SIGINT);
+  sigprocmask(SIG_UNBLOCK, &sigmask, &SigMask);
 
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;
