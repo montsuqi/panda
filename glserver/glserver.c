@@ -183,9 +183,15 @@ static void InitSystem(void) {
 
 extern int main(int argc, char **argv) {
   struct sigaction sa;
+  sigset_t sigmask;
 
   // PGID変更
   setsid();
+
+  // SIGINTをUNBLOCK
+  sigemptyset(&sigmask);
+  sigaddset(&sigmask, SIGINT);
+  sigprocmask(SIG_UNBLOCK, &sigmask, NULL);
 
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;

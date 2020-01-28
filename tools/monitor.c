@@ -777,6 +777,7 @@ static void ProcessMonitor(void) {
 
 extern int main(int argc, char **argv) {
   struct sigaction sa;
+  sigset_t sigmask;
 
   SetDefault();
   GetOption(option, argc, argv, NULL);
@@ -791,6 +792,15 @@ extern int main(int argc, char **argv) {
 
   InitServers();
 
+  sigemptyset(&sigmask);
+  sigaddset(&sigmask, SIGINT);
+  sigaddset(&sigmask, SIGPIPE);
+  sigaddset(&sigmask, SIGTERM);
+  /*sigaddset(&sigmask, SIGUSR1); /etc/init.d/jma-receiptで利用 */
+  sigaddset(&sigmask, SIGUSR2);
+  sigprocmask(SIG_BLOCK, &sigmask, NULL);
+
+  memset(&sa, 0, sizeof(sa));
   sa.sa_handler = (void *)RestartSystem;
   sa.sa_flags |= SA_RESTART;
   if (sigaction(SIGHUP, &sa, NULL) != 0) {
@@ -804,5 +814,6 @@ extern int main(int argc, char **argv) {
     StartServers();
     ProcessMonitor();
   }
+  Message("exit system");
   return (0);
 }
