@@ -78,8 +78,6 @@ static volatile sig_atomic_t fLoop = TRUE;
 static volatile sig_atomic_t fRestart = TRUE;
 static volatile sig_atomic_t WfcRestartCount = 0;
 
-static sigset_t SigMask;
-
 #define MAX_WFC_RESTART_COUNT 5
 
 #define PTYPE_NULL (unsigned char)0x00
@@ -800,7 +798,7 @@ extern int main(int argc, char **argv) {
   sigaddset(&sigmask, SIGTERM);
   /*sigaddset(&sigmask, SIGUSR1); /etc/init.d/jma-receiptで利用 */
   sigaddset(&sigmask, SIGUSR2);
-  sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
+  sigprocmask(SIG_BLOCK, &sigmask, NULL);
 
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = (void *)RestartSystem;

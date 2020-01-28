@@ -81,8 +81,6 @@ static ARG_TABLE option[] = {
 
     {NULL, 0, FALSE, NULL, NULL}};
 
-static sigset_t SigMask;
-
 static void SetDefault(void) {
   PortNumber = PORT_GLTERM;
   PortSysData = SYSDATA_PORT;
@@ -193,7 +191,7 @@ extern int main(int argc, char **argv) {
   // SIGINTをUNBLOCK
   sigemptyset(&sigmask);
   sigaddset(&sigmask, SIGINT);
-  sigprocmask(SIG_UNBLOCK, &sigmask, &SigMask);
+  sigprocmask(SIG_UNBLOCK, &sigmask, NULL);
 
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = SIG_IGN;
