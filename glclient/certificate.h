@@ -4,8 +4,9 @@ extern void checkCertificateExpire(const char *AuthURI, const char *CertFile, co
 typedef struct {
   CURL *Curl;
   gchar *cert_dir;
-  gchar *new_cert_name;
   gchar *new_p12_name;
+  gchar *new_cert_name;
+  gchar *new_key_name;
   gchar *APIDomain;
   const char *CertFile;
   const char *CertKeyFile;

@@ -66,10 +66,13 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   LargeByteString *body, *headers;
   json_object *res;
   struct curl_slist *request_headers = NULL;
-  FILE *fp;
+  FILE *fp = NULL;
   int response_code;
+  CURLcode curl_res;
 
   body = NewLBS();
+  LBS_EmitStart(body);
+  LBS_SetPos(body, 0);
   headers = NewLBS();
 
   if (filename != NULL) {
@@ -92,11 +95,17 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   request_headers = curl_slist_append(request_headers, "Accept: application/json");
   if (method == CERT_HTTP_POST) {
     request_headers = curl_slist_append(request_headers, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{}");
+  } else {
+    curl_easy_setopt(curl, CURLOPT_POST, 0L);
   }
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, request_headers);
 
-  curl_easy_perform(curl);
+  curl_res = curl_easy_perform(curl);
+  if (curl_res != CURLE_OK) {
+    Info("curl_easy_perform:%s", curl_easy_strerror(curl_res));
+  }
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
   Info("code: %d", response_code);
   if (response_code != 200) {
@@ -104,6 +113,7 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   }
 
   if (filename == NULL) {
+    LBS_EmitEnd(body);
     res = json_tokener_parse(LBS_Body(body));
   } else {
     res = NULL;
@@ -113,9 +123,9 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   }
 
   curl_slist_free_all(request_headers);
-  curl_easy_reset(curl);
 
-  if (filename != NULL) {
+  if (fp != NULL) {
+    fflush(fp);
     fclose(fp);
   }
 
@@ -124,17 +134,19 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
 void initCertDir(Certificate *cert) {
   gchar *dir;
   dir = g_build_filename(g_get_home_dir(), GL_ROOT_DIR, "certificates", NULL);
-  MakeDir(dir, 0700);
+  mkdir_p(dir, 0700);
   cert->cert_dir = dir;
 }
 
 void setupNewCert(Certificate *cert) {
   time_t now = time(NULL);
   char buf[256];
-  strftime(buf, 256, "%Y%m%d%H%M%S.crt", localtime(&now));
-  cert->new_cert_name = g_build_filename(cert->cert_dir, buf, NULL);
-  strftime(buf, 256, "%Y%m%d%H%M%S.p12", localtime(&now));
+  strftime(buf, sizeof(buf), "%Y%m%d%H%M%S.p12", localtime(&now));
   cert->new_p12_name = g_build_filename(cert->cert_dir, buf, NULL);
+  strftime(buf, sizeof(buf), "%Y%m%d%H%M%S.crt", localtime(&now));
+  cert->new_cert_name = g_build_filename(cert->cert_dir, buf, NULL);
+  strftime(buf, sizeof(buf), "%Y%m%d%H%M%S.pem", localtime(&now));
+  cert->new_key_name = g_build_filename(cert->cert_dir, buf, NULL);
 }
 
 Certificate *initCertificate() {
@@ -169,6 +181,7 @@ int call_update_certificate(Certificate *cert) {
   char url_buf[256];
   json_object *result, *obj;
   sprintf(url_buf, "%s/api/cert", cert->APIDomain);
+  Warning("call_update_certificate %s",url_buf);
   result = cert_request(cert->Curl, url_buf, CERT_HTTP_POST, NULL);
 
   if (result == NULL) {
@@ -192,12 +205,42 @@ void get_new_certificate(Certificate *cert) {
 }
 
 gchar *extract_domain(const char *AuthURI) {
-  gchar *uri = g_strdup(AuthURI);
-  int i = strstr(uri, "//") - uri + 2;
-  while(uri[i] != '/') { i++; }
-  i++;
-  uri[i] = '\0';
-  return uri;
+  static char map[][2][64] = {
+    // 運用環境
+    {"sms.orca.orcamo.jp",       "https://auth.cmo.orcamo.jp"},
+    {"sms.glorca.orcamo.jp",     "https://auth.glcmo.orcamo.jp"},
+    // ステージング環境
+    {"ms-stg.orca.orcamo.jp",    "https://auth-stg.cmo.orcamo.jp"},
+    {"sms-stg.glorca.orcamo.jp", "https://auth-stg.glcmo.orcamo.jp"},
+    // テスト環境
+    {"sms-test.orca.orcamo.jp",  "https://cmo-auth-test.orca.orcamo.jp"},
+    // デモ環境
+    {"sms.orca-ng.org",          "https://auth.orca-ng.org"},
+    // 給管帳運用
+    {"sms.qkn.orcamo.jp",        "https://auth.cmo.orcamo.jp"},
+    {"sms.glqkn.orcamo.jp",      "https://auth.glcmo.orcamo.jp"},
+    // 給管帳ステージング
+    {"sms-stg.qkn.orcamo.jp",    "https://auth-stg.cmo.orcamo.jp"},
+    {"sms-stg.glqkn.orcamo.jp",  "https://auth-stg.glcmo.orcamo.jp"},
+    // 給管帳デモ
+    {"sms.qkn.orca-ng.org",      "https://auth.orca-ng.org"},
+    // 医見書運用
+    {"sms.ikn.orcamo.jp",        "https://auth.cmo.orcamo.jp"},
+    {"sms.glikn.orcamo.jp",      "https://auth.glcmo.orcamo.jp"},
+    // 医見書ステージング
+    {"sms-stg.ikn.orcamo.jp",    "https://auth-stg.cmo.orcamo.jp"},
+    {"sms-stg.glikn.orcamo.jp",  "https://auth-stg.glcmo.orcamo.jp"},
+    // 医見書デモ
+    {"sms.ikn.orca-ng.org",      "https://auth.orca-ng.org"}
+  };
+
+  int i;
+  for(i=0;i<(sizeof(map)/sizeof(map[0]));i++) {
+    if (g_regex_match_simple(map[i][0], AuthURI, G_REGEX_CASELESS, 0)) {
+      return map[i][1];
+    }
+  }
+  return NULL;
 }
 
 void decode_p12(Certificate *cert) {
@@ -206,14 +249,13 @@ void decode_p12(Certificate *cert) {
   X509 *x509 = X509_new();
   STACK_OF(X509) *ca = NULL;
   PKCS12 *p12;
-  if ((fp = fopen(cert->new_p12_name, "rb")) == NULL) {
-    Error("Error open file");
-  }
 
+  if ((fp = fopen(cert->new_p12_name, "rb")) == NULL) {
+    Error("fopen error:%s",cert->new_p12_name);
+  }
   p12 = d2i_PKCS12_fp(fp, NULL);
-  fclose(fp);
   if (!p12) {
-    Error("Error reading PKCS#12 file");
+    Error("d2i_PKCS12_fp error:%s",cert->new_p12_name);
   }
   if (!PKCS12_parse(p12, cert->NewCertPass, &pkey, &x509, &ca)) {
     Error("Error parsing PKCS#12 file");
@@ -222,22 +264,39 @@ void decode_p12(Certificate *cert) {
   fclose(fp);
 
   if ((fp = fopen(cert->new_cert_name, "w")) == NULL) {
-    Error("Error open file");
+    Error("fopen error:%s",cert->new_cert_name);
   }
   PEM_write_X509_AUX(fp, x509);
+  fclose(fp);
+
+  const EVP_CIPHER* pCipher = EVP_aes_256_cbc();
+  if ((fp = fopen(cert->new_key_name, "w")) == NULL) {
+    Error("fopen error:%s",cert->new_key_name);
+  }
+  PEM_write_PrivateKey(fp,pkey,pCipher,(unsigned char*)cert->NewCertPass,(int)strlen(cert->NewCertPass),NULL,NULL);
   fclose(fp);
 }
 
 void save_cert_config(Certificate *cert) {
   int n = gl_config_get_index();
   gl_config_set_string(n, "certfile", cert->new_cert_name);
+  gl_config_set_string(n, "certkeyfile", cert->new_key_name);
+  gl_config_set_boolean(n, "savecertpassword", TRUE);
+  gl_config_set_string(n, "certpassword", cert->NewCertPass);
   gl_config_save();
   Info("saved: %d, %s", n, cert->new_cert_name);
 }
 
 void updateCertificate(const char *AuthURI, const char *CertFile, const char *CertKeyFile, const char *CertPass, const char *CAFile) {
   Certificate *cert = initCertificate();
-  cert->APIDomain = extract_domain(AuthURI);
+  cert->APIDomain = getenv("GLCLIENT_UPDATE_CERT_API_HOST");
+  if (cert->APIDomain == NULL) {
+    cert->APIDomain = extract_domain(AuthURI);
+    if (cert->APIDomain == NULL) {
+      Warning("cancel certificate update. no match authuri");
+      return;
+    }
+  }
   cert->CertFile = CertFile;
   cert->CertKeyFile = CertKeyFile;
   cert->CertPass = CertPass;
@@ -259,7 +318,7 @@ void checkCertificateExpire(const char *AuthURI, const char *CertFile, const cha
   FILE *fp;
   X509 *cert;
   ASN1_TIME *not_after;
-  int day, sec;
+  int day, sec, check_monthes = CERT_EXPIRE_CHECK_MONTHES;
 
   if ((fp = fopen(CertFile, "rb")) == NULL) {
     Error(_("does not open cert"));
@@ -272,7 +331,14 @@ void checkCertificateExpire(const char *AuthURI, const char *CertFile, const cha
   not_after = X509_get_notAfter(cert);
   ASN1_TIME_diff(&day, &sec, NULL, not_after);
 
-  if (day < (CERT_EXPIRE_CHECK_MONTHES * 30)) {
+  if (getenv("GLCLIENT_CERT_EXPIRE_CHECK_MONTHES") != NULL) {
+    check_monthes = atoi(getenv("GLCLIENT_CERT_EXPIRE_CHECK_MONTHES"));
+    if (check_monthes < CERT_EXPIRE_CHECK_MONTHES) {
+      check_monthes = CERT_EXPIRE_CHECK_MONTHES;
+    }
+  }
+
+  if (day < (check_monthes * 30)) {
     time_t t = time(NULL);
     char s[256];
     t += day * 24 * 3600 + sec;
