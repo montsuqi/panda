@@ -295,6 +295,28 @@ static int callback_push_receive(struct lws *wsi,
   return 0;
 }
 
+/*
+env http_proxy=http://host:port -> host:port
+*/
+static const char* ProxyAddress() {
+  char *p,*env_proxy;
+  env_proxy = getenv("http_proxy");
+  if (env_proxy == NULL) {
+    env_proxy = getenv("https_proxy");
+  }
+  if (env_proxy == NULL) {
+    env_proxy = getenv("all_proxy");
+  }
+  if (env_proxy == NULL) {
+    return NULL;
+  }
+  if ((p = strstr(env_proxy,"://")) != NULL) {
+    p += 3;
+    return (const char*)p;
+  }
+  return NULL;
+}
+
 /* list of supported protocols and callbacks */
 static struct lws_protocols protocols[] = {
     {
@@ -341,6 +363,7 @@ static void Execute() {
   info.protocols = protocols;
   info.gid = -1;
   info.uid = -1;
+  info.http_proxy_address = ProxyAddress();
 
   if (fSSL) {
     info.ssl_ca_filepath = CAFile;
