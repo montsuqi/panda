@@ -311,6 +311,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
   get_new_certificate(cert);
   decode_p12(cert);
   save_cert_config(cert);
+  MessageDialog(GTK_MESSAGE_INFO, _("Success update certificate."));
   return;
 }
 
@@ -342,7 +343,7 @@ void checkCertificateExpire(const char *AuthURI, const char *CertFile, const cha
     time_t t = time(NULL);
     char s[256];
     t += day * 24 * 3600 + sec;
-    strftime(s, sizeof(s), _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d/ %H:%M:%S"), localtime(&t));
+    strftime(s, sizeof(s), _("Certificate Expiration is Approaching.\nexpiration: %Y/%m/%d %H:%M:%S\nUpdate certificate?"), localtime(&t));
     if (ConfirmDialog(s)) {
       updateCertificate(AuthURI, CertFile, CertKeyFile, CertPass, CAFile);
     }
