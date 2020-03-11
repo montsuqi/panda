@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 3.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2019-11-29 15:42+0900\n"
+"POT-Creation-Date: 2020-03-09 11:34+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -439,30 +439,35 @@ msgstr ""
 msgid "websocket_disconnect_message"
 msgstr ""
 
-#: glclient/certificate.c:179
+#: glclient/certificate.c:192
 msgid "no uri object"
 msgstr ""
 
-#: glclient/certificate.c:184
+#: glclient/certificate.c:197
 msgid "no pass object"
 msgstr ""
 
-#: glclient/certificate.c:248
+#: glclient/certificate.c:307
 msgid "Failure update certificate."
 msgstr ""
 
-#: glclient/certificate.c:265
+#: glclient/certificate.c:314
+msgid "Success update certificate."
+msgstr ""
+
+#: glclient/certificate.c:325
 msgid "does not open cert"
 msgstr ""
 
-#: glclient/certificate.c:269
+#: glclient/certificate.c:329
 msgid "cert read failure"
 msgstr ""
 
-#: glclient/certificate.c:279
+#: glclient/certificate.c:346
 msgid ""
 "Certificate Expiration is Approaching.\n"
-"expiration: %Y/%m/%d/ %H:%M:%S"
+"expiration: %Y/%m/%d %H:%M:%S\n"
+"Update certificate?"
 msgstr ""
 
 #: glclient/openid_connect.c:150
