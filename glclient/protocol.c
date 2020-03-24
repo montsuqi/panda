@@ -79,22 +79,24 @@ static void CommError(CURLcode res) {
   msg = curl_easy_strerror(res);
   if (msg == NULL) {
     Error(_("comm error:other error"));
+  } else {
+    Warning(msg);
+    if (strncasecmp(msg,"Peer certificate cannot be authenticated with given CA certificates",ERR_MSG_MAX_LEN) == 0) {
+      Error(_("Peer certificate cannot be authenticated with given CA certificates"));
+    } else if (strncasecmp(msg,"Problem with the SSL CA cert (path? access rights?)",ERR_MSG_MAX_LEN) == 0) {
+      Error(_("Problem with the SSL CA cert (path? access rights?)"));
+    } else if (strncasecmp(msg,"SSL connect error",ERR_MSG_MAX_LEN) == 0) {
+      Error(_("SSL connect error"));
+    } else if (strncasecmp(msg,"Problem with the local SSL certificate",ERR_MSG_MAX_LEN) == 0) {
+      Error(_("Problem with the local SSL certificate"));
+    } else if (strncasecmp(msg,"Couldn't resolve host name",ERR_MSG_MAX_LEN) == 0) {
+      Error(_("Couldn't resolve host name"));
+    } else if (strncasecmp(msg,"Couldn't connect to server",ERR_MSG_MAX_LEN) == 0) {
+      Error(_("Couldn't connect to server"));
+    } else {
+      Error(_("comm error:%s"),msg);
+    }
   }
-  Warning(msg);
-  if (strncasecmp(msg,"Peer certificate cannot be authenticated with given CA certificates",ERR_MSG_MAX_LEN) == 0) {
-    Error(_("Peer certificate cannot be authenticated with given CA certificates"));
-  } else if (strncasecmp(msg,"Problem with the SSL CA cert (path? access rights?)",ERR_MSG_MAX_LEN) == 0) {
-    Error(_("Problem with the SSL CA cert (path? access rights?)"));
-  } else if (strncasecmp(msg,"SSL connect error",ERR_MSG_MAX_LEN) == 0) {
-    Error(_("SSL connect error"));
-  } else if (strncasecmp(msg,"Problem with the local SSL certificate",ERR_MSG_MAX_LEN) == 0) {
-    Error(_("Problem with the local SSL certificate"));
-  } else if (strncasecmp(msg,"Couldn't resolve host name",ERR_MSG_MAX_LEN) == 0) {
-    Error(_("Couldn't resolve host name"));
-  } else if (strncasecmp(msg,"Couldn't connect to server",ERR_MSG_MAX_LEN) == 0) {
-    Error(_("Couldn't connect to server"));
-  }
-  Error(_("comm error:%s"),msg);
 }
 
 static LargeByteString *readbuf;
