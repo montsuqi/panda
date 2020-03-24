@@ -19,11 +19,6 @@
 
 #define MAIN
 
-/*
-#define	DEBUG
-#define	TRACE
-*/
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -72,6 +67,7 @@ static Bool fVerifyPeer;
 static char *GlAuth;
 static char *GlCert;
 static char *GlCAfile;
+static Bool fDebug;
 
 static GList *ProcessList;
 static volatile sig_atomic_t fLoop = TRUE;
@@ -100,35 +96,6 @@ typedef struct {
   int argc;
   char **argv;
 } Process;
-
-#ifdef DEBUG
-static void DumpCommand(char **argv) {
-  int i;
-
-  for (i = 0; argv[i] != NULL; i++) {
-    fprintf(stderr, "%s ", argv[i]);
-  }
-  fprintf(stderr, "\n");
-}
-
-static void DumpProcess(Process *proc) {
-  fprintf(stderr, "pid:%d status:%s\n", (int)proc->pid,
-          proc->state == STATE_RUN ? "RUN" : "DOWN");
-  DumpCommand(proc->argv);
-}
-
-static void DumpProcessAll(void) {
-  int i;
-  Process *proc;
-
-  printf("*** process table dump ***\n");
-  for (i = 0; i < g_list_length(ProcessList); i++) {
-    proc = g_list_nth_data(ProcessList, i);
-    DumpProcess(proc);
-  }
-  printf("**************************\n");
-}
-#endif
 
 static ARG_TABLE option[] = {
     {"ApsPath", STRING, TRUE, (void *)&ApsPath, "aps command path"},
@@ -180,8 +147,34 @@ static ARG_TABLE option[] = {
     {"timer", BOOLEAN, TRUE, (void *)&fTimer, "time measuring"},
     {"log", STRING, TRUE, (void *)&Log, "monitor log file name"},
     {"sleep", INTEGER, TRUE, (void *)&Sleep, "aps sleep time(for debug)"},
+    {"debug", BOOLEAN, TRUE, (void *)&fDebug,
+     "add debug message to syslog"},
 
     {NULL, 0, FALSE, NULL, NULL}};
+
+static char *GetCommandStr(Process *proc) {
+  int i;
+  int size;
+  char *p;
+  char *command = NULL;
+
+  if (proc == NULL) {
+    return command;
+  }
+  size = 0;
+  for (i = 0; proc->argv[i] != NULL; i++) {
+    size += 1 + strlen(proc->argv[i]);
+  }
+  if (size > 0) {
+    p = command = xmalloc(size + 1);
+    for (i = 0; proc->argv[i] != NULL; i++) {
+      sprintf(p, "%s ", proc->argv[i]);
+      p += strlen(proc->argv[i]) + 1;
+    }
+    *p = 0;
+  }
+  return command;
+}
 
 static Bool HerePort(Port *port) {
   Bool ret;
@@ -243,6 +236,7 @@ static void SetDefault(void) {
   GlAuth = NULL;
   GlCert = NULL;
   GlCAfile = NULL;
+  fDebug = FALSE;
 }
 
 static void InitSystem(void) {
@@ -260,9 +254,6 @@ static void InitSystem(void) {
 }
 
 static void _execv(char *cmd, char **argv) {
-#ifdef DEBUG
-  DumpCommand(argv);
-#endif
   if (execv(cmd, argv) < 0) {
     int errsv = errno;
     Error("%s: %s", strerror(errsv), cmd);
@@ -271,33 +262,16 @@ static void _execv(char *cmd, char **argv) {
 
 static int StartProcess(Process *proc) {
   pid_t pid;
-  char *msg, *p;
-  int i;
-  size_t size;
 
 retry:
   if ((pid = fork()) > 0) {
     proc->pid = pid;
     proc->state = STATE_RUN;
 
-    if (getenv("MONITOR_START_PROCESS_LOGGING") != NULL) {
-      size = 0;
-      for (i = 0; proc->argv[i] != NULL; i++) {
-        size += strlen(proc->argv[i]) + 1;
-      }
-      msg = malloc(size + 10);
-      memset(msg, 0, size + 10);
-      p = msg;
-      sprintf(p, "(%d) ", pid);
-      p += strlen(p);
-      for (i = 0; proc->argv[i] != NULL; i++) {
-        memcpy(p, proc->argv[i], strlen(proc->argv[i]));
-        p += strlen(proc->argv[i]);
-        memcpy(p, " ", 1);
-        p += 1;
-      }
-      Warning(msg);
-      free(msg);
+    if (fDebug) {
+      char *cmd = GetCommandStr(proc);
+      Message("start %d %s", pid, cmd);
+      xfree(cmd);
     }
   } else if (pid == 0) {
     _execv(proc->argv[0], proc->argv);
@@ -601,7 +575,11 @@ static void KillProcess(unsigned char type, int sig) {
   for (i = 0; i < g_list_length(ProcessList); i++) {
     proc = g_list_nth_data(ProcessList, i);
     if ((proc->type & type) != 0) {
-      dbgprintf("kill -%d %d\n", sig, proc->pid);
+      if (fDebug) {
+        char *cmd = GetCommandStr(proc);
+        Message("kill %d %s", proc->pid, cmd);
+        xfree(cmd);
+      }
       if (kill(proc->pid, sig) == -1) {
         Message("kill(2) failure: %s", strerror(errno));
       }
@@ -689,29 +667,6 @@ static Process *GetProcess(int pid) {
   return NULL;
 }
 
-static char *GetCommandStr(Process *proc) {
-  int i;
-  int size;
-  char *p;
-  char *command = NULL;
-
-  if (proc == NULL) {
-    return command;
-  }
-  size = 0;
-  for (i = 0; proc->argv[i] != NULL; i++) {
-    size += 1 + strlen(proc->argv[i]);
-  }
-  if (size > 0) {
-    p = command = xmalloc(size + 1);
-    for (i = 0; proc->argv[i] != NULL; i++) {
-      sprintf(p, "%s ", proc->argv[i]);
-      p += strlen(proc->argv[i]) + 1;
-    }
-    *p = 0;
-  }
-  return command;
-}
 
 static void ProcessMonitor(void) {
   int pid;
