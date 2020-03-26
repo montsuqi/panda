@@ -624,6 +624,9 @@ static void StartServers() {
   int i;
   Process *proc;
 
+  /* サービス再起動(systemctl restart)の際に子プロセスが終了していない可能性があるため起動を少し待つ */
+  sleep(5);
+
   for (i = 0; i < g_list_length(ProcessList); i++) {
     proc = g_list_nth_data(ProcessList, i);
     StartProcess(proc);
@@ -639,10 +642,10 @@ static void StopServers(void) {
 }
 
 static void StopSystem(void) {
-  fLoop = FALSE;
   fRestart = FALSE;
-  StopServers();
+  fLoop = FALSE;
   Message("stop system");
+  exit(0);
 }
 
 static void RestartSystem(void) {
@@ -751,7 +754,6 @@ extern int main(int argc, char **argv) {
   sigaddset(&sigmask, SIGINT);
   sigaddset(&sigmask, SIGPIPE);
   sigaddset(&sigmask, SIGTERM);
-  /*sigaddset(&sigmask, SIGUSR1); /etc/init.d/jma-receiptで利用 */
   sigaddset(&sigmask, SIGUSR2);
   sigprocmask(SIG_BLOCK, &sigmask, NULL);
 
@@ -762,11 +764,7 @@ extern int main(int argc, char **argv) {
     Error("sigaction(2) failure");
   }
 
-  sa.sa_handler = (void *)StopSystem;
-  sa.sa_flags |= SA_RESTART;
-  if (sigaction(SIGUSR1, &sa, NULL) != 0) {
-    Error("sigaction(2) failure");
-  }
+  /*start_stop_daemonからSIGUSR1で停止させる*/
 
   StartSetup();
 

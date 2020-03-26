@@ -34,6 +34,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <sys/socket.h>
+#include <sys/prctl.h>
 #include <pthread.h>
 #include <glib.h>
 
@@ -409,6 +410,9 @@ extern int main(int argc, char **argv) {
   if (sigaction(SIGUSR2, &sa, NULL) != 0) {
     Error("sigaction(2) failure");
   }
+
+  /* 親プロセス(monitor)停止で自動停止 */
+  prctl(PR_SET_PDEATHSIG, SIGHUP);
 
   stdout_path = getenv("APS_DEBUG_STDOUT_PATH");
   if (stdout_path != NULL) {

@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/prctl.h>
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -924,6 +925,9 @@ extern void InitSystem(char *name, char *program) {
   sa.sa_flags |= SA_RESTART;
   sigemptyset(&sa.sa_mask);
   sigaction(SIGUSR1, &sa, NULL);
+
+  /* 親プロセス(monitor)停止で自動停止 */
+  prctl(PR_SET_PDEATHSIG, SIGHUP);
 
   InitDirectory();
   SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
