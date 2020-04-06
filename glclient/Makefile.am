@@ -18,7 +18,6 @@
 
 bin_PROGRAMS = 			\
 	glclient2			\
-	cpanda				\
 	gl-push-client		\
 	gl-push-action
 
@@ -78,33 +77,6 @@ glclient2_CFLAGS =			\
 	$(GLCLIENT_CFLAGS)
 
 glclient2_LDADD =			\
-	$(GLCLIENT_LIBS)		\
-	$(base_LDADD)
-
-#################################################
-# cpanda
-#################################################
-
-cpanda_sources =	\
-	glclient.h						\
-	protocol.c		protocol.h		\
-	logger.c		logger.h		\
-	utils.c			utils.h			\
-	tempdir.c		tempdir.h		\
-	openid_connect.c openid_connect.h \
-	cpanda.c
-
-cpanda_SOURCES =		\
-	$(cpanda_sources)
-
-cpanda_DEPENDENCIES =	\
-	$(base_dependencies)
-
-cpanda_CFLAGS =			\
-	$(base_CFLAGS)			\
-	$(GLCLIENT_CFLAGS)
-
-cpanda_LDADD =			\
 	$(GLCLIENT_LIBS)		\
 	$(base_LDADD)
 
