@@ -41,12 +41,6 @@
 #include <syslog.h>
 #endif
 #include "libmondai.h"
-#ifdef USE_MSGD
-#include "const.h"
-#include "socket.h"
-#include "port.h"
-#include "net.h"
-#endif
 #include "message.h"
 
 #ifndef SIZE_LOG
@@ -58,11 +52,7 @@
 static int syslog_facility = LOG_LOCAL1;
 #endif
 
-#ifdef USE_MSGD
-static NETFILE *fpLog = NULL;
-#else
 static FILE *fpLog = NULL;
-#endif
 
 Bool fTimer = FALSE;
 
@@ -121,14 +111,8 @@ static void PutLog(char *str) {
   char buff[SIZE_LOG];
 
   sprintf(buff, "%s", StringChop(str));
-#ifdef USE_MSGD
-  Send(fpLog, buff, strlen(buff));
-  Send(fpLog, "\n", 1);
-  Flush(fpLog);
-#else
   fprintf(fpLog, "%s\n", buff);
   fflush(fpLog);
-#endif
 }
 
 extern void _Message(int level, char *file, int line, char *msg) {
@@ -235,10 +219,6 @@ extern void __Message(int level, char *file, int line, char *msg) {
 
 extern void InitMessage(char *id, char *fn) {
   char *tempformat, *tempfn;
-#ifdef USE_MSGD
-  int fd;
-  Port *port;
-#endif
 
 #ifdef USE_SYSLOG
   static char buff[SIZE_LOG];
@@ -259,34 +239,9 @@ extern void InitMessage(char *id, char *fn) {
   if (tempformat != NULL) {
     Format = StrDup(tempformat);
   }
-#ifdef USE_MSGD
-  if (fn != NULL) {
-    if (*fn == '@') {
-      port = ParPort(fn + 1, PORT_MSGD);
-      if ((fd = ConnectSocket(port, SOCK_STREAM)) >= 0) {
-        fpLog = SocketToNet(fd);
-        if (Format == NULL) {
-          Format = "%F:%i:%f:%L:%B";
-        }
-      }
-      DestroyPort(port);
-    } else {
-      if ((fd = open(fn, O_WRONLY | O_CREAT | O_TRUNC, 0600)) >= 0) {
-        fpLog = FileToNet(fd);
-      }
-    }
-  }
-  if (fpLog == NULL) {
-    if (Format == NULL) {
-      Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
-    }
-    fpLog = FileToNet(STDOUT_FILENO);
-  }
-#else
   if ((fn == NULL) || ((fpLog = fopen(fn, "w+")) == NULL)) {
     fpLog = stdout;
   }
-#endif
   if (Format == NULL) {
     Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
   }
