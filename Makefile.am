@@ -24,7 +24,6 @@ SUBDIRS		=	\
 	include 	\
 	dbstuff		\
 	tools		\
-	glauth 		\
 	glserver	\
 	@GLCLIENT@	\
 	wfc			\

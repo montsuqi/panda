@@ -373,7 +373,6 @@ intl/Makefile
 po/Makefile.in
 Doc/Makefile
 aps/Makefile
-glauth/Makefile
 cobol/Makefile
 dblib/Makefile
 dbstuff/Makefile
