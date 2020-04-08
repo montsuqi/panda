@@ -22,7 +22,6 @@ SUBDIRS		=	\
 	libs		\
 	dblib		\
 	include 	\
-	dbstuff		\
 	tools		\
 	glserver	\
 	@GLCLIENT@	\
