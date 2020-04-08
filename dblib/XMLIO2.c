@@ -324,20 +324,6 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return ret;
 }
 
-static ValueStruct *_Open(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
-                          ValueStruct *args) {
-  fprintf(stderr,"XMLOPEN: don't use this function.deprecated\n");
-  ctrl->rc = MCP_OK;
-  return NULL;
-}
-
-static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
-                           RecordStruct *rec, ValueStruct *args) {
-  fprintf(stderr,"XMLCLOSE: don't use this function.deprecated\n");
-  ctrl->rc = MCP_OK;
-  return NULL;
-}
-
 extern ValueStruct *XML_BEGIN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   return (NULL);
 }
@@ -353,10 +339,8 @@ static DB_OPS Operations[] = {
     {"DBSTART", (DB_FUNC)XML_BEGIN},
     {"DBCOMMIT", (DB_FUNC)XML_END},
     /*	table operations	*/
-    {"XMLOPEN", _Open},
     {"XMLREAD", _Read},
     {"XMLWRITE", _Write},
-    {"XMLCLOSE", _Close},
 
     {NULL, NULL}};
 
