@@ -108,7 +108,6 @@ typedef struct {
   int pno;
   int rcount;
   int limit;
-  int redirect;
   int usage;
   int fDBOperation;
   long time;
@@ -134,9 +133,6 @@ typedef struct {
 #define DB_STATUS_UNCONNECT 0x02
 #define DB_STATUS_FAILURE 0x03
 #define DB_STATUS_DISCONNECT 0x04
-#define DB_STATUS_REDFAILURE 0x05
-#define DB_STATUS_LOCKEDRED 0x06
-#define DB_STATUS_SYNC 0x07
 
 typedef struct {
 } DB_Process;
@@ -156,24 +152,11 @@ typedef struct _DBG_Struct {
                                      value is NULL, this DBG has no DB	*/
   int priority;    /*	commit priority			*/
   char *coding;    /*	DB backend coding		*/
-  /*	DB redirect variable	*/
-  Port *redirectPort;
-  char *redirectName;
-  struct _DBG_Struct *redirect;
-  int redirectorMode;
-  int auditlog;
-  char *logTableName;
-  NETFILE *fpLog;
-  LargeByteString *redirectData;
-  LargeByteString *checkData;
-  uint64_t ticket_id;
   int count;
   int errcount;
   char *transaction_id;
   LargeByteString *last_query;
   char *file;
-  int sumcheck;
-  char *appname;
   DB_Server *server;
   void *conn;
   int dbstatus;

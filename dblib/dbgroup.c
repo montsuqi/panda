@@ -95,22 +95,6 @@ static DB_FUNC LookupFUNC(DBG_Struct *dbg, char *funcname) {
   return func;
 }
 
-static void SetDBAudit(DBG_Struct *dbg) {
-  ValueStruct *audit;
-  LargeByteString *lbs;
-
-  if (dbg->auditlog > 0) {
-    if (ThisEnv->auditrec->value != NULL) {
-      audit = ThisEnv->auditrec->value;
-      SetValueInteger(GetItemLongName(audit, "ticket_id"), dbg->ticket_id);
-      lbs = dbg->last_query;
-      if ((lbs != NULL) && (LBS_Size(lbs) > 0)) {
-        SetValueString(GetItemLongName(audit, "exec_query"), LBS_Body(lbs),
-                       dbg->coding);
-      }
-    }
-  }
-}
 static void CheckErrCount(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (ctrl->rc >= 0) {
     dbg->errcount = 0;
@@ -260,7 +244,6 @@ extern ValueStruct *ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec,
       }
       ret = (*func)(dbg, ctrl, rec, args);
       CheckErrCount(dbg, ctrl);
-      SetDBAudit(dbg);
     }
     if (ctrl->rc < 0) {
       Warning("bad function [%s:%s:%s] rc = %d\n", ctrl->func, ctrl->rname,
@@ -293,53 +276,7 @@ extern int TransactionEnd(DBG_Struct *dbg) {
   return (rc);
 }
 
-extern int GetDBRedirectStatus(int newstatus) {
-  int dbstatus;
-  DBG_Struct *dbg, *rdbg;
-  int i;
-  dbstatus = DB_STATUS_NOCONNECT;
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    dbg = ThisEnv->DBG[i];
-    if (dbg->redirect != NULL) {
-      rdbg = dbg->redirect;
-      if (dbstatus < rdbg->dbstatus) {
-        dbstatus = rdbg->dbstatus;
-      }
-    }
-  }
-  return dbstatus;
-}
-
-extern void RedirectError(void) {
-  DBG_Struct *dbg;
-  int i;
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    dbg = ThisEnv->DBG[i];
-    CloseDB_RedirectPort(dbg);
-  }
-}
-
 extern int OpenDB(DBG_Struct *dbg) { return ExecDBG_Operation(dbg, "DBOPEN"); }
-
-extern int OpenRedirectDB(DBG_Struct *dbg) {
-  return ExecFunction(dbg, "DBOPEN", TRUE);
-}
-
-extern int CloseRedirectDB(DBG_Struct *dbg) {
-  return ExecFunction(dbg, "DBDISCONNECT", TRUE);
-}
-
-extern int TransactionRedirectStart(DBG_Struct *dbg) {
-  return ExecFunction(dbg, "DBSTART", FALSE);
-}
-
-extern int TransactionRedirectEnd(DBG_Struct *dbg) {
-  int rc;
-
-  rc = ExecFunction(dbg, "DBCOMMIT", FALSE);
-
-  return rc;
-}
 
 extern int CloseDB(DBG_Struct *dbg) {
   return ExecDBG_Operation(dbg, "DBDISCONNECT");
@@ -667,47 +604,6 @@ extern RecordStruct *BuildDBCTRL(void) {
 static void CopyValuebyName(ValueStruct *to, char *to_name, ValueStruct *from,
                             char *from_name) {
   CopyValue(GetItemLongName(to, to_name), GetItemLongName(from, from_name));
-}
-
-extern RecordStruct *SetAuditRec(ValueStruct *mcp, RecordStruct *rec) {
-  time_t now;
-  struct tm tm_now;
-  ValueStruct *audit;
-
-  audit = rec->value;
-  now = time(NULL);
-  localtime_r(&now, &tm_now);
-  SetValueDateTime(GetItemLongName(audit, "exec_date"), tm_now);
-  CopyValuebyName(audit, "func", mcp, "func");
-  CopyValuebyName(audit, "result", mcp, "rc");
-  CopyValuebyName(audit, "username", mcp, "dc.user");
-  CopyValuebyName(audit, "term", mcp, "dc.term");
-  CopyValuebyName(audit, "windowname", mcp, "dc.window");
-  CopyValuebyName(audit, "widget", mcp, "dc.widget");
-  CopyValuebyName(audit, "event", mcp, "dc.event");
-  CopyValuebyName(audit, "comment", mcp, "db.logcomment");
-  return (rec);
-}
-
-extern void AuditLog(ValueStruct *mcp) {
-  int i;
-  DBG_Struct *dbg;
-  ValueStruct *ret;
-  DB_FUNC func;
-  RecordStruct *rec;
-  rec = ThisEnv->auditrec;
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    dbg = ThisEnv->DBG[i];
-    if (dbg->auditlog > 0) {
-      rec = SetAuditRec(mcp, rec);
-      if ((func = LookupFUNC(dbg, "DBAUDITLOG")) != NULL) {
-        ret = (*func)(dbg, NULL, rec, rec->value);
-        if (ret != NULL) {
-          FreeValueStruct(ret);
-        }
-      }
-    }
-  }
 }
 
 extern void SetDBConfig(const char *file) {

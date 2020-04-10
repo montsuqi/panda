@@ -27,20 +27,11 @@
 #define SIZE_SQL 1024
 #define MAX_ERR_COUNT 1000
 
-#define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
 #define MONDB "mondb_"
 
 extern void DBGroup_Init(RecordStruct **db,RecordStructMeta **meta);
 
 extern void InitializeCTRL(DBCOMM_CTRL *ctrl);
-
-extern int OpenRedirectDB(DBG_Struct *dbg);
-extern int CloseRedirectDB(DBG_Struct *dbg);
-extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed);
-extern int TransactionRedirectStart(DBG_Struct *dbg);
-extern int TransactionRedirectEnd(DBG_Struct *dbg);
-
-extern void CloseDB_RedirectPort(DBG_Struct *dbg);
 
 extern Port *GetDB_Port(DBG_Struct *dbg);
 extern char *GetDB_Host(DBG_Struct *dbg);
@@ -62,7 +53,6 @@ extern Bool SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname);
 
 extern RecordStruct *BuildDBCTRL(void);
 extern void DumpDB_Node(DBCOMM_CTRL *ctrl);
-extern void AuditLog(ValueStruct *mcp);
 
 extern Bool IsDBOperation(char *func);
 extern Bool IsDBUpdateFunc(char *func);
@@ -84,13 +74,5 @@ GLOBAL char *DB_Port;
 GLOBAL char *DB_Name;
 GLOBAL char *DB_User;
 GLOBAL char *DB_Pass;
-
-GLOBAL Bool fNoCheck;
-GLOBAL Bool fNoRedirect;
-GLOBAL Bool fNoSumCheck;
-GLOBAL Bool fNoAudit;
-GLOBAL int MaxSendRetry;
-GLOBAL int RetryInterval;
-GLOBAL char *AuditLogFile;
 
 #endif
