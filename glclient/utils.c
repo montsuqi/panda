@@ -146,7 +146,9 @@ void rm_r_old(const char *name, unsigned int elapsed) {
       /* directory */
       if ((dir = opendir(name)) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
-          if (ent->d_name[0] != '.') {
+          if (strcmp(".",ent->d_name) == 0 || strcmp("..",ent->d_name) == 0) {
+            // skip
+          } else {
             snprintf(path, sizeof(path), "%s/%s", name, ent->d_name);
             path[sizeof(path) - 1] = 0;
             rm_r_old(path, elapsed);
