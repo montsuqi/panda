@@ -42,24 +42,22 @@ const char *KILLBATCH = "/usr/local/bin/push_kill_batch_queue";
 #include "SQLparser.h"
 #include "dbgroup.h"
 #include "monsys.h"
-#include "redirect.h"
 #include "debug.h"
 
 #include "directory.h"
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRedirect) {
+static int _EXEC(DBG_Struct *dbg, char *sql) {
   int rc;
 
   rc = MCP_OK;
   return (rc);
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql) {
   return NULL;
 }
 
 static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  OpenDB_RedirectPort(dbg);
   dbg->conn = xmalloc((SIZE_ARG) * sizeof(char *));
   dbg->dbstatus = DB_STATUS_CONNECT;
   if (ctrl != NULL) {
@@ -71,7 +69,6 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     xfree(dbg->conn);
-    CloseDB_RedirectPort(dbg);
     dbg->dbstatus = DB_STATUS_DISCONNECT;
     if (ctrl != NULL) {
       ctrl->rc = MCP_OK;
@@ -97,7 +94,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (dbg->transaction_id) {
     xfree(dbg->transaction_id);
   }
-  LBS_EmitStart(dbg->checkData);
+  LBS_EmitStart(dbg->misc);
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
@@ -153,13 +150,10 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   char **cmdv;
 
-  CheckDB_Redirect(dbg);
-  LBS_EmitEnd(dbg->checkData);
-  setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->checkData), 1);
+  setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->misc), 1);
 
   cmdv = (char **)dbg->conn;
   rc = DoShell(cmdv);
-  CommitDB_Redirect(dbg);
   for (i = 0; i < dbg->count; i++) {
     xfree(cmdv[i]);
   }
@@ -327,8 +321,8 @@ static ValueStruct *RegistShell(DBCOMM_CTRL *ctrl, RecordStruct *rec,
         RewindLBS(lbs);
         repos_name =
             ValueToString(GetItemLongName(args, "repos_name"), dbg->coding);
-        LBS_EmitString(dbg->checkData, repos_name);
-        LBS_EmitString(dbg->checkData, ":");
+        LBS_EmitString(dbg->misc, repos_name);
+        LBS_EmitString(dbg->misc, ":");
         break;
       default:
         break;
@@ -515,7 +509,7 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
            "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s ORDER BY groupname, "
            "starttime;",
            BATCH_TABLE, BATCH_TABLE, where);
-  ret = ExecDBQuery(mondbg, sql, FALSE);
+  ret = ExecDBQuery(mondbg, sql);
   xfree(where);
   xfree(sql);
   return ret;
@@ -533,7 +527,7 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   mondbg = GetDBG_monsys();
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "FETCH 1 FROM %s_csr;", BATCH_TABLE);
-  mondbg_val = ExecDBQuery(mondbg, sql, FALSE);
+  mondbg_val = ExecDBQuery(mondbg, sql);
   xfree(sql);
   if (mondbg_val) {
     ctrl->rc = MCP_OK;
@@ -613,7 +607,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "CLOSE %s_csr;", BATCH_TABLE);
-  ExecDBOP(mondbg, sql, FALSE);
+  ExecDBOP(mondbg, sql);
   xfree(sql);
 
   return (ret);

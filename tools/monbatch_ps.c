@@ -106,7 +106,7 @@ static void Batch_view(DBG_Struct *dbg) {
            "SELECT pgid,  date_trunc('seconds', now() - starttime) as time, "
            "name, comment FROM %s ORDER BY starttime;",
            BATCH_TABLE);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(sql);
   if (ret) {
     ViewInfo(ret);

@@ -23,15 +23,14 @@
 #include <net.h>
 #include <libmondai.h>
 
-extern void InitDB_Process(char *appname);
-extern int ExecDBOP(DBG_Struct *dbg, char *sql, Bool fRed);
+extern int ExecDBOP(DBG_Struct *dbg, char *sql);
 extern ValueStruct *ExecDBESCAPE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                  RecordStruct *rec, ValueStruct *args);
 extern ValueStruct *ExecDBESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                       RecordStruct *rec, ValueStruct *args);
 extern ValueStruct *ExecDBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                                         RecordStruct *rec, ValueStruct *args);
-extern ValueStruct *ExecDBQuery(DBG_Struct *dbg, char *sql, Bool fRed);
+extern ValueStruct *ExecDBQuery(DBG_Struct *dbg, char *sql);
 extern ValueStruct *ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec,
                                    ValueStruct *args);
 extern int TransactionStart(DBG_Struct *dbg);

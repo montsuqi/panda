@@ -43,7 +43,6 @@
 #include "libmondai.h"
 #include "dbgroup.h"
 #include "directory.h"
-#include "redirect.h"
 #include "message.h"
 #include "debug.h"
 #include "PostgreSQLlib.h"
@@ -1123,7 +1122,7 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         break;
       case SQL_OP_EOL:
         LBS_EmitEnd(sql);
-        res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
+        res = _PQexec(dbg, LBS_Body(sql));
         LBS_Clear(sql);
         status = PGRES_FATAL_ERROR;
         if ((res == NULL) ||
@@ -1202,20 +1201,14 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return (ret);
 }
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
+static int _EXEC(DBG_Struct *dbg, char *sql) {
   PGresult *res;
   int rc = MCP_OK;
 
   if (_PQsendQuery(dbg, sql) == TRUE) {
     while ((res = _PQgetResult(dbg)) != NULL) {
       rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
-      if ((rc == MCP_OK) && fRed) {
-        PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-      }
       _PQclear(res);
-    }
-    if (fRed) {
-      PutDB_Redirect(dbg, sql);
     }
   } else {
     Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
@@ -1224,12 +1217,12 @@ static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
   return rc;
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql) {
   PGresult *res;
   ValueStruct *ret;
   ExecStatusType status;
 
-  res = _PQexec(dbg, sql, fRed);
+  res = _PQexec(dbg, sql);
   if (!CheckConnect(dbg)) {
     ret = NULL;
   } else if ((res == NULL) ||
@@ -1292,7 +1285,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   DbExecTime = 0;
   rc = 0;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
-    res = _PQexec(dbg, "BEGIN", FALSE);
+    res = _PQexec(dbg, "BEGIN");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
   }
@@ -1311,9 +1304,8 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   rc = 0;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg);
-    CheckDB_Redirect(dbg);
     fCommit = InTrans(conn);
-    res = _PQexec(dbg, "COMMIT WORK", FALSE);
+    res = _PQexec(dbg, "COMMIT WORK");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
   } else {
@@ -1371,7 +1363,7 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ret = NULL;
       sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
               ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect);
+      res = _PQexec(dbg, sql);
       ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
       ret = PGresToValue(dbg, ctrl, res, args);
       _PQclear(res);
@@ -1403,7 +1395,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     } else {
       p = sql;
       sprintf(p, "CLOSE %s_%s_csr", ctrl->rname, ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect);
+      res = _PQexec(dbg, sql);
       ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
     }
@@ -1463,7 +1455,7 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
+      res = _PQexec(dbg, LBS_Body(sql));
       ctrl->rcount = cmdTuples(res);
       ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
@@ -1651,7 +1643,7 @@ static ValueStruct *_DBLOCK(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     LBS_EmitString(sql, "LOCK\tTABLE\t");
     LBS_EmitString(sql, rec->name);
     LBS_EmitEnd(sql);
-    res = _PQexec(dbg, LBS_Body(sql), FALSE);
+    res = _PQexec(dbg, LBS_Body(sql));
     ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
     FreeLBS(sql);

@@ -45,7 +45,6 @@ static char *Directory;
 static char *TempDir;
 static char *ApsPath;
 static char *WfcPath;
-static char *RedirectorPath;
 static char *GlserverPath;
 static char *MONSetupPath;
 static char *DDir;
@@ -54,10 +53,7 @@ static char *ScrDir;
 static char *MyHost;
 static char *Log;
 static Bool fQ;
-static Bool fRedirector;
 static Bool fNoApsConnectRetry;
-static int Interval; /* deprecated */
-static int Wfcinterval; /* deprecated */
 static int MaxTransactionRetry;
 static int Sleep;
 static int SesNum;
@@ -79,7 +75,6 @@ static volatile sig_atomic_t WfcRestartCount = 0;
 #define PTYPE_NULL (unsigned char)0x00
 #define PTYPE_APS (unsigned char)0x01
 #define PTYPE_WFC (unsigned char)0x02
-#define PTYPE_RED (unsigned char)0x04
 #define PTYPE_GLS (unsigned char)0x08
 #define PTYPE_LOG (unsigned char)0x10
 #define PTYPE_MST (unsigned char)0x20
@@ -100,8 +95,6 @@ typedef struct {
 static ARG_TABLE option[] = {
     {"ApsPath", STRING, TRUE, (void *)&ApsPath, "aps command path"},
     {"WfcPath", STRING, TRUE, (void *)&WfcPath, "wfc command path"},
-    {"RedPath", STRING, TRUE, (void *)&RedirectorPath,
-     "redirector command path"},
     {"GlsPath", STRING, TRUE, (void *)&GlserverPath, "glserver command path"},
 
     {"MONSetupPath", STRING, TRUE, (void *)&MONSetupPath,
@@ -113,16 +106,6 @@ static ARG_TABLE option[] = {
     {"tempdirroot", STRING, TRUE, (void *)&TempDir,
      "root of temporary directory"},
 
-    {"redirector", BOOLEAN, TRUE, (void *)&fRedirector, "start dbredirector"},
-    {"nocheck", BOOLEAN, TRUE, (void *)&fNoCheck,
-     "no check dbredirector start"},
-    {"nosumcheck", BOOLEAN, TRUE, (void *)&fNoSumCheck,
-     "no count dbredirector updates"},
-    {"numeric", BOOLEAN, TRUE, (void *)&fNumericHOST,
-     "Numeric form of the hostname"},
-    {"sendretry", INTEGER, TRUE, (void *)&MaxSendRetry,
-     "send retry dbredirector"},
-
     {"glserver", BOOLEAN, TRUE, (void *)&fGlserver, "start glserver"},
     {"glauth", STRING, TRUE, (void *)&GlAuth, "glserver authentication"},
     {"glssl", BOOLEAN, TRUE, (void *)&fGlSSL, "use ssl connection"},
@@ -130,10 +113,6 @@ static ARG_TABLE option[] = {
     {"glcert", STRING, TRUE, (void *)&GlCert, "ssl certificate(p12)"},
     {"glcafile", STRING, TRUE, (void *)&GlCAfile, "ca certificate(pem)"},
 
-    {"interval", INTEGER, TRUE, (void *)&Interval,
-     "process start interval time"},
-    {"wfcwait", INTEGER, TRUE, (void *)&Wfcinterval,
-     "wfc start interval time(for slowCPU)"},
     {"sesnum", INTEGER, TRUE, (void *)&SesNum, "terminal session number"},
 
     {"myhost", STRING, TRUE, (void *)&MyHost, "my host name"},
@@ -204,7 +183,6 @@ static Bool HerePort(Port *port) {
 static void SetDefault(void) {
   ApsPath = NULL;
   WfcPath = NULL;
-  RedirectorPath = NULL;
   GlserverPath = NULL;
   MONSetupPath = NULL;
   Directory = "./directory";
@@ -213,18 +191,11 @@ static void SetDefault(void) {
   RecDir = NULL;
   ScrDir = NULL;
   Log = NULL;
-  Interval = 0;
-  Wfcinterval = 0;
   MaxTransactionRetry = 0;
-  MaxSendRetry = 3;
   Sleep = 0;
 
   MyHost = "localhost";
 
-  fRedirector = FALSE;
-  fNoCheck = FALSE;
-  fNoSumCheck = FALSE;
-  fNumericHOST = FALSE;
   fQ = FALSE;
   fTimer = FALSE;
   fNoApsConnectRetry = FALSE;
@@ -282,81 +253,6 @@ retry:
   return (pid);
 }
 
-static void InitRedirector(DBG_Struct *dbg) {
-  int argc;
-  char **argv;
-  Process *proc;
-
-  proc = New(Process);
-  argv = (char **)xmalloc(sizeof(char *) * 15);
-  proc->argv = argv;
-  proc->type = PTYPE_RED;
-  argc = 0;
-  if (RedirectorPath != NULL) {
-    argv[argc++] = RedirectorPath;
-  } else if (ThisEnv->RedPath != NULL) {
-    argv[argc++] = ThisEnv->RedPath;
-  } else {
-    argv[argc++] = SERVER_DIR "/dbredirector";
-  }
-  if (Directory != NULL) {
-    argv[argc++] = "-dir";
-    argv[argc++] = Directory;
-  }
-  if (DDir != NULL) {
-    argv[argc++] = "-ddir";
-    argv[argc++] = DDir;
-  }
-  if (RecDir != NULL) {
-    argv[argc++] = "-record";
-    argv[argc++] = RecDir;
-  }
-  if (fTimer) {
-    argv[argc++] = "-timer";
-  }
-  if (dbg->sumcheck == 0) {
-    argv[argc++] = "-nosumcheck";
-  } else if (fNoSumCheck) {
-    argv[argc++] = "-nosumcheck";
-  }
-  argv[argc++] = dbg->name;
-  if (fQ) {
-    argv[argc++] = "-?";
-  }
-  argv[argc++] = "-maxretry";
-  argv[argc++] = IntStrDup(MaxSendRetry);
-  proc->argc = argc;
-  argv[argc++] = NULL;
-  Message("start redirector:%s", dbg->name);
-  dbg->dbstatus = DB_STATUS_CONNECT;
-  ProcessList = g_list_append(ProcessList, proc);
-}
-
-static void _InitRedirectors(DBG_Struct *dbg) {
-
-  if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
-    _InitRedirectors(dbg->redirect);
-  }
-  if (dbg->dbstatus != DB_STATUS_CONNECT) {
-    InitRedirector(dbg);
-  }
-}
-
-static void InitRedirectors(void) {
-  int i;
-  DBG_Struct *dbg;
-
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    ThisEnv->DBG[i]->dbstatus = DB_STATUS_UNCONNECT;
-  }
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    dbg = ThisEnv->DBG[i];
-    if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
-      _InitRedirectors(dbg->redirect);
-    }
-  }
-}
-
 static void InitGlserver(void) {
   int argc;
   char **argv;
@@ -392,9 +288,6 @@ static void InitGlserver(void) {
     argv[argc++] = GlAuth;
   }
   argv[argc++] = "-api";
-  if (fNumericHOST) {
-    argv[argc++] = "-numeric";
-  }
   if (fGlSSL) {
     argv[argc++] = "-ssl";
     if (GlCert != NULL) {
@@ -462,12 +355,6 @@ static void _InitAps(LD_Struct *ld) {
       argv[argc++] = ld->name;
       argv[argc++] = "-sleep";
       argv[argc++] = IntStrDup(Sleep);
-      argv[argc++] = "-maxretry";
-      argv[argc++] = IntStrDup(MaxSendRetry);
-
-      if (fNoCheck) {
-        argv[argc++] = "-nocheck";
-      }
 
       if (fQ) {
         argv[argc++] = "-?";
@@ -558,9 +445,6 @@ static void InitWfc(void) {
 }
 
 static void InitServers(void) {
-  if (fRedirector) {
-    InitRedirectors();
-  }
   if (fGlserver) {
     InitGlserver();
   }
@@ -636,7 +520,7 @@ static void StartServers() {
 static void StopServers(void) {
   KillProcess(PTYPE_GLS, SIGHUP);
   KillProcess(PTYPE_APS, SIGHUP);
-  KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST), SIGHUP);
+  KillProcess((PTYPE_WFC | PTYPE_LOG | PTYPE_MST), SIGHUP);
   /*再起動したglserverやapsがkill中のwfcに接続するのを防ぐ*/
   sleep(5);
 }
@@ -740,10 +624,6 @@ extern int main(int argc, char **argv) {
   SetDefault();
   GetOption(option, argc, argv, NULL);
   InitMessage("monitor", Log);
-
-  if (!fRedirector) {
-    fNoCheck = TRUE;
-  }
 
   InitSystem();
   Message("start system");

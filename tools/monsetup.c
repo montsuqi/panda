@@ -101,7 +101,7 @@ static Bool create_clog(DBG_Struct *dbg) {
   p += sprintf(p, "       clog text,");
   p += sprintf(p, "PRIMARY KEY(id, num)");
   sprintf(p, ");");
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return rc;
 }
@@ -117,7 +117,7 @@ static Bool create_clog_setup(DBG_Struct *dbg) {
     create_clog(dbg);
   } else if (exist && fRECREATE) {
     snprintf(sql, SIZE_SQL, "DROP TABLE %s;", BATCH_CLOG_TABLE);
-    ExecDBOP(dbg, sql, FALSE);
+    ExecDBOP(dbg, sql);
     create_clog(dbg);
   }
   rc = TransactionEnd(dbg);
@@ -135,7 +135,7 @@ static Bool check_monbatch_log(DBG_Struct *dbg) {
   p = sql;
   p += sprintf(p, "ALTER TABLE %s ADD", BATCH_LOG_TABLE);
   sprintf(p, "       groupname    varchar(64);");
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return rc;
 }
@@ -169,7 +169,7 @@ static Bool create_monbatch_log(DBG_Struct *dbg) {
                BATCH_LOG_TABLE);
   sprintf(p, "CREATE INDEX %s_start ON %s (starttime);", BATCH_LOG_TABLE,
           BATCH_LOG_TABLE);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return rc;
 }
@@ -185,7 +185,7 @@ static Bool monbatch_log_setup(DBG_Struct *dbg) {
     create_monbatch_log(dbg);
   } else if (exist && fRECREATE) {
     snprintf(sql, SIZE_SQL, "DROP TABLE %s;", BATCH_LOG_TABLE);
-    ExecDBOP(dbg, sql, FALSE);
+    ExecDBOP(dbg, sql);
     create_monbatch_log(dbg);
   } else if (exist && !fRECREATE) {
     check_monbatch_log(dbg);
@@ -207,7 +207,7 @@ static Bool delete_monbatch_log(DBG_Struct *dbg, int days) {
            BATCH_CLOG_TABLE, BATCH_LOG_TABLE, days, nowtime);
   snprintf(sql, SIZE_SQL, "DELETE FROM %s WHERE starttime + '%d days' < '%s';",
            BATCH_LOG_TABLE, days, nowtime);
-  ExecDBOP(dbg, sql, FALSE);
+  ExecDBOP(dbg, sql);
 
   rc = TransactionEnd(dbg);
   return (rc == MCP_OK);
@@ -239,7 +239,7 @@ static Bool create_monbatch(DBG_Struct *dbg) {
                BATCH_TABLE);
   sprintf(p, "CREATE INDEX %s_start ON %s (starttime);", BATCH_TABLE,
           BATCH_TABLE);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
 
   return rc;
@@ -256,7 +256,7 @@ static Bool check_monbatch(DBG_Struct *dbg) {
   p = sql;
   p += sprintf(p, "ALTER TABLE %s ADD", BATCH_TABLE);
   sprintf(p, "       groupname    varchar(64);");
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return rc;
 }
@@ -272,7 +272,7 @@ static Bool monbatch_setup(DBG_Struct *dbg) {
     create_monbatch(dbg);
   } else if (exist && fRECREATE) {
     snprintf(sql, SIZE_SQL, "DROP TABLE %s;", BATCH_TABLE);
-    ExecDBOP(dbg, sql, FALSE);
+    ExecDBOP(dbg, sql);
     create_monbatch(dbg);
   } else if (exist && !fRECREATE) {
     check_monbatch(dbg);

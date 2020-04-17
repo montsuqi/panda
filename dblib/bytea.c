@@ -52,7 +52,7 @@ static char *get_columns(DBG_Struct *dbg, char *table_name) {
           "FROM pg_tables JOIN information_schema.columns on "
           "pg_tables.tablename = columns.table_name  WHERE table_name = '%s';",
           table_name);
-  retval = ExecDBQuery(dbg, sql, FALSE);
+  retval = ExecDBQuery(dbg, sql);
   if (retval) {
     if (IS_VALUE_RECORD(retval)) {
       columns = StrDup(ValueToString(ValueRecordItem(retval, 0), dbg->coding));
@@ -92,7 +92,7 @@ static Bool migration_monblob(DBG_Struct *dbg) {
   sql = (char *)xmalloc(SIZE_BUFF);
   sprintf(sql, "INSERT INTO %s (%s) SELECT %s FROM %s;", MONBLOB, columns,
           columns, table_name);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   xfree(columns);
   xfree(table_name);
@@ -106,12 +106,12 @@ static Bool create_monblob(DBG_Struct *dbg) {
 
   sql = (char *)xmalloc(SIZE_BUFF);
   sprintf(sql, "DROP SEQUENCE IF EXISTS %s;", SEQMONBLOB);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   if (rc != MCP_OK) {
     return FALSE;
   }
   sprintf(sql, "DROP INDEX IF EXISTS %s_pkey;", MONBLOB);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   if (rc != MCP_OK) {
     return FALSE;
   }
@@ -124,20 +124,20 @@ static Bool create_monblob(DBG_Struct *dbg) {
     p += sprintf(p, "%s %s", columns[i][0], columns[i][1]);
   }
   sprintf(p, ");");
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   if (rc == MCP_OK) {
     sprintf(sql, "ALTER TABLE ONLY %s ADD CONSTRAINT %s_pkey PRIMARY KEY(id);",
             MONBLOB, MONBLOB);
-    rc = ExecDBOP(dbg, sql, FALSE);
+    rc = ExecDBOP(dbg, sql);
   }
   if (rc == MCP_OK) {
     sprintf(sql, "CREATE INDEX %s_blobid ON %s (blobid);", MONBLOB, MONBLOB);
-    rc = ExecDBOP(dbg, sql, FALSE);
+    rc = ExecDBOP(dbg, sql);
   }
   if (rc == MCP_OK) {
     sprintf(sql, "CREATE INDEX %s_importtime ON %s (importtime);", MONBLOB,
             MONBLOB);
-    rc = ExecDBOP(dbg, sql, FALSE);
+    rc = ExecDBOP(dbg, sql);
   }
   xfree(sql);
   return (rc == MCP_OK);
@@ -149,25 +149,25 @@ static Bool recreate_monblob(DBG_Struct *dbg) {
 
   if (table_exist(dbg, "monblob__bak") == TRUE) {
     sprintf(sql, "DROP TABLE %s__bak CASCADE;", MONBLOB);
-    if (ExecDBOP(dbg, sql, FALSE) != MCP_OK) {
+    if (ExecDBOP(dbg, sql) != MCP_OK) {
       return FALSE;
     }
   }
   if (index_exist(dbg, "monblob_pkey") == TRUE) {
     sprintf(sql, "ALTER TABLE %s DROP CONSTRAINT %s_pkey;", MONBLOB, MONBLOB);
-    if (ExecDBOP(dbg, sql, FALSE) != MCP_OK) {
+    if (ExecDBOP(dbg, sql) != MCP_OK) {
       return FALSE;
     }
   }
   sprintf(sql, "ALTER TABLE %s RENAME TO %s__bak;", MONBLOB, MONBLOB);
-  if (ExecDBOP(dbg, sql, FALSE) != MCP_OK) {
+  if (ExecDBOP(dbg, sql) != MCP_OK) {
     return FALSE;
   }
   int i;
   char *index[] = {"monblob_blobid", "monblob_importtime", NULL};
   for (i = 0; index[i] != NULL; i++) {
     sprintf(sql, "DROP INDEX IF EXISTS %s;", index[i]);
-    if (ExecDBOP(dbg, sql, FALSE) != MCP_OK) {
+    if (ExecDBOP(dbg, sql) != MCP_OK) {
       return FALSE;
     }
   }
@@ -178,7 +178,7 @@ static Bool recreate_monblob(DBG_Struct *dbg) {
     return FALSE;
   }
   sprintf(sql, "DROP TABLE %s__bak CASCADE;", MONBLOB);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   return (rc == MCP_OK);
 }
 
@@ -188,7 +188,7 @@ static Bool create_sequence(DBG_Struct *dbg) {
 
   sql = (char *)xmalloc(SIZE_BUFF);
   sprintf(sql, "CREATE SEQUENCE %s;", SEQMONBLOB);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -219,7 +219,7 @@ static Bool monblob_idcheck(DBG_Struct *dbg, char *id) {
   sql = (char *)xmalloc(SIZE_BUFF);
   eid = Escape_monsys(dbg, id);
   sprintf(sql, "SELECT 1 FROM %s WHERE id='%s';", MONBLOB, eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   if (ret) {
@@ -395,7 +395,7 @@ static Bool monblob_expire(DBG_Struct *dbg) {
            "CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > "
            "importtime + CAST('%d days' AS INTERVAL)));",
            MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -481,7 +481,7 @@ extern Bool monblob_insert(DBG_Struct *dbg, monblob_struct *monblob,
     sql_p += snprintf(sql_p, sql_len, "')");
   }
   snprintf(sql_p, sql_len, ";");
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
 
   return (rc == MCP_OK);
@@ -523,7 +523,7 @@ ValueStruct *monblob_export(DBG_Struct *dbg, char *id) {
            "SELECT id, filename, content_type, status, file_data FROM %s WHERE "
            "id = '%s';",
            MONBLOB, eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   return ret;
@@ -554,7 +554,7 @@ extern Bool monblob_export_file(DBG_Struct *dbg, char *id, char *filename) {
   eid = Escape_monsys(dbg, id);
   snprintf(sql, sql_len, "SELECT file_data FROM %s WHERE id = '%s';", MONBLOB,
            eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   if (!ret) {
@@ -589,7 +589,7 @@ extern Bool monblob_export_mem(DBG_Struct *dbg, char *id, char **buf,
   eid = Escape_monsys(dbg, id);
   snprintf(sql, sql_len, "SELECT file_data FROM %s WHERE id = '%s';", MONBLOB,
            eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   if (!ret) {
@@ -633,7 +633,7 @@ static Bool monblob_update(DBG_Struct *dbg, monblob_struct *monblob) {
   sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", id);
   xfree(id);
   snprintf(sql_p, sql_len, ";");
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -666,7 +666,7 @@ extern Bool monblob_delete(DBG_Struct *dbg, char *id) {
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s'", MONBLOB, id);
-  rc = ExecDBOP(dbg, sql, FALSE);
+  rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return (rc == MCP_OK);
 }
@@ -680,7 +680,7 @@ extern char *monblob_get_filename(DBG_Struct *dbg, char *id) {
   sql = (char *)xmalloc(SIZE_BUFF);
   eid = Escape_monsys(dbg, id);
   sprintf(sql, "SELECT filename FROM %s WHERE id = '%s';", MONBLOB, eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   if (ret) {
@@ -703,7 +703,7 @@ extern Bool monblob_check_id(DBG_Struct *dbg, char *id) {
   eid = Escape_monsys(dbg, id);
   sprintf(sql, "SELECT id FROM %s WHERE id = '%s' and status = 200;", MONBLOB,
           eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   if (ret) {
@@ -730,7 +730,7 @@ extern ValueStruct *monblob_info(DBG_Struct *dbg, char *id) {
       "SELECT importtime, id, blobid, "
       "filename,size,content_type,lifetype,status FROM %s WHERE id = '%s';",
       MONBLOB, eid);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(eid);
   xfree(sql);
   return ret;
@@ -747,7 +747,7 @@ extern ValueStruct *monblob_list(DBG_Struct *dbg) {
       "SELECT importtime, id, blobid, "
       "filename,size,content_type,lifetype,status FROM %s ORDER BY importtime;",
       MONBLOB);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(sql);
   return ret;
 }

@@ -64,25 +64,11 @@ extern void InitializeCTRL(DBCOMM_CTRL *ctrl) {
   ctrl->blocks = 0;
   ctrl->rc = 0;
   ctrl->limit = 1;
-  ctrl->redirect = 1;
   ctrl->usage = 1;
   ctrl->time = 0;
   ctrl->rec = NULL;
   ctrl->value = NULL;
   ctrl->src = NULL;
-}
-
-static void SetApplicationName(DBG_Struct *dbg, char *appname) {
-  if (appname != NULL) {
-    dbg->appname = appname;
-  }
-}
-
-extern void InitDB_Process(char *appname) {
-  int i;
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    SetApplicationName(ThisEnv->DBG[i], appname);
-  }
 }
 
 static DB_FUNC LookupFUNC(DBG_Struct *dbg, char *funcname) {
@@ -199,21 +185,21 @@ extern ValueStruct *ExecDBUNESCAPEBYTEA(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return ret;
 }
 
-extern int ExecDBOP(DBG_Struct *dbg, char *sql, Bool fRed) {
+extern int ExecDBOP(DBG_Struct *dbg, char *sql) {
   int rc;
-  rc = dbg->func->primitive->exec(dbg, sql, fRed);
+  rc = dbg->func->primitive->exec(dbg, sql);
   return (rc);
 }
 
-extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed) {
+extern int ExecRedirectDBOP(DBG_Struct *dbg, char *sql) {
   int rc;
-  rc = dbg->func->primitive->exec(dbg, sql, fRed);
+  rc = dbg->func->primitive->exec(dbg, sql);
   return (rc);
 }
 
-extern ValueStruct *ExecDBQuery(DBG_Struct *dbg, char *sql, Bool fRed) {
+extern ValueStruct *ExecDBQuery(DBG_Struct *dbg, char *sql) {
   ValueStruct *ret;
-  ret = dbg->func->primitive->query(dbg, sql, fRed);
+  ret = dbg->func->primitive->query(dbg, sql);
   return ret;
 }
 
@@ -599,11 +585,6 @@ extern RecordStruct *BuildDBCTRL(void) {
   rec = ParseRecordMem(buff);
 
   return (rec);
-}
-
-static void CopyValuebyName(ValueStruct *to, char *to_name, ValueStruct *from,
-                            char *from_name) {
-  CopyValue(GetItemLongName(to, to_name), GetItemLongName(from, from_name));
 }
 
 extern void SetDBConfig(const char *file) {

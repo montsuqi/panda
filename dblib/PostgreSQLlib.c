@@ -75,7 +75,7 @@ static LargeByteString *_CreateConninfo(LargeByteString *conninfo,
   AddConninfo(conninfo, "sslrootcert", GetDB_Sslrootcert(dbg));
   AddConninfo(conninfo, "sslcrl", GetDB_Sslcrl(dbg));
 #ifdef POSTGRES_APPLICATIONNAME
-  AddConninfo(conninfo, "application_name", dbg->appname);
+  AddConninfo(conninfo, "application_name", APPLICATION_NAME);
   AddConninfo(conninfo, "fallback_application_name", APPLICATION_NAME);
 #endif /* ifdef POSTGRES_APPLICATIONNAME */
   return conninfo;
@@ -136,20 +136,6 @@ extern char *GetPGencoding(PGconn *conn) {
   }
   PQclear(res);
   return encoding;
-}
-
-extern char *LockRedirectorQuery(void) {
-  return StrDup("CREATE TEMP TABLE " REDIRECT_LOCK_TABLE " (flag int);\n");
-}
-
-extern void LockRedirectorConnect(PGconn *conn) {
-  char *sql;
-  PGresult *res;
-
-  sql = LockRedirectorQuery();
-  res = PQexec(conn, sql);
-  xfree(sql);
-  PQclear(res);
 }
 
 #endif /* #ifdef HAVE_POSTGRES */

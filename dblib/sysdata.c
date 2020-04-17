@@ -42,7 +42,6 @@
 #include "comm.h"
 #include "comms.h"
 #include "sysdatacom.h"
-#include "redirect.h"
 #include "debug.h"
 
 #define NBCONN(dbg) (NETFILE *)((dbg)->conn)
@@ -57,7 +56,6 @@ extern ValueStruct *SYSDATA_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
       (fh = ConnectSocket(ThisEnv->sysdata->port, SOCK_STREAM)) >= 0) {
     fp = SocketToNet(fh);
   }
-  OpenDB_RedirectPort(dbg);
   dbg->conn = (void *)fp;
   if (fp != NULL) {
     dbg->dbstatus = DB_STATUS_CONNECT;
@@ -73,7 +71,6 @@ extern ValueStruct *SYSDATA_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     SendPacketClass(NBCONN(dbg), SYSDATA_END);
     CloseNet(NBCONN(dbg));
-    CloseDB_RedirectPort(dbg);
     dbg->dbstatus = DB_STATUS_DISCONNECT;
     if (ctrl != NULL) {
       ctrl->rc = MCP_OK;
@@ -83,7 +80,6 @@ extern ValueStruct *SYSDATA_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 }
 
 extern ValueStruct *SYSDATA_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  BeginDB_Redirect(dbg);
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }
@@ -91,8 +87,6 @@ extern ValueStruct *SYSDATA_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 }
 
 extern ValueStruct *SYSDATA_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
-  CheckDB_Redirect(dbg);
-  CommitDB_Redirect(dbg);
   if (ctrl != NULL) {
     ctrl->rc = MCP_OK;
   }

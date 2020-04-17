@@ -150,11 +150,11 @@ typedef struct _DBG_Struct {
   struct _DB_Func *func;
   GHashTable *dbt; /*	DBs in this DBG, if this
                                      value is NULL, this DBG has no DB	*/
-  int priority;    /*	commit priority			*/
   char *coding;    /*	DB backend coding		*/
   int count;
   int errcount;
   char *transaction_id;
+  LargeByteString *misc;
   LargeByteString *last_query;
   char *file;
   DB_Server *server;
@@ -166,10 +166,10 @@ typedef ValueStruct *(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *,
                                 ValueStruct *);
 
 typedef struct {
-  int (*exec)(DBG_Struct *, char *, Bool);
+  int (*exec)(DBG_Struct *,char *);
   ValueStruct *(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *,
                          ValueStruct *);
-  ValueStruct *(*query)(DBG_Struct *, char *, Bool);
+  ValueStruct *(*query)(DBG_Struct *, char *);
   Bool (*record)(DBG_Struct *, char *, RecordStruct *);
 } DB_Primitives;
 
