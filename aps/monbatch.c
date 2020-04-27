@@ -210,7 +210,7 @@ static void clog_db(DBG_Struct *dbg, char *batch_id, int logfd) {
     LBS_EmitString(lbs, log);
     LBS_EmitString(lbs, "');");
     LBS_EmitEnd(lbs);
-    ExecDBOP(dbg, (char *)LBS_Body(lbs), FALSE);
+    ExecDBOP(dbg, (char *)LBS_Body(lbs));
     xfree(log);
   }
   FreeLBS(lbs);
@@ -275,11 +275,11 @@ static char *registdb(DBG_Struct *dbg, char *batch_id, pid_t pgid) {
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len, "INSERT INTO %s (%s) VALUES (%s);", BATCH_TABLE,
            (char *)LBS_Body(kv.name), (char *)LBS_Body(kv.value));
-  ExecDBOP(dbg, sql, FALSE);
+  ExecDBOP(dbg, sql);
 
   snprintf(sql, sql_len, "INSERT INTO %s (%s) VALUES (%s);", BATCH_LOG_TABLE,
            (char *)LBS_Body(kv.name), (char *)LBS_Body(kv.value));
-  ExecDBOP(dbg, sql, FALSE);
+  ExecDBOP(dbg, sql);
 
   xfree(sql);
   FreeLBS(kv.name);
@@ -324,11 +324,11 @@ static int unregistdb(DBG_Struct *dbg, char *batch_id,
            "UPDATE %s SET endtime = '%s',rc = '%d', message = '%s', "
            "exec_record = '%s' WHERE id = '%s';",
            BATCH_LOG_TABLE, endtime, rc, message, exec_record, batch_id);
-  ExecDBOP(dbg, sql, FALSE);
+  ExecDBOP(dbg, sql);
 
   snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s';", BATCH_TABLE,
            batch_id);
-  ExecDBOP(dbg, sql, FALSE);
+  ExecDBOP(dbg, sql);
   xfree(exec_record);
   xfree(sql);
 

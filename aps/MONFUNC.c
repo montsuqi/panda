@@ -88,7 +88,6 @@ static void MCPtoCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp) {
           SIZE_TERM);
   if (ValueInteger(GetItemLongName(mcp, "version")) == 2) {
     ctrl->limit = ValueInteger(GetItemLongName(mcp, "db.limit"));
-    ctrl->redirect = ValueInteger(GetItemLongName(mcp, "db.redirect"));
   }
   if (!IsDBOperation(ctrl->func)) {
     rname = ValueStringPointer(GetItemLongName(mcp, "db.table"));
@@ -154,10 +153,6 @@ static int _MONFUNC(char *mcpdata, char *data, ValueStruct **retval) {
     ret = MonDBOperation(mcp, func);
   } else {
     ret = MonDBFunc(mcp, func, data, retval);
-  }
-  if (ValueInteger(GetItemLongName(mcp, "db.logflag")) > 0) {
-    AuditLog(mcp);
-    SetValueInteger(GetItemLongName(mcp, "db.logflag"),0);
   }
 #ifdef DEBUG
   DumpValueStruct(mcp);
