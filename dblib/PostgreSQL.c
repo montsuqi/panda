@@ -1300,11 +1300,10 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   PGresult *res;
   int rc;
   PGconn *conn;
-  Bool fCommit;
   rc = 0;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg);
-    fCommit = InTrans(conn);
+    InTrans(conn);
     res = _PQexec(dbg, "COMMIT WORK");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
