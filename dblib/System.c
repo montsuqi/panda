@@ -42,7 +42,6 @@
 #include "term.h"
 #include "directory.h"
 #include "wfcdata.h"
-#include "redirect.h"
 #include "comm.h"
 #include "comms.h"
 #include "sysdata.h"

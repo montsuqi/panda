@@ -180,7 +180,6 @@ static void _ReadyOnlineDB(char *name, WindowBind *bind, void *dummy) {
 
 extern int ReadyOnlineDB(char *application_name) {
   int rc;
-  InitDB_Process(application_name);
   rc = OpenDB(NULL);
   g_hash_table_foreach(ThisLD->bhash, (GHFunc)_ReadyOnlineDB, NULL);
   return rc;

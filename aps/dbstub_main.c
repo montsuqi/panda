@@ -97,7 +97,6 @@ extern void InitSystem(char *name) {
   if ((Bind = g_hash_table_lookup(ThisBD->BatchTable, name)) == NULL) {
     Error("%s application is not in BD.", name);
   }
-  InitDB_Process(AppName);
   ReadyHandlerDB(Bind->handler);
 }
 
@@ -150,15 +149,6 @@ static ARG_TABLE option[] = {
     {"pass", STRING, TRUE, (void *)&DB_Pass, "パスワード"},
     {"bd", STRING, TRUE, (void *)&BD_Name, "BD定義名"},
 
-    {"nocheck", BOOLEAN, TRUE, (void *)&fNoCheck,
-     "dbredirectorの起動をチェックしない"},
-    {"noredirect", BOOLEAN, TRUE, (void *)&fNoRedirect,
-     "dbredirectorを使わない"},
-    {"maxretry", INTEGER, TRUE, (void *)&MaxSendRetry,
-     "dbredirector送信の再試行数を指定する"},
-    {"retryint", INTEGER, TRUE, (void *)&RetryInterval,
-     "dbredirector送信の再試行の間隔を指定する(秒)"},
-
     {NULL, 0, FALSE, NULL, NULL}};
 
 static void SetDefault(void) {
@@ -175,11 +165,6 @@ static void SetDefault(void) {
   DB_Name = DB_User;
   BD_Name = NULL;
   CommandParameter = "";
-
-  fNoCheck = FALSE;
-  fNoRedirect = FALSE;
-  MaxSendRetry = 3;
-  RetryInterval = 5;
 }
 
 extern int main(int argc, char **argv) {

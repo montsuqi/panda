@@ -54,12 +54,12 @@ static char *DBG_Name;
 static char *Command;
 static char *SQLFile;
 static char *Output;
-static Bool Redirect = FALSE;
+static Bool Redirect = FALSE; /* depricated */
 
 static ARG_TABLE option[] = {
     {"dir", STRING, TRUE, (void *)&Directory, N_("directory file name")},
     {"dbg", STRING, TRUE, (void *)&DBG_Name, N_("db group name")},
-    {"r", BOOLEAN, TRUE, (void *)&Redirect, N_("redirect query")},
+    {"r", BOOLEAN, TRUE, (void *)&Redirect, N_("[Deprecated]redirect query")},
     {"c", STRING, TRUE, (void *)&Command, N_("run only single command")},
     {"f", STRING, TRUE, (void *)&SQLFile, N_("execute commands from file")},
     {"o", STRING, TRUE, (void *)&Output,
@@ -111,7 +111,7 @@ static char *ReadSQLFile(DBG_Struct *dbg, char *sqlfile) {
   return sql;
 }
 
-static int FileCommands(DBG_Struct *dbg, Bool redirect, char *sqlfile) {
+static int FileCommands(DBG_Struct *dbg, char *sqlfile) {
   int rc;
   char *sql;
 
@@ -122,7 +122,7 @@ static int FileCommands(DBG_Struct *dbg, Bool redirect, char *sqlfile) {
   TransactionStart(dbg);
   sql = ReadSQLFile(dbg, sqlfile);
   if (sql) {
-    ExecDBOP(dbg, sql, redirect);
+    ExecDBOP(dbg, sql);
     xfree(sql);
   }
   rc = TransactionEnd(dbg);
@@ -161,7 +161,7 @@ static void OutPutValue(char *type, ValueStruct *value) {
   xfree(buf);
 }
 
-static int SingleCommand(DBG_Struct *dbg, Bool redirect, char *str) {
+static int SingleCommand(DBG_Struct *dbg, char *str) {
   int rc;
   ValueStruct *ret;
   char *sql;
@@ -173,7 +173,7 @@ static int SingleCommand(DBG_Struct *dbg, Bool redirect, char *str) {
   TransactionStart(dbg);
 
   sql = Coding_monsys(dbg, str);
-  ret = ExecDBQuery(dbg, sql, redirect);
+  ret = ExecDBQuery(dbg, sql);
   OutPutValue(Output, ret);
   FreeValueStruct(ret);
   xfree(sql);
@@ -203,9 +203,9 @@ extern int main(int argc, char **argv) {
   dbg->dbt = NewNameHash();
 
   if (Command) {
-    rc = SingleCommand(dbg, Redirect, Command);
+    rc = SingleCommand(dbg, Command);
   } else if (SQLFile) {
-    rc = FileCommands(dbg, Redirect, SQLFile);
+    rc = FileCommands(dbg, SQLFile);
   }
   return rc;
 }

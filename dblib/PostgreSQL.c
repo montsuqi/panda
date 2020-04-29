@@ -43,7 +43,6 @@
 #include "libmondai.h"
 #include "dbgroup.h"
 #include "directory.h"
-#include "redirect.h"
 #include "message.h"
 #include "debug.h"
 #include "PostgreSQLlib.h"
@@ -990,28 +989,7 @@ static void _PQclear(PGresult *res) {
   }
 }
 
-static Bool IsRedirectQuery(PGresult *res) {
-  Bool rc = FALSE;
-
-  if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-    if (cmdTuples(res) > 0) {
-      if ((strncmp(PQcmdStatus(res), "INSERT ", 7) == 0) ||
-          (strncmp(PQcmdStatus(res), "UPDATE ", 7) == 0) ||
-          (strncmp(PQcmdStatus(res), "DELETE ", 7) == 0)) {
-        rc = TRUE;
-      }
-    } else {
-      if ((strncmp(PQcmdStatus(res), "CREATE ", 7) == 0) ||
-          (strncmp(PQcmdStatus(res), "DROP ", 5) == 0) ||
-          (strncmp(PQcmdStatus(res), "ALTER ", 6) == 0)) {
-        rc = TRUE;
-      }
-    }
-  }
-  return rc;
-}
-
-static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed) {
+static PGresult *_PQexec(DBG_Struct *dbg, char *sql) {
   PGresult *res;
   unsigned long t1,t2;
 
@@ -1020,13 +998,6 @@ static PGresult *_PQexec(DBG_Struct *dbg, char *sql, Bool fRed) {
   res = PQexecParams(PGCONN(dbg), sql, 0, NULL, NULL, NULL, NULL, 0);
   t2 = GetNowTime();
   DbExecTime += (t2 - t1);
-  if (res != NULL) {
-    if ((fRed) && (IsRedirectQuery(res))) {
-      PutDB_Redirect(dbg, sql);
-      PutDB_Redirect(dbg, ";\n");
-      PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-    }
-  }
   if (sql) {
     LBS_String(dbg->last_query, sql);
   }
@@ -1151,7 +1122,7 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         break;
       case SQL_OP_EOL:
         LBS_EmitEnd(sql);
-        res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
+        res = _PQexec(dbg, LBS_Body(sql));
         LBS_Clear(sql);
         status = PGRES_FATAL_ERROR;
         if ((res == NULL) ||
@@ -1230,20 +1201,14 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return (ret);
 }
 
-static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
+static int _EXEC(DBG_Struct *dbg, char *sql) {
   PGresult *res;
   int rc = MCP_OK;
 
   if (_PQsendQuery(dbg, sql) == TRUE) {
     while ((res = _PQgetResult(dbg)) != NULL) {
       rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
-      if ((rc == MCP_OK) && fRed) {
-        PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-      }
       _PQclear(res);
-    }
-    if (fRed) {
-      PutDB_Redirect(dbg, sql);
     }
   } else {
     Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
@@ -1252,12 +1217,12 @@ static int _EXEC(DBG_Struct *dbg, char *sql, Bool fRed) {
   return rc;
 }
 
-static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql, Bool fRed) {
+static ValueStruct *_QUERY(DBG_Struct *dbg, char *sql) {
   PGresult *res;
   ValueStruct *ret;
   ExecStatusType status;
 
-  res = _PQexec(dbg, sql, fRed);
+  res = _PQexec(dbg, sql);
   if (!CheckConnect(dbg)) {
     ret = NULL;
   } else if ((res == NULL) ||
@@ -1289,12 +1254,8 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
     if (encoding != NULL) {
       xfree(encoding);
     }
-    OpenDB_RedirectPort(dbg);
     dbg->conn = (void *)conn;
     dbg->dbstatus = DB_STATUS_CONNECT;
-    if (dbg->redirectPort != NULL) {
-      LockRedirectorConnect(conn);
-    }
     CryptoMode(dbg);
     rc = MCP_OK;
   }
@@ -1308,7 +1269,6 @@ static ValueStruct *_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 static ValueStruct *_DBDISCONNECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     PQfinish(PGCONN(dbg));
-    CloseDB_RedirectPort(dbg);
     dbg->dbstatus = DB_STATUS_DISCONNECT;
   }
   if (ctrl != NULL) {
@@ -1325,10 +1285,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   DbExecTime = 0;
   rc = 0;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
-    LockDB_Redirect(dbg);
-    BeginDB_Redirect(dbg);
-    res = _PQexec(dbg, "BEGIN", FALSE);
-    UnLockDB_Redirect(dbg);
+    res = _PQexec(dbg, "BEGIN");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
   }
@@ -1343,21 +1300,13 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   PGresult *res;
   int rc;
   PGconn *conn;
-  Bool fCommit;
   rc = 0;
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg);
-    CheckDB_Redirect(dbg);
-    fCommit = InTrans(conn);
-    res = _PQexec(dbg, "COMMIT WORK", FALSE);
+    InTrans(conn);
+    res = _PQexec(dbg, "COMMIT WORK");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
-    if ((fCommit == TRUE) && (rc == MCP_OK)) {
-      CommitDB_Redirect(dbg);
-    } else {
-      rc = MCP_NONFATAL;
-      AbortDB_Redirect(dbg);
-    }
   } else {
     conn = NULL;
   }
@@ -1413,7 +1362,7 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ret = NULL;
       sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
               ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect);
+      res = _PQexec(dbg, sql);
       ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
       ret = PGresToValue(dbg, ctrl, res, args);
       _PQclear(res);
@@ -1445,7 +1394,7 @@ static ValueStruct *_DBCLOSECURSOR(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     } else {
       p = sql;
       sprintf(p, "CLOSE %s_%s_csr", ctrl->rname, ctrl->pname);
-      res = _PQexec(dbg, sql, ctrl->redirect);
+      res = _PQexec(dbg, sql);
       ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
     }
@@ -1505,7 +1454,7 @@ static ValueStruct *_DBUPDATE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
+      res = _PQexec(dbg, LBS_Body(sql));
       ctrl->rcount = cmdTuples(res);
       ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
@@ -1562,7 +1511,7 @@ static ValueStruct *_DBDELETE(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
         }
       }
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
+      res = _PQexec(dbg, LBS_Body(sql));
       ctrl->rcount = cmdTuples(res);
       ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
@@ -1604,7 +1553,7 @@ static ValueStruct *_DBINSERT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       InsertValues(dbg, sql, args);
       LBS_EmitString(sql, ") ");
       LBS_EmitEnd(sql);
-      res = _PQexec(dbg, LBS_Body(sql), ctrl->redirect);
+      res = _PQexec(dbg, LBS_Body(sql));
       ctrl->rcount = cmdTuples(res);
       ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
@@ -1693,34 +1642,11 @@ static ValueStruct *_DBLOCK(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     LBS_EmitString(sql, "LOCK\tTABLE\t");
     LBS_EmitString(sql, rec->name);
     LBS_EmitEnd(sql);
-    res = _PQexec(dbg, LBS_Body(sql), FALSE);
+    res = _PQexec(dbg, LBS_Body(sql));
     ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
     _PQclear(res);
     FreeLBS(sql);
   }
-  return (ret);
-}
-
-static ValueStruct *_DBAUDITLOG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
-                                RecordStruct *rec, ValueStruct *args) {
-  LargeByteString *sql;
-  ValueStruct *ret;
-  ret = NULL;
-  sql = NewLBS();
-  LBS_EmitString(sql, "INSERT INTO ");
-  LBS_EmitString(sql, AUDITLOG_TABLE);
-  LBS_EmitString(sql, " (");
-  LBS_EmitString(sql, " id, ");
-  InsertNames(sql, args);
-  LBS_EmitString(sql, ") VALUES (");
-  LBS_EmitString(sql, " nextval('");
-  LBS_EmitString(sql, AUDITLOG_TABLE);
-  LBS_EmitString(sql, "_seq'), ");
-  InsertValues(dbg, sql, args);
-  LBS_EmitString(sql, ");");
-  LBS_EmitEnd(sql);
-  PutDB_AuditLog(dbg, sql);
-  FreeLBS(sql);
   return (ret);
 }
 
@@ -1772,7 +1698,6 @@ static DB_OPS Operations[] = {
     {"DBESCAPEBYTEA", _DBESCAPEBYTEA},
     {"DBUNESCAPEBYTEA", _DBUNESCAPEBYTEA},
     {"DBLOCK", _DBLOCK},
-    {"DBAUDITLOG", _DBAUDITLOG},
 
     {NULL, NULL}};
 

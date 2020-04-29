@@ -40,7 +40,7 @@ static Bool rel_exist(DBG_Struct *dbg, char *name, char *relkind) {
       "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON "
       "n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = '%s';",
       name, relkind);
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(sql);
   if (ret) {
     rc = TRUE;
@@ -76,7 +76,7 @@ extern Bool column_exist(DBG_Struct *dbg, char *table_name, char *column_name) {
   p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s'", table_name,
                column_name);
   sprintf(p, ";");
-  ret = ExecDBQuery(dbg, sql, FALSE);
+  ret = ExecDBQuery(dbg, sql);
   xfree(sql);
   if (ret) {
     rc = TRUE;

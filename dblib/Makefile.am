@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-noinst_LIBRARIES = libpostgresqlutils.a
 pkglib_LTLIBRARIES = $(DB_OBJECTS)
 lib_LTLIBRARIES = libpandadb.la
 
@@ -54,21 +53,11 @@ libpandadb_la_LDFLAGS	=		\
 libpandadb_la_SOURCES	=			\
 	dbgroup.c		dbgroup.h		\
 	dbutils.c		dbutils.h		\
-	redirect.c		redirect.h		\
 	monsys.c		monsys.h		\
 	dbops.c			dbops.h			\
 	bytea.c			bytea.h			\
 	msglib.c		msglib.h		\
 	monpushevent.c	monpushevent.h
-
-libpostgresqlutils_a_LIBADD = 
-
-
-libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)
-libpostgresqlutils_a_SOURCES = \
-	PostgreSQLlib.c PostgreSQLlib.h	\
-	PostgreSQLutils.c PostgreSQLutils.h \
-	audit.c audit.h 
 
 DB_OBJECTS			=		\
 	PostgreSQL.la			\

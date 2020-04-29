@@ -143,7 +143,6 @@ static ProcessNode *MakeProcessNode(void) {
   node->textsize = ThisLD->textsize;
   node->scrrec =
       (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
-  node->dbstatus = GetDBRedirectStatus(0);
   for (i = 0; i < node->cWindow; i++) {
     node->scrrec[i] = ThisLD->windows[i];
   }
@@ -301,11 +300,6 @@ retry:
     }
     SetValueString(GetItemLongName(node->mcprec->value, "dc.module"),
                    bind->module, NULL);
-    if (node->dbstatus == DB_STATUS_REDFAILURE) {
-      RedirectError();
-    } else {
-      node->dbstatus = GetDBRedirectStatus(0);
-    }
     SetMCPEnv(node->mcprec->value);
     TransactionStart(NULL);
     ExecuteProcess(node);
@@ -356,20 +350,10 @@ static ARG_TABLE option[] = {
     {"connect-retry", BOOLEAN, TRUE, (void *)&fConnectRetry,
      "WFC connection retry"},
 
-    {"nocheck", BOOLEAN, TRUE, (void *)&fNoCheck,
-     "no check dbredirector start"},
-    {"noredirect", BOOLEAN, TRUE, (void *)&fNoRedirect, "no use dbredirector"},
-    {"maxretry", INTEGER, TRUE, (void *)&MaxSendRetry,
-     "max retry dbredirector"},
-    {"retryint", INTEGER, TRUE, (void *)&RetryInterval,
-     "dbredirector retry interval(sec)"},
-
     {NULL, 0, FALSE, NULL, NULL}};
 
 static void SetDefault(void) {
   WfcPortNumber = NULL;
-  fNoCheck = FALSE;
-  fNoRedirect = FALSE;
 
   BaseDir = NULL;
   RecordDir = NULL;
@@ -383,9 +367,6 @@ static void SetDefault(void) {
   DB_Host = NULL;
   DB_Port = NULL;
   DB_Name = DB_User;
-
-  MaxSendRetry = 3;
-  RetryInterval = 5;
 
   fTimer = FALSE;
   fConnectRetry = FALSE;

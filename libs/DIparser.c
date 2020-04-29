@@ -62,9 +62,9 @@
 #define T_USER (T_YYBASE + 8)
 #define T_PASS (T_YYBASE + 9)
 #define T_TYPE (T_YYBASE + 10)
-#define T_FILE (T_YYBASE + 11)
-#define T_REDIRECT (T_YYBASE + 12)
-#define T_REDIRECTPORT (T_YYBASE + 13)
+#define T_FILE (T_YYBASE + 11) /*deprecated*/
+#define T_REDIRECT (T_YYBASE + 12)/*deprecated*/
+#define T_REDIRECTPORT (T_YYBASE + 13)/*deprecated*/
 #define T_RECDIR (T_YYBASE + 16)
 #define T_BASEDIR (T_YYBASE + 17)
 #define T_PRIORITY (T_YYBASE + 18)
@@ -82,7 +82,7 @@
 #define T_SPACE (T_YYBASE + 31)
 #define T_APSPATH (T_YYBASE + 32)
 #define T_WFCPATH (T_YYBASE + 33)
-#define T_REDPATH (T_YYBASE + 34)
+#define T_REDPATH (T_YYBASE + 34)/*deprecated*/
 #define T_DBPATH (T_YYBASE + 35)
 #define T_UPDATE (T_YYBASE + 36)   /*deprecated*/
 #define T_READONLY (T_YYBASE + 37) /*deprecated*/
@@ -93,16 +93,16 @@
 #define T_SSLCRL (T_YYBASE + 42)
 #define T_BLOB (T_YYBASE + 43)
 
-#define T_LOGDBNAME (T_YYBASE + 44)
-#define T_LOGTABLENAME (T_YYBASE + 45)
-#define T_LOGPORT (T_YYBASE + 46)
-#define T_LOGPATH (T_YYBASE + 47)
-#define T_MSTPATH (T_YYBASE + 48)
-#define T_SLVPATH (T_YYBASE + 49)
-#define T_MSTPORT (T_YYBASE + 50)
-#define T_DBMASTER (T_YYBASE + 51)
-#define T_AUDITLOG (T_YYBASE + 52)
-#define T_SUMCHECK (T_YYBASE + 53)
+#define T_LOGDBNAME (T_YYBASE + 44) /*deprecated*/
+#define T_LOGTABLENAME (T_YYBASE + 45) /*deprecated*/
+#define T_LOGPORT (T_YYBASE + 46) /*deprecated*/
+#define T_LOGPATH (T_YYBASE + 47) /*deprecated*/
+#define T_MSTPATH (T_YYBASE + 48) /*deprecated*/
+#define T_SLVPATH (T_YYBASE + 49) /*deprecated*/
+#define T_MSTPORT (T_YYBASE + 50) /*deprecated*/
+#define T_DBMASTER (T_YYBASE + 51) /*deprecated*/
+#define T_AUDITLOG (T_YYBASE + 52) /*deprecated*/
+#define T_SUMCHECK (T_YYBASE + 53) /*deprecated*/
 
 #define T_INITIAL_LD (T_YYBASE + 54)
 #define T_CRYPTOPASS (T_YYBASE + 55)
@@ -630,21 +630,9 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
   dbg->type = NULL;
   dbg->func = NULL;
   dbg->transaction_id = NULL;
-  dbg->file = NULL;
-  dbg->sumcheck = 1;
-  dbg->appname = NULL;
-  dbg->redirect = NULL;
-  dbg->redirectName = NULL;
-  dbg->logTableName = NULL;
-  dbg->redirectorMode = REDIRECTOR_MODE_PATCH;
-  dbg->auditlog = 0;
-  dbg->redirectPort = NULL;
-  dbg->redirectData = NULL;
-  dbg->checkData = NewLBS();
+  dbg->misc = NewLBS();
   dbg->last_query = NewLBS();
-  dbg->fpLog = NULL;
   dbg->dbt = NULL;
-  dbg->priority = 50;
   dbg->errcount = 0;
   dbg->dbstatus = DB_STATUS_NOCONNECT;
   dbg->conn = NULL;
@@ -670,7 +658,7 @@ extern DBG_Struct *NewDBG_Struct(char *name) {
 }
 
 extern void FreeDBG_Struct(DBG_Struct *dbg) {
-  FreeLBS(dbg->checkData);
+  FreeLBS(dbg->misc);
   FreeLBS(dbg->last_query);
   xfree(dbg->name);
   xfree(dbg);
@@ -695,14 +683,14 @@ static void ParDBGROUP(CURFILE *in, char *name) {
       break;
     case T_REDIRECTPORT:
       if (GetSymbol == T_SCONST) {
-        dbg->redirectPort = ParPort(ComSymbol, PORT_REDIRECT);
+        fprintf(stderr,"T_REDIRECTPORT depricated\n");
       } else {
         ParError("invalid port");
       }
       break;
     case T_FILE:
       if (GetSymbol == T_SCONST) {
-        dbg->file = StrDup(ComSymbol);
+        fprintf(stderr,"T_FILE depricated\n");
       } else {
         ParError("invalid logging file name");
       }
@@ -725,14 +713,14 @@ static void ParDBGROUP(CURFILE *in, char *name) {
       break;
     case T_REDIRECT:
       if (GetSymbol == T_SCONST) {
-        dbg->redirectName = StrDup(ComSymbol);
+        fprintf(stderr,"T_REDIRECT deprecated\n");
       } else {
         ParError("invalid redirect group");
       }
       break;
     case T_PRIORITY:
       if (GetSymbol == T_ICONST) {
-        dbg->priority = atoi(ComSymbol);
+        fprintf(stderr,"T_PRIORITY deprecated\n");
       } else {
         ParError("priority invalid");
       }
@@ -802,37 +790,35 @@ static void ParDBGROUP(CURFILE *in, char *name) {
       break;
     case T_LOGDBNAME:
       if (GetSymbol == T_SCONST) {
-        dbg->redirectName = StrDup(ComSymbol);
-        dbg->redirectorMode = REDIRECTOR_MODE_LOG;
+        fprintf(stderr,"T_LOGDBNAME depricated\n");
       } else {
         ParError("invalid logdbname");
       }
       break;
     case T_LOGTABLENAME:
       if (GetSymbol == T_SCONST) {
-        dbg->logTableName = StrDup(ComSymbol);
+        fprintf(stderr,"T_LOGTABLENAME depricated\n");
       } else {
         ParError("invalid logtable_name");
       }
       break;
     case T_LOGPORT:
       if (GetSymbol == T_SCONST) {
-        DestroyPort(dbg->redirectPort);
-        dbg->redirectPort = ParPort(ComSymbol, PORT_LOG);
+        fprintf(stderr,"T_LOGPORT depricated\n");
       } else {
         ParError("invalid port");
       }
       break;
     case T_AUDITLOG:
       if (GetSymbol == T_ICONST) {
-        dbg->auditlog = atoi(ComSymbol);
+        fprintf(stderr,"T_AUDITLOG depricated\n");
       } else {
         ParError("auditlog invalid");
       }
       break;
     case T_SUMCHECK:
       if (GetSymbol == T_ICONST) {
-        dbg->sumcheck = atoi(ComSymbol);
+        fprintf(stderr,"T_SUMCHECK depricated\n");
       } else {
         ParError("sumcheck invalid");
       }
@@ -847,60 +833,6 @@ static void ParDBGROUP(CURFILE *in, char *name) {
     ERROR_BREAK;
   }
   RegistDBG(dbg);
-}
-
-static void _AssignDBG(CURFILE *in, char *name, DBG_Struct *dbg) {
-  DBG_Struct *red;
-
-  if (dbg->redirectName != NULL) {
-    red = g_hash_table_lookup(ThisEnv->DBG_Table, dbg->redirectName);
-    if (red == NULL) {
-      ParError("redirect DB group not found");
-    }
-    dbg->redirect = red;
-  }
-}
-
-static int DBGcomp(DBG_Struct **x, DBG_Struct **y) {
-  return ((*x)->priority - (*y)->priority);
-}
-
-static void AssignDBG(CURFILE *in) {
-  int i;
-  DBG_Struct *dbg;
-
-  qsort(ThisEnv->DBG, ThisEnv->cDBG, sizeof(DBG_Struct *),
-        (int (*)(const void *, const void *))DBGcomp);
-  for (i = 0; i < ThisEnv->cDBG; i++) {
-    dbg = ThisEnv->DBG[i];
-    dbgprintf("%d DB group name = [%s]\n", dbg->priority, dbg->name);
-    dbgprintf("  redirectorMode => %d", dbg->redirectorMode);
-    _AssignDBG(in, dbg->name, dbg);
-  }
-}
-
-static RecordStruct *BuildAuditLog(void) {
-  RecordStruct *rec;
-  char *buff, *p;
-  buff = (char *)xmalloc(SIZE_BUFF);
-  p = buff;
-  p += sprintf(p, "%s	{", AUDITLOG_TABLE);
-  p += sprintf(p, "exec_date	timestamp;");
-  p += sprintf(p, "username	varchar(%d);", SIZE_USER);
-  p += sprintf(p, "term		varchar(%d);", SIZE_TERM);
-  p += sprintf(p, "windowname varchar(%d);", SIZE_NAME);
-  p += sprintf(p, "widget	varchar(%d);", SIZE_NAME);
-  p += sprintf(p, "event		varchar(%d);", SIZE_NAME);
-  p += sprintf(p, "comment	varchar(%d);", SIZE_COMMENT);
-  ;
-  p += sprintf(p, "func		varchar(%d);", SIZE_FUNC);
-  p += sprintf(p, "result	integer;");
-  p += sprintf(p, "ticket_id	integer;");
-  p += sprintf(p, "exec_query	text;");
-  sprintf(p, "};");
-  rec = ParseRecordMem(buff);
-  xfree(buff);
-  return (rec);
 }
 
 static RecordStruct *BuildMcpArea(size_t stacksize) {
@@ -939,9 +871,6 @@ static RecordStruct *BuildMcpArea(size_t stacksize) {
   p += sprintf(p, "pathname	varchar(%d);", SIZE_NAME);
   p += sprintf(p, "limit		int;");
   p += sprintf(p, "rcount		int;");
-  p += sprintf(p, "redirect	int;");
-  p += sprintf(p, "logflag	int;");
-  p += sprintf(p, "logcomment	varchar(%d);", SIZE_COMMENT);
   p += sprintf(p, "};");
   sprintf(p, "};");
   rec = ParseRecordMem(buff);
@@ -1250,8 +1179,6 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
   }
   if (ThisEnv != NULL) {
     ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
-    ThisEnv->auditrec = BuildAuditLog();
-    AssignDBG(in);
   }
   return (ThisEnv);
 }

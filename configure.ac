@@ -375,7 +375,6 @@ Doc/Makefile
 aps/Makefile
 cobol/Makefile
 dblib/Makefile
-dbstuff/Makefile
 glclient/Makefile
 glserver/Makefile
 include/Makefile

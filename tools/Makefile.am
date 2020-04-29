@@ -181,34 +181,5 @@ msgd_SOURCES		=	\
 monpushevent_SOURCES	=	\
 	monpushevent.c
 
-if POSTGRESQL
-dbsyncbin = dbsync
-
-dbsync_SOURCES	= \
-	dbsync.c
-
-dbsync_LDADD			=						\
-	-lm											\
-	$(top_builddir)/dblib/libpandadb.la			\
-	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpanda.la			\
-	$(P11_LIBS)									\
-	$(SSL_LIBS)									\
-	$(COMMON_LIBS)								\
-	$(POSTGRES_LIBS)			
-
-dbsync_LDFLAGS	=	-export-dynamic
-
-dbsync_DEPENDENCIES	=							\
-	$(top_builddir)/defaults.h					\
-	$(top_builddir)/libs/libpanda.la			\
-	$(top_builddir)/dblib/libpostgresqlutils.a	
-
-else
-dbsyncbin = 
-dbsync_SOURCES	=
-endif
-
-
 EXTRA_DIST =				\
 	copy

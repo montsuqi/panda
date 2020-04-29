@@ -132,7 +132,6 @@ static void ExecuteDB_Server(MessageHandler *handler) {
       }
       strncpy(ctrl.func, func, SIZE_FUNC);
       ctrl.limit = 1;
-      ctrl.redirect = 1;
       ctrl.fDBOperation = IsDBOperation(func);
       if ((ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value, "rc"))) >=
           0) {

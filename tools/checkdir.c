@@ -407,12 +407,6 @@ static void DumpDBG(char *name, DBG_Struct *dbg, void *dummy) {
   if (dbg->file != NULL) {
     printf("\tlog file = [%s]\n", dbg->file);
   }
-  if (dbg->redirect != NULL) {
-    while (dbg->redirect != NULL) {
-      dbg = dbg->redirect;
-    }
-    printf("\tredirect = [%s]\n", dbg->name);
-  }
 }
 
 static void DumpDirectory(void) {
