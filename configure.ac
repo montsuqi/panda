@@ -310,16 +310,6 @@ AC_ARG_WITH(ssl,
 ])		
 
 dnl ***************************************************************************
-dnl use msgd for message output
-dnl ***************************************************************************
-
-AC_ARG_ENABLE(msgd,
-  [  --enable-msgd           enable msgd [[disable]]],,[enable_msgd="no"])
-if test "x$enable_msgd" = "xyes"; then
-    AC_DEFINE(USE_MSGD,1,"")
-fi
-
-dnl ***************************************************************************
 dnl use syslog for message output
 dnl ***************************************************************************
 
@@ -399,6 +389,5 @@ echo "  shell driver support:  $enable_shell"
 echo "  OpenCOBOL support:     $enable_opencobol"
 echo "  IP v6 support:         $enable_ipv6"
 echo "  SSL support:           $enable_ssl"
-echo "  msgd support:          $enable_msgd"
 echo "  syslog support:        $enable_syslog"
 echo ""

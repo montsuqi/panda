@@ -19,7 +19,7 @@
 
 bin_PROGRAMS = recdefgen copygen dbgen checkdir monupload monsql monsetup monbatch_ps monpushevent $(dbsyncbin)
 
-sbin_PROGRAMS = monitor msgd
+sbin_PROGRAMS = monitor
 noinst_SCRIPTS = copy
 
 recdefgen_SOURCES = \
@@ -139,13 +139,6 @@ monitor_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-msgd_LDADD 		=						\
-	-lm									\
-	$(top_builddir)/libs/libpanda.la	\
-	$(P11_LIBS)							\
-	$(SSL_LIBS)							\
-	$(COMMON_LIBS)
-
 AM_CPPFLAGS 			= 				\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/include				\
@@ -174,9 +167,6 @@ monupload_SOURCES	=	\
 
 monitor_SOURCES		=	\
 	monitor.c
-
-msgd_SOURCES		=	\
-	msgd.c
 
 monpushevent_SOURCES	=	\
 	monpushevent.c
