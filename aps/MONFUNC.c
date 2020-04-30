@@ -135,15 +135,12 @@ static int MonGLFunc(ValueStruct *mcp) {
 
 static int _MONFUNC(char *mcpdata, char *data, ValueStruct **retval) {
   ValueStruct *mcp;
-  ValueStruct *audit;
   char *func;
   int ret;
 
   *retval = NULL;
   mcp = UnPackMCP(mcpdata);
 
-  audit = ThisEnv->auditrec->value;
-  InitializeValue(audit);
   func = ValueStringPointer(GetItemLongName(mcp, "func"));
   if (!strcmp(func, "PUTWINDOW")) {
     ret = MonGLFunc(mcp);
