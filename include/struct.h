@@ -323,7 +323,6 @@ typedef struct {
   char *DBMasterAuth;
   size_t cLD, cBD, cDBD, stacksize;
   SysData_Struct *sysdata;
-  RecordStruct *auditrec;
   RecordStruct *mcprec;
   RecordStruct *linkrec;
   char *InitialLD;
