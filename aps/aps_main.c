@@ -112,6 +112,8 @@ static void InitSystem(char *name) {
   TextSize = ThisLD->textsize;
   if (ThisEnv->mcprec != NULL) {
     InitializeValue(ThisEnv->mcprec->value);
+    /* デフォルトフェッチ件数を100に設定 */
+    SetValueInteger(GetItemLongName(ThisEnv->mcprec->value, "db.limit"), 100);
   }
   if (ThisEnv->linkrec != NULL) {
     InitializeValue(ThisEnv->linkrec->value);

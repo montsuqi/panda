@@ -237,7 +237,6 @@ static void CallBefore(WindowBind *bind, ProcessNode *node) {
   SetValueString(GetItemLongName(mcp, "dc.dbstatus"),
                  DBSTATUS[(int)node->dbstatus], NULL);
   SetValueInteger(GetItemLongName(mcp, "db.rcount"), 0);
-  SetValueInteger(GetItemLongName(mcp, "db.limit"), 1);
   node->thisscrrec = bind->rec;
 
   /* SCREEN_NULLを除去  */

@@ -51,6 +51,11 @@ static int level;
 static char *rname[SIZE_RNAME];
 static int alevel;
 static int Dim[SIZE_RNAME];
+/*マルチフェッチ結果*/
+static PGresult *fetch_result = NULL;
+static int fetch_index = 0;
+
+static void _PQclear(PGresult *res);
 
 static void EscapeString(DBG_Struct *dbg, LargeByteString *lbs, char *str) {
   int error;
@@ -721,6 +726,14 @@ static char *PutDim(void) {
   return (buff);
 }
 
+static void ClearFetchResult() {
+  if (fetch_result != NULL) {
+    _PQclear(fetch_result);
+  }
+  fetch_result = NULL;
+  fetch_index = 0;
+}
+
 static ValueStruct *_PGresToValue(DBG_Struct *dbg, PGresult *res, int count,
                                   ValueStruct *val) {
   ValueStruct *ret;
@@ -729,6 +742,42 @@ static ValueStruct *_PGresToValue(DBG_Struct *dbg, PGresult *res, int count,
   level = 0;
   alevel = 0;
   GetTable(dbg, res, count, ret);
+  return ret;
+}
+
+static ValueStruct *PGresToValueFetch(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
+                                 ValueStruct *val) {
+  int count;
+  ValueStruct *ret;
+
+  ret = NULL;
+  if (ctrl->rc != MCP_OK) {
+    return ret;
+  }
+  if (ctrl->limit < 1) {
+    Warning("Invalid ctrl->limit:%d",ctrl->limit);
+    ctrl->rc = MCP_BAD_OTHER;
+    return ret;
+  }
+  if (fetch_result == NULL) {
+    Warning("fetch_result is null");
+    ctrl->rc = MCP_BAD_OTHER;
+    return ret;
+  }
+  count = PQntuples(fetch_result);
+  if (count <= 0) {
+    ClearFetchResult();
+    ctrl->rc = MCP_EOF;
+    return ret;
+  }
+  if (count < ctrl->limit && (count - 1) < fetch_index) {
+    ClearFetchResult();
+    ctrl->rc = MCP_EOF;
+    return ret;
+  } else {
+    ret = _PGresToValue(dbg, fetch_result, fetch_index, val);
+    fetch_index += 1;
+  }
   return ret;
 }
 
@@ -1326,6 +1375,7 @@ static ValueStruct *_DBSELECT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   ret = NULL;
   ctrl->rcount = 0;
+  ClearFetchResult();
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
     ctrl->rc = MCP_BAD_ARG;
   } else {
@@ -1343,7 +1393,6 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char sql[SIZE_SQL + 1];
   DB_Struct *db;
   PathStruct *path;
-  PGresult *res;
   ValueStruct *ret;
   LargeByteString *src;
 
@@ -1360,12 +1409,13 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
       ret = NULL;
-      sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
+      if (fetch_result == NULL) {
+        sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
               ctrl->pname);
-      res = _PQexec(dbg, sql);
-      ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
-      ret = PGresToValue(dbg, ctrl, res, args);
-      _PQclear(res);
+        fetch_result = _PQexec(dbg, sql);
+        ctrl->rc = CheckResult(dbg, fetch_result, PGRES_TUPLES_OK);
+      }
+      ret = PGresToValueFetch(dbg, ctrl, args);
     }
   }
   return (ret);
