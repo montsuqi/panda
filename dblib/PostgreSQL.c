@@ -770,13 +770,11 @@ static ValueStruct *PGresToValueFetch(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     ctrl->rc = MCP_EOF;
     return ret;
   }
-  if (count < ctrl->limit && (count - 1) < fetch_index) {
+  ret = _PGresToValue(dbg, fetch_result, fetch_index, val);
+  fetch_index += 1;
+  if (fetch_index >= count) {
+    /* refetch */
     ClearFetchResult();
-    ctrl->rc = MCP_EOF;
-    return ret;
-  } else {
-    ret = _PGresToValue(dbg, fetch_result, fetch_index, val);
-    fetch_index += 1;
   }
   return ret;
 }
