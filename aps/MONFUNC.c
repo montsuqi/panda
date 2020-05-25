@@ -74,7 +74,6 @@ static void CTRLtoMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl) {
   strcpy(ValueStringPointer(GetItemLongName(mcp, "db.pathname")), ctrl->pname);
   SetValueInteger(GetItemLongName(mcp, "rc"), ctrl->rc);
   SetValueInteger(GetItemLongName(mcp, "db.rcount"), ctrl->rcount);
-  SetValueInteger(GetItemLongName(mcp, "db.limit"), ctrl->limit);
 }
 
 static void MCPtoCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp) {
@@ -86,9 +85,7 @@ static void MCPtoCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp) {
           SIZE_USER);
   strncpy(ctrl->term, ValueStringPointer(GetItemLongName(mcp, "dc.term")),
           SIZE_TERM);
-  if (ValueInteger(GetItemLongName(mcp, "version")) == 2) {
-    ctrl->limit = ValueInteger(GetItemLongName(mcp, "db.limit"));
-  }
+  ctrl->limit = ValueInteger(GetItemLongName(mcp, "db.limit"));
   if (!IsDBOperation(ctrl->func)) {
     rname = ValueStringPointer(GetItemLongName(mcp, "db.table"));
     SetDBCTRLRecord(ctrl, rname);

@@ -192,7 +192,6 @@ static Bool GetWFCTerm(NETFILE *fp, ProcessNode *node) {
 }
 
 static Bool GetWFCAPI(NETFILE *fp, ProcessNode *node) {
-  ValueStruct *e;
   WindowBind *bind;
   int i;
   MessageHeader hdr;
@@ -219,14 +218,15 @@ static Bool GetWFCAPI(NETFILE *fp, ProcessNode *node) {
     ON_IO_ERROR(fp, badio);
     RecvnString(fp, sizeof(hdr.user), hdr.user);
     ON_IO_ERROR(fp, badio);
-    e = node->mcprec->value;
-    SetValueString(GetItemLongName(e, "dc.term"), hdr.uuid, NULL);
-    SetValueString(GetItemLongName(e, "dc.tenant"), hdr.tenant, NULL);
-    SetValueString(GetItemLongName(e, "dc.host"), hdr.host, NULL);
-    SetValueString(GetItemLongName(e, "dc.tempdir"), hdr.tempdir, NULL);
-    SetValueString(GetItemLongName(e, "dc.user"), hdr.user, NULL);
-    SetValueString(GetItemLongName(e, "dc.window"), hdr.window, NULL);
+    SetValueString(GetItemLongName(node->mcprec->value, "dc.term"), hdr.uuid, NULL);
+    SetValueString(GetItemLongName(node->mcprec->value, "dc.tenant"), hdr.tenant, NULL);
+    SetValueString(GetItemLongName(node->mcprec->value, "dc.host"), hdr.host, NULL);
+    SetValueString(GetItemLongName(node->mcprec->value, "dc.tempdir"), hdr.tempdir, NULL);
+    SetValueString(GetItemLongName(node->mcprec->value, "dc.user"), hdr.user, NULL);
+    SetValueString(GetItemLongName(node->mcprec->value, "dc.window"), hdr.window, NULL);
 
+    node->command = APL_COMMAND_NULL;
+    node->dbstatus = DB_STATUS_CONNECT;
     strcpy(node->uuid, hdr.uuid);
     strcpy(node->user, hdr.user);
     strcpy(node->window, hdr.window);
@@ -235,18 +235,14 @@ static Bool GetWFCAPI(NETFILE *fp, ProcessNode *node) {
     RecvLBS(fp, buff);
     ON_IO_ERROR(fp, badio);
 
-    e = NULL;
     for (i = 0; i < node->cWindow; i++) {
-      if (node->scrrec[i] != NULL &&
-          !strcmp(node->scrrec[i]->name, hdr.window)) {
-        e = node->scrrec[i]->value;
-        break;
+      if (node->scrrec[i] != NULL) {
+        InitializeValue(node->scrrec[i]->value);
+        if (!strcmp(node->scrrec[i]->name, hdr.window)) {
+          NativeUnPackValue(NULL, LBS_Body(buff), node->scrrec[i]->value);
+        }
       }
     }
-    if (e == NULL) {
-      Error("record [%s] not found", hdr.window);
-    }
-    NativeUnPackValue(NULL, LBS_Body(buff), e);
   }
   return TRUE;
 badio:
