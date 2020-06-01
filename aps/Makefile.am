@@ -81,14 +81,10 @@ OpenCOBOLla += OpenCOBOL.la
 
 HANDLER_OBJECTS	=	\
 	C.la			\
-	Exec.la			\
-	Resident.la		\
 	OpenCOBOL.la
 
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic -avoid-version
 C_la_LDFLAGS			=	-module -export-dynamic -avoid-version
-Exec_la_LDFLAGS			=	-module -export-dynamic -avoid-version
-Resident_la_LDFLAGS		=	-module -export-dynamic -avoid-version
 
 C_la_SOURCES			=	\
 	C.c						\
@@ -101,12 +97,6 @@ OpenCOBOL_la_SOURCES	=	\
 	OpenCOBOL.h
 
 OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
-
-Exec_la_SOURCES			=	Exec.c
-Exec_la_LIBADD			=	\
-	$(top_builddir)/libs/libpanda.la
-
-Resident_la_SOURCES		=	Resident.c
 
 aps_LDFLAGS	=			\
 	-export-dynamic
@@ -135,5 +125,3 @@ MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
 	MONFUNC.h					\
 	apslib.c
-
-EXTRA_DIST = apslib.rb
