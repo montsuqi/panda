@@ -259,7 +259,7 @@ static void SetPandaCombo(GtkWidget *widget, json_object *obj) {
 static void SetPandaCList(GtkWidget *widget, json_object *obj) {
   int count, n, m, i, j, row;
   double rowattr;
-  char *rdata[MAX_CLIST_COLUMNS], name[16];
+  char *rdata[MAX_CLIST_COLUMNS], name[32];
   json_object *child, *val, *rowobj, *colobj, *boolobj;
 
   SetCommon(widget, obj);
@@ -315,7 +315,8 @@ static void SetPandaCList(GtkWidget *widget, json_object *obj) {
         rdata[j] = NULL;
       }
       for (j = 0; j < m; j++) {
-        sprintf(name, "column%d", j + 1);
+        memset(name, 0, sizeof(name));
+        snprintf(name, sizeof(name) - 1, "column%d", j + 1);
         if (json_object_object_get_ex(rowobj, name, &colobj)) {
           rdata[j] = (char *)json_object_get_string(colobj);
         } else {
@@ -427,7 +428,7 @@ static void SetPandaTable(GtkWidget *widget, json_object *obj) {
   char *rowval[GTK_PANDA_TABLE_MAX_COLS];
   char *fgval[GTK_PANDA_TABLE_MAX_COLS];
   char *bgval[GTK_PANDA_TABLE_MAX_COLS];
-  char name[16];
+  char name[32];
 
   SetCommon(widget, obj);
 
@@ -482,7 +483,8 @@ static void SetPandaTable(GtkWidget *widget, json_object *obj) {
         bgval[j] = NULL;
       }
       for (j = 0; j < n; j++) {
-        sprintf(name, "column%d", j + 1);
+        memset(name, 0, sizeof(name));
+        snprintf(name, sizeof(name) - 1, "column%d", j + 1);
         if (!json_object_object_get_ex(rowobj, name, &colobj)) {
           continue;
         }
@@ -534,7 +536,7 @@ static void GetPandaTable(GtkWidget *widget, json_object *tmpl,
   GtkTreeModel *model;
   GtkTreeIter iter;
   int n, i, j, k, trow, tcolumn;
-  gchar *tvalue, name[16];
+  gchar *tvalue, name[32];
   json_object *child, *rowdata, *colobj, *cell, *array;
   GList *list, *l;
 
@@ -573,7 +575,8 @@ static void GetPandaTable(GtkWidget *widget, json_object *tmpl,
         return;
       }
       for (j = 0; j < n; j++) {
-        sprintf(name, "column%d", j + 1);
+        memset(name, 0, sizeof(name));
+        snprintf(name, sizeof(name) - 1, "column%d", j + 1);
         if (!json_object_object_get_ex(rowdata, name, &colobj)) {
           Warning("%s not found", name);
           return;
@@ -598,7 +601,8 @@ static void GetPandaTable(GtkWidget *widget, json_object *tmpl,
       rowdata = json_object_new_object();
       json_object_array_add(array, rowdata);
       for (j = 0; j < n; j++) {
-        sprintf(name, "column%d", j + 1);
+        memset(name,0,sizeof(name));
+        snprintf(name,sizeof(name)-1, "column%d", j + 1);
         colobj = json_object_new_object();
         json_object_object_add(rowdata, name, colobj);
         json_object_object_add(colobj, "celldata",
@@ -960,7 +964,8 @@ static void GetColorButton(GtkWidget *widget, json_object *tmpl,
 
   cb = GTK_COLOR_BUTTON(widget);
   gtk_color_button_get_color(cb, &color);
-  sprintf(strcolor, "#%02X%02X%02X", (guint)(color.red / 256.0),
+  memset(strcolor, 0, sizeof(strcolor));
+  snprintf(strcolor, sizeof(strcolor) - 1, "#%02X%02X%02X", (guint)(color.red / 256.0),
           (guint)(color.green / 256.0), (guint)(color.blue / 256.0));
 
   if (json_object_object_get_ex(tmpl, "color", &child)) {
