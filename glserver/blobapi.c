@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <json.h>
+#include <errno.h>
 
 #include "const.h"
 
