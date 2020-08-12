@@ -36,7 +36,6 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <json.h>
-#include <json_object_private.h> /*for json_object_object_foreachC()*/
 
 #include "const.h"
 #include "enum.h"
@@ -100,7 +99,7 @@ static int _ReadJSON(ValueStruct *ret, unsigned char *buff, size_t size) {
   memcpy(jsonstr, buff, size);
   obj = json_tokener_parse(jsonstr);
   g_free(jsonstr);
-  if (is_error(obj)) {
+  if (obj == NULL) {
     Warning("_ReadXML_JSON failure");
     return MCP_BAD_ARG;
   }
@@ -246,7 +245,7 @@ static int _WriteJSON(DBG_Struct *dbg, ValueStruct *ret) {
 
   jobj = json_tokener_parse(buff);
   g_free(buff);
-  if (is_error(jobj)) {
+  if (jobj == NULL) {
     Warning("json_tokener_parse failure");
     return MCP_BAD_OTHER;
   }

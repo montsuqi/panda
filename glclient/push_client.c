@@ -113,7 +113,7 @@ static void event_handler(json_object *ent) {
       memset(tmp + size, 0, 1);
     }
     obj = json_tokener_parse(buf);
-    if (is_error(obj)) {
+    if (obj == NULL) {
       obj = json_object_new_array();
       Warning("invalid json:|%s|", buf);
     }

@@ -40,7 +40,6 @@
 #include <glade/glade.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <json.h>
-#include <json_object_private.h> /*for json_object_object_foreachC()*/
 
 #include "gettext.h"
 #include "types.h"

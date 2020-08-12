@@ -75,7 +75,7 @@ static json_object *ReadMetaFile(const char *metafile) {
   g_free(buf);
   g_free(buf2);
 
-  if (is_error(obj)) {
+  if (obj == NULL) {
     return NULL;
   }
   if (!json_object_object_get_ex(obj, "result", &result)) {

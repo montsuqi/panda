@@ -497,7 +497,7 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   }
 
   ret = json_tokener_parse(LBS_Body(writebuf));
-  if (is_error(ret)) {
+  if (ret == NULL) {
     Error(_("invalid json"));
   }
   CheckJSONRPCResponse(ctx, ret);
