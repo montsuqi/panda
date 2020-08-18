@@ -151,7 +151,6 @@ if test "x$enable_client" = "xyes"; then
 		gtkpanda2			>= 2.0.6
 		libcurl             >= 7.0.5
 		gmodule-2.0			>= 2.0.0
-		gconf-2.0			>= 2.28.1
 		libp11				>= 0.2.8
 	])
 
