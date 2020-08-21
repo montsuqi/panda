@@ -276,7 +276,7 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     ctrl->rc = MCP_BAD_ARG;
     return NULL;
   }
-  if ((val = GetItemLongName(args, "object")) == NULL) {
+  if (GetItemLongName(args, "object") == NULL) {
     Warning("no [object] record");
     ctrl->rc = MCP_BAD_ARG;
     return NULL;

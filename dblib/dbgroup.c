@@ -97,10 +97,9 @@ static void _DBRecordFunc(char *rname, RecordStruct *rec, char *fname) {
   DB_Struct *db = RecordDB(rec);
   DBG_Struct *dbg = db->dbg;
   int ix;
-  DB_Operation *op;
 
   if ((ix = (int)(long)g_hash_table_lookup(db->opHash, fname)) > 0) {
-    if ((op = db->ops[ix - 1]) != NULL) {
+    if (db->ops[ix - 1] != NULL) {
       if (!(*dbg->func->primitive->record)(dbg, fname, rec)) {
         Warning("function not found [%s]\n", fname);
       }

@@ -364,11 +364,11 @@ static MSGTYPE CheckContentType(const char *ctype) {
 
 static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                              RecordStruct *rec, ValueStruct *args) {
-  ValueStruct *ret, *obj, *ctype, *data;
-  MSGTYPE type;
+  ValueStruct *ret, *obj, *ctype;
   char *buff;
   size_t size;
   DBG_Struct *mondbg;
+  MSGTYPE type;
 
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
@@ -387,7 +387,7 @@ static ValueStruct *_ReadMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     Warning("no [object] record");
     return NULL;
   }
-  if ((data = GetItemLongName(args, "data")) == NULL) {
+  if (GetItemLongName(args, "data") == NULL) {
     ctrl->rc = MCP_BAD_ARG;
     Warning("no [data] record");
     return NULL;
@@ -489,8 +489,9 @@ static int _WriteMSG_JSON(DBG_Struct *dbg, ValueStruct *ret) {
 
 static ValueStruct *_WriteMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
                               RecordStruct *rec, ValueStruct *args) {
-  ValueStruct *ctype, *obj, *data, *ret;
+  ValueStruct *ctype, *data, *ret;
   MSGTYPE type;
+
   ctrl->rc = MCP_BAD_OTHER;
   if (rec->type != RECORD_DB) {
     ctrl->rc = MCP_BAD_ARG;
@@ -501,17 +502,17 @@ static ValueStruct *_WriteMSG(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     Warning("no [content_type] record");
     return NULL;
   }
-  if ((obj = GetItemLongName(args, "object")) == NULL) {
+  if (GetItemLongName(args, "object") == NULL) {
     ctrl->rc = MCP_BAD_ARG;
     Warning("no [object] record");
     return NULL;
   }
-  if ((data = GetItemLongName(args, "data")) == NULL) {
+  if (GetItemLongName(args, "data") == NULL) {
     Warning("no [data] record");
     ctrl->rc = MCP_BAD_ARG;
     return NULL;
   }
-  type = CheckContentType(ValueToString(ctype, NULL));
+  type = CheckContentType(ValueToString(ctype, NULL)); 
   if (type == MSG_NONE) {
     ctrl->rc = MCP_BAD_ARG;
     Warning("invalid content type[%s]", ValueToString(ctype, NULL));

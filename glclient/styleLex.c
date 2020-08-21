@@ -98,7 +98,7 @@ retry:
     }
   }
   if (c == '#') {
-    while ((c = GetChar(StyleFile)) != '\n')
+    while (GetChar(StyleFile) != '\n')
       ;
     StylecLine++;
     goto retry;

@@ -162,7 +162,7 @@ static int _ReadJSON(ValueStruct *ret) {
 
 static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
                           ValueStruct *args) {
-  ValueStruct *ret, *data;
+  ValueStruct *ret;
   ret = NULL;
   ctrl->rc = MCP_BAD_OTHER;
 
@@ -170,7 +170,7 @@ static ValueStruct *_Read(DBG_Struct *dbg, DBCOMM_CTRL *ctrl, RecordStruct *rec,
     ctrl->rc = MCP_BAD_ARG;
     return NULL;
   }
-  if ((data = GetItemLongName(args, "data")) == NULL) {
+  if (GetItemLongName(args, "data") == NULL) {
     ctrl->rc = MCP_BAD_ARG;
     Warning("no [data] record");
     return NULL;
@@ -260,7 +260,7 @@ static ValueStruct *_Write(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     Warning("invalid mode:%d", CTX.mode);
     return NULL;
   }
-  if ((data = GetItemLongName(args, "data")) == NULL) {
+  if (GetItemLongName(args, "data") == NULL) {
     Warning("no [data] record");
     ctrl->rc = MCP_BAD_ARG;
     return NULL;
@@ -399,7 +399,7 @@ static ValueStruct *_Close(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if (rec->type != RECORD_DB) {
     return NULL;
   }
-  if ((oid = GetItemLongName(args, "object")) == NULL) {
+  if (GetItemLongName(args, "object") == NULL) {
     Warning("no [object] record");
     ctrl->rc = MCP_BAD_ARG;
     return NULL;

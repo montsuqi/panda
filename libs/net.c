@@ -534,7 +534,7 @@ char *GetCommonNameFromCertificate(X509 *cert) {
     return NULL;
   if ((name = xmalloc(len + 1)) == NULL)
     return NULL;
-  if ((len = GetCommonNameFromCertificate__(cert, name, len + 1)) < 0) {
+  if (GetCommonNameFromCertificate__(cert, name, len + 1) < 0) {
     xfree(name);
     return NULL;
   }
@@ -577,7 +577,7 @@ static int CheckSubjectAltName(X509_EXTENSION *ext, const char *hostname) {
 Bool CheckHostnameInCertificate(X509 *cert, const char *hostname) {
   X509_EXTENSION *ext;
   ASN1_OBJECT *extobj;
-  int ext_count, i, oid;
+  int ext_count, i;
   Bool should_check_cn = TRUE;
   Bool ok = FALSE;
   char *cn;
@@ -598,7 +598,7 @@ Bool CheckHostnameInCertificate(X509 *cert, const char *hostname) {
         break;
       if ((extobj = X509_EXTENSION_get_object(ext)) == NULL)
         break;
-      if ((oid = OBJ_obj2nid(extobj)) == NID_subject_alt_name) {
+      if (OBJ_obj2nid(extobj) == NID_subject_alt_name) {
         ok = CheckSubjectAltName(ext, hostname);
       }
     }

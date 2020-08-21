@@ -160,6 +160,13 @@ Certificate *initCertificate() {
   return cert;
 }
 
+static void freeCertificate(Certificate *cert) {
+  if (cert->Curl != NULL) {
+    curl_easy_cleanup(cert->Curl);
+  }
+  g_free(cert);
+}
+
 void cert_setSSL(Certificate *cert) {
   curl_easy_setopt(cert->Curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
   curl_easy_setopt(cert->Curl, CURLOPT_SSL_VERIFYPEER, 1);
@@ -294,6 +301,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
     cert->APIDomain = extract_domain(AuthURI);
     if (cert->APIDomain == NULL) {
       Warning("cancel certificate update. no match authuri");
+      freeCertificate(cert);
       return;
     }
   }
@@ -305,6 +313,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
   initCertDir(cert);
   if(call_update_certificate(cert) < 0) {
     MessageDialog(GTK_MESSAGE_WARNING, _("Failure update certificate."));
+    freeCertificate(cert);
     return;
   }
   setupNewCert(cert);
@@ -312,6 +321,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
   decode_p12(cert);
   save_cert_config(cert);
   MessageDialog(GTK_MESSAGE_INFO, _("Success update certificate."));
+  freeCertificate(cert);
   return;
 }
 
