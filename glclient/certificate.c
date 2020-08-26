@@ -93,6 +93,7 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)headers);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, cert_write_data);
   request_headers = curl_slist_append(request_headers, "Accept: application/json");
+  request_headers = curl_slist_append(request_headers, "Transfer-Encoding: identity");
   if (method == CERT_HTTP_POST) {
     request_headers = curl_slist_append(request_headers, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
