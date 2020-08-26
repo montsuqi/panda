@@ -162,7 +162,7 @@ static void _DumpOps(LargeByteString *sql) {
       printf("\n");
     }
     printf("%04d ", (int)LBS_GetPos(sql) - 1);
-    switch (c = LBS_FetchByte(sql)) {
+    switch (LBS_FetchByte(sql)) {
     case SQL_OP_INTO:
       n = LBS_FetchInt(sql);
       printf("INTO\t%d", n);
@@ -195,7 +195,7 @@ static void _DumpOps(LargeByteString *sql) {
       fflush(stdout);
       break;
     default:
-      dbgprintf("[%X]", c);
+      /* do nothing */
       break;
     }
     printf("\n");

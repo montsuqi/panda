@@ -540,14 +540,14 @@ static json_object *MakeEventResponse(json_object *obj, SessionData *data,
       buf = xmalloc(JSON_SizeValue(NULL, val));
       JSON_PackValue(NULL, buf, val);
       child = json_tokener_parse(buf);
-      if (child == NULL || is_error(child)) {
+      if (child == NULL) {
         Warning("JSON_PackValue Error");
         MakeErrorLog(buf);
       }
       xfree(buf);
       FreeValueStruct(val);
 
-      if (child == NULL || is_error(child)) {
+      if (child == NULL) {
         json_object_object_add(w, "screen_data", json_object_new_object());
       } else {
         json_object_object_add(w, "screen_data", child);
@@ -897,7 +897,7 @@ static json_object *ReadDownloadMetaFile(const char *metafile) {
       memset(tmp + size, 0, 1);
     }
     obj = json_tokener_parse(buf);
-    if (!is_error(obj)) {
+    if (obj != NULL) {
       if (json_object_object_get_ex(obj, "result", &result)) {
         json_object_get(result);
       } else {

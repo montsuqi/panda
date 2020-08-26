@@ -80,7 +80,7 @@ json_object *WFCIO_JSONRPC(json_object *req) {
   ON_IO_ERROR(fp, badio2);
   CloseNet(fp);
   res = json_tokener_parse(str);
-  if (res == NULL || is_error(res)) {
+  if (res == NULL) {
     Error("WFCIO_JSONRPC invalid json object");
   }
   return res;

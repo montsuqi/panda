@@ -413,7 +413,7 @@ static void MakeLD(void) {
   int i;
   char buff[SIZE_BUFF + 1];
   char *_prefix;
-  size_t size, num, spasize, linksize, mcpsize;
+  size_t size, num, spasize, linksize;
   int base;
 
   InitDirectory();
@@ -467,7 +467,7 @@ static void MakeLD(void) {
     num = 0;
   }
   if (fMCP) {
-    if ((mcpsize = SizeValue(Conv, ThisEnv->mcprec->value)) > 0) {
+    if (SizeValue(Conv, ThisEnv->mcprec->value) > 0) {
       PutLevel(base, TRUE);
       PutName("mcpdata");
       level = base;

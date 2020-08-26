@@ -202,6 +202,8 @@ char *REST_PostBLOB(GLProtocol *ctx, LargeByteString *lbs) {
   headers = curl_slist_append(headers, buf);
   headers =
       curl_slist_append(headers, "Content-Type: application/octet-stream");
+  headers =
+      curl_slist_append(headers, "Transfer-Encoding: identity");
   snprintf(clength, sizeof(clength), "Content-Length: %ld", LBS_Size(lbs));
   headers = curl_slist_append(headers, clength);
 
@@ -424,8 +426,8 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   headers = curl_slist_append(headers, "Content-Type: application/json");
   snprintf(buf, sizeof(buf), "Content-Length: %ld", ctx->ReqSize);
   headers = curl_slist_append(headers, buf);
-  snprintf(buf, sizeof(buf), "Expect:");
-  headers = curl_slist_append(headers, buf);
+  headers = curl_slist_append(headers, "Expect:");
+  headers = curl_slist_append(headers, "Transfer-Encoding: identity");
   if (ctx->fSSO) {
     headers = curl_slist_append(headers, "X-Support-SSO: 1");
   }
@@ -497,7 +499,7 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
   }
 
   ret = json_tokener_parse(LBS_Body(writebuf));
-  if (is_error(ret)) {
+  if (ret == NULL) {
     Error(_("invalid json"));
   }
   CheckJSONRPCResponse(ctx, ret);

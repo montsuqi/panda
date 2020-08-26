@@ -120,7 +120,7 @@ static int MonPushEventJSON(DBG_Struct *dbg) {
 
   obj = json_tokener_parse(buf);
   g_free(buf);
-  if (obj == NULL || is_error(obj)) {
+  if (obj == NULL) {
     g_error("invalid json file:%s", JSONFile);
   }
   if (!json_object_object_get_ex(obj, "event", &event)) {

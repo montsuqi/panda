@@ -1168,7 +1168,7 @@ static void UpdateWindow(json_object *w, int idx) {
   }
 
   if (!strcmp("new", put_type) || !strcmp("current", put_type)) {
-    if (child == NULL || is_error(child)) {
+    if (child == NULL) {
       Error("invalid json part:screeen_data");
     }
     if (!strcmp(wname, FOCUSEDWINDOW(Session))) {

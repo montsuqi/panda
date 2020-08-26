@@ -18,9 +18,6 @@
 
 lib_LTLIBRARIES = libpanda.la
 
-noinst_PROGRAMS		=		\
-	testnet
-
 libpanda_la_CFLAGS = $(AM_CFLAGS)
 libpanda_la_LDFLAGS	=			\
 	-version-info $(LTVERSION)	\
@@ -102,16 +99,6 @@ AM_CPPFLAGS 			= 	\
 	$(COMMON_CFLAGS)				\
 	-DBIN_DIR=\"$(bindir)\"			\
 	-DLOCALEDIR=\"$(localedir)\"
-
-testnet_LDADD	= 	\
-	-lm									\
-	$(top_builddir)/libs/libpanda.la	\
-	$(COMMON_LIBS)						\
-	$(P11_LIBS)							\
-	$(SSL_LIBS)
-
-testnet_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpanda.la
 
 EXTRA_DIST	=					\
 	option_parser.txt

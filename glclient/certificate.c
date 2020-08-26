@@ -93,6 +93,7 @@ json_object *cert_request(CURL *curl, char *uri, int method, char *filename) {
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)headers);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, cert_write_data);
   request_headers = curl_slist_append(request_headers, "Accept: application/json");
+  request_headers = curl_slist_append(request_headers, "Transfer-Encoding: identity");
   if (method == CERT_HTTP_POST) {
     request_headers = curl_slist_append(request_headers, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -158,6 +159,13 @@ Certificate *initCertificate() {
     exit(1);
   }
   return cert;
+}
+
+static void freeCertificate(Certificate *cert) {
+  if (cert->Curl != NULL) {
+    curl_easy_cleanup(cert->Curl);
+  }
+  g_free(cert);
 }
 
 void cert_setSSL(Certificate *cert) {
@@ -294,6 +302,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
     cert->APIDomain = extract_domain(AuthURI);
     if (cert->APIDomain == NULL) {
       Warning("cancel certificate update. no match authuri");
+      freeCertificate(cert);
       return;
     }
   }
@@ -305,6 +314,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
   initCertDir(cert);
   if(call_update_certificate(cert) < 0) {
     MessageDialog(GTK_MESSAGE_WARNING, _("Failure update certificate."));
+    freeCertificate(cert);
     return;
   }
   setupNewCert(cert);
@@ -312,6 +322,7 @@ void updateCertificate(const char *AuthURI, const char *CertFile, const char *Ce
   decode_p12(cert);
   save_cert_config(cert);
   MessageDialog(GTK_MESSAGE_INFO, _("Success update certificate."));
+  freeCertificate(cert);
   return;
 }
 

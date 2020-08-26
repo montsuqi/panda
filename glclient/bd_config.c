@@ -43,9 +43,6 @@ static gboolean check_json_object(json_object *config_obj,
   if (config_obj == NULL) {
     return FALSE;
   }
-  if (is_error(config_obj)) {
-    return FALSE;
-  }
   if (!json_object_is_type(config_obj, type)) {
     return FALSE;
   }
@@ -216,7 +213,7 @@ void gl_config_save(void) {
   nlist = json_object_new_array();
   for (i = 0, j = 0; i < json_object_array_length(list); i++) {
     child = json_object_array_get_idx(list, i);
-    if (child == NULL || is_error(child)) {
+    if (child == NULL) {
     } else {
       json_object_get(child); /* ref++ for child(array) put */
       json_object_array_add(nlist, child);

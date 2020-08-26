@@ -61,7 +61,7 @@ static void LoadWidgetCache(void) {
   } else {
     obj = json_tokener_parse(buf);
     g_free(buf);
-    if (obj == NULL || is_error(obj) ||
+    if (obj == NULL ||
         !json_object_is_type(obj, json_type_object)) {
       obj = json_object_new_object();
     }

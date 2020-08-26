@@ -187,7 +187,7 @@ static void execute() {
     Error("read(2) failure %s %s", datafile, strerror(errno));
   }
   obj = json_tokener_parse(buf);
-  if (is_error(obj)) {
+  if (obj == NULL) {
     obj = json_object_new_array();
     Warning("invalid json:|%s|", buf);
   }

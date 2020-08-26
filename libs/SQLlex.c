@@ -379,7 +379,7 @@ retry:
     }
   }
   if (c == '#') {
-    while (((c = GetChar(in)) != 0) && ((c = GetChar(in)) != '\n'))
+    while (GetChar(in) != 0 && GetChar(in) != '\n')
       ;
     in->cLine++;
     goto retry;
