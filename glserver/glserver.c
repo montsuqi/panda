@@ -85,7 +85,7 @@ static void SetDefault(void) {
   PortNumber = PORT_GLTERM;
   PortSysData = SYSDATA_PORT;
   Directory = "./directory";
-  Back = 5;
+  Back = 512;
   AuthURL = "glauth://localhost:" PORT_GLAUTH;
   fAPI = FALSE;
   fDebug = FALSE;

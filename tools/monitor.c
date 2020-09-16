@@ -64,6 +64,7 @@ static int SesNum;
 static Bool fGlserver;
 static Bool fGlSSL;
 static Bool fVerifyPeer;
+static int BackNum;
 static char *GlAuth;
 static char *GlCert;
 static char *GlCAfile;
@@ -124,6 +125,7 @@ static ARG_TABLE option[] = {
      "send retry dbredirector"},
 
     {"glserver", BOOLEAN, TRUE, (void *)&fGlserver, "start glserver"},
+    {"back", INTEGER, TRUE, (void *)&BackNum, "socket backlog number"},
     {"glauth", STRING, TRUE, (void *)&GlAuth, "glserver authentication"},
     {"glssl", BOOLEAN, TRUE, (void *)&fGlSSL, "use ssl connection"},
     {"verifypeer", BOOLEAN, TRUE, (void *)&fVerifyPeer, "verify peer"},
@@ -233,6 +235,7 @@ static void SetDefault(void) {
   fGlserver = FALSE;
   fGlSSL = FALSE;
   fVerifyPeer = FALSE;
+  BackNum = 512;
   GlAuth = NULL;
   GlCert = NULL;
   GlCAfile = NULL;
@@ -409,6 +412,11 @@ static void InitGlserver(void) {
       argv[argc++] = "-verifypeer";
     }
   }
+  if (BackNum < 5) {
+    BackNum = 5;
+  }
+  argv[argc++] = "-back";
+  argv[argc++] = IntStrDup(BackNum);
 
   proc->argc = argc;
   argv[argc++] = NULL;
