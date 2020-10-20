@@ -56,6 +56,11 @@ static char AppName[128];
 static char *BD_Name;
 static BatchBind *Bind;
 
+/* <deprecate> */
+static Bool NopBool;
+static int NopInt;
+/* </deprecate> */
+
 static void InitData(char *name) {
   InitDirectory();
   SetUpDirectory(Directory, "", name, "", P_ALL);
@@ -149,6 +154,17 @@ static ARG_TABLE option[] = {
     {"pass", STRING, TRUE, (void *)&DB_Pass, "パスワード"},
     {"bd", STRING, TRUE, (void *)&BD_Name, "BD定義名"},
 
+/* <deprecate> */
+    {"nocheck", BOOLEAN, TRUE, (void *)&NopBool,
+     "dbredirectorの起動をチェックしない"},
+    {"noredirect", BOOLEAN, TRUE, (void *)&NopBool,
+     "dbredirectorを使わない"},
+    {"maxretry", INTEGER, TRUE, (void *)&NopInt,
+     "dbredirector送信の再試行数を指定する"},
+    {"retryint", INTEGER, TRUE, (void *)&NopInt,
+     "dbredirector送信の再試行の間隔を指定する(秒)"},
+/* </deprecate> */
+
     {NULL, 0, FALSE, NULL, NULL}};
 
 static void SetDefault(void) {
@@ -165,6 +181,11 @@ static void SetDefault(void) {
   DB_Name = DB_User;
   BD_Name = NULL;
   CommandParameter = "";
+
+/* <deprecate> */
+  NopBool = FALSE;
+  NopInt = 1;
+/* </deprecate> */
 }
 
 extern int main(int argc, char **argv) {

@@ -713,14 +713,12 @@ static void ParDBGROUP(CURFILE *in, char *name) {
       break;
     case T_REDIRECT:
       if (GetSymbol == T_SCONST) {
-        fprintf(stderr,"T_REDIRECT deprecated\n");
       } else {
         ParError("invalid redirect group");
       }
       break;
     case T_PRIORITY:
       if (GetSymbol == T_ICONST) {
-        fprintf(stderr,"T_PRIORITY deprecated\n");
       } else {
         ParError("priority invalid");
       }

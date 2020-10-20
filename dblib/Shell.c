@@ -150,6 +150,7 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   char **cmdv;
 
+  LBS_EmitEnd(dbg->misc);
   setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->misc), 1);
 
   cmdv = (char **)dbg->conn;
