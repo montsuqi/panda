@@ -7,6 +7,7 @@ typedef struct {
   gchar *new_p12_name;
   gchar *new_cert_name;
   gchar *new_key_name;
+  gchar *new_pass_name;
   gchar *APIDomain;
   const char *CertFile;
   const char *CertKeyFile;
