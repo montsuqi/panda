@@ -147,6 +147,8 @@ void setupNewCert(Certificate *cert) {
   cert->new_cert_name = g_build_filename(cert->cert_dir, buf, NULL);
   strftime(buf, sizeof(buf), "%Y%m%d%H%M%S.pem", localtime(&now));
   cert->new_key_name = g_build_filename(cert->cert_dir, buf, NULL);
+  strftime(buf, sizeof(buf), "%Y%m%d%H%M%S.pass", localtime(&now));
+  cert->new_pass_name = g_build_filename(cert->cert_dir, buf, NULL);
 }
 
 Certificate *initCertificate() {
@@ -275,6 +277,8 @@ void decode_p12(Certificate *cert) {
   }
   PEM_write_PrivateKey(fp,pkey,pCipher,(unsigned char*)cert->NewCertPass,(int)strlen(cert->NewCertPass),NULL,NULL);
   fclose(fp);
+
+  g_file_set_contents(cert->new_pass_name, cert->NewCertPass, strlen(cert->NewCertPass), NULL);
 }
 
 void save_cert_config(Certificate *cert) {
