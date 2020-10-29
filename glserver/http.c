@@ -74,7 +74,7 @@
 #define REQUEST_TYPE_API 4
 #define REQUEST_TYPE_BLOB_API 5
 
-HTTP_REQUEST *HTTP_Init(NETFILE *fp) {
+static HTTP_REQUEST *HTTP_Init(NETFILE *fp) {
   HTTP_REQUEST *req;
 
   req = New(HTTP_REQUEST);
@@ -101,7 +101,7 @@ HTTP_REQUEST *HTTP_Init(NETFILE *fp) {
   return req;
 }
 
-HTTP_RESPONSE *ResponseInit(void) {
+static HTTP_RESPONSE *ResponseInit(void) {
   HTTP_RESPONSE *res;
 
   res = New(HTTP_RESPONSE);
@@ -113,7 +113,7 @@ HTTP_RESPONSE *ResponseInit(void) {
   return res;
 }
 
-void ResponseFree(HTTP_RESPONSE *res) {
+static void ResponseFree(HTTP_RESPONSE *res) {
   if (res == NULL) {
     return;
   }
@@ -128,7 +128,7 @@ void ResponseFree(HTTP_RESPONSE *res) {
     return y;                                                                  \
     break;
 
-char *GetReasonPhrase(int code) {
+static char *GetReasonPhrase(int code) {
   switch (code) {
     HTTP_CODE2REASON(HTTP_CONTINUE, "Continue")
     HTTP_CODE2REASON(HTTP_SWITCHING_PROTOCOLS, "Switching Protocols")
@@ -193,7 +193,7 @@ char *GetReasonPhrase(int code) {
   }
 }
 
-void SendResponse(HTTP_REQUEST *req, int status, char *body, size_t body_size,
+static void SendResponse(HTTP_REQUEST *req, int status, char *body, size_t body_size,
                   ...) {
   va_list ap;
   char buf[1024], date[50], *header, *h, *v;
@@ -260,7 +260,7 @@ void SendResponse(HTTP_REQUEST *req, int status, char *body, size_t body_size,
   Flush(req->fp);
 }
 
-int TryRecv(HTTP_REQUEST *req) {
+static int TryRecv(HTTP_REQUEST *req) {
   int size;
 
   if (req->buf_size >= MAX_REQ_SIZE) {
@@ -278,15 +278,11 @@ int TryRecv(HTTP_REQUEST *req) {
   }
   return size;
 badio:
-#if 0
-	Error("client termination");
-#else
   exit(0);
-#endif
   return 0;
 }
 
-char *GetNextLine(HTTP_REQUEST *req) {
+static char *GetNextLine(HTTP_REQUEST *req) {
   char *p;
   char *ret;
   char *head;
@@ -310,7 +306,7 @@ char *GetNextLine(HTTP_REQUEST *req) {
   }
 }
 
-void ParseReqLine(HTTP_REQUEST *req) {
+static void ParseReqLine(HTTP_REQUEST *req) {
   GRegex *re;
   GMatchInfo *match;
 
@@ -403,7 +399,7 @@ void ParseReqLine(HTTP_REQUEST *req) {
   free(line);
 }
 
-gboolean ParseReqHeader(HTTP_REQUEST *req) {
+static gboolean ParseReqHeader(HTTP_REQUEST *req) {
   GRegex *re;
   GMatchInfo *match;
   gchar *line, *key, *value;
@@ -432,29 +428,16 @@ gboolean ParseReqHeader(HTTP_REQUEST *req) {
   return TRUE;
 }
 
-void ParseReqBody(HTTP_REQUEST *req) {
-  char *value;
+static void ParseReqBodyContentLength(HTTP_REQUEST *req,const char *value)
+{
   size_t body_size, size, left;
 
-  value = (char *)g_hash_table_lookup(req->header_hash, "Content-Length");
-  if (value == NULL) {
-    req->status = HTTP_BAD_REQUEST;
-    Message("invalid Content-Length:%s", value);
-    return;
-  }
   body_size = (size_t)atoi(value);
   if ((body_size + req->buf_size) >= MAX_REQ_SIZE) {
     req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
     Message("invalid Content-Length:%s", value);
     return;
   }
-  value = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
-  if (value == NULL) {
-    req->status = HTTP_BAD_REQUEST;
-    Message("does not have content-type");
-    return;
-  }
-
   left = body_size - (req->buf_size - (req->head - req->buf));
   if (left > 0) {
     while (left > 0) {
@@ -470,11 +453,112 @@ void ParseReqBody(HTTP_REQUEST *req) {
   req->body = req->head;
   req->body_size = body_size;
   req->head += body_size;
-
-  dbgprintf("body :%s\n", req->body);
 }
 
-void ParseReqAuth(HTTP_REQUEST *req) {
+static void GetChunk(HTTP_REQUEST *req,char *out,size_t size) {
+  char buf[2];
+  size_t recv_size;
+  recv_size = Recv(req->fp,out,size);
+  ON_IO_ERROR(req->fp, badio);
+  if (recv_size != size) {
+    Message("wrong chunk_size?");
+    req->status = HTTP_BAD_REQUEST;
+    return;
+  }
+  /* \r\n */
+  recv_size = Recv(req->fp,buf,2);
+  if (recv_size != 2) {
+    Message("\\r\\n missing");
+    req->status = HTTP_BAD_REQUEST;
+    return;
+  }
+  if (buf[0] != 0x0d || buf[1] != 0x0a) {
+    Message("\\r\\n missing");
+    req->status = HTTP_BAD_REQUEST;
+    return;
+  }
+  return;
+badio:
+  Error("GetChunk Recv Error");
+  return;
+}
+
+/* (size)\r\n */
+static size_t GetChunkSize(HTTP_REQUEST *req) {
+  char *line;
+  line = GetNextLine(req);
+  size_t size = (size_t)strtoul(line,NULL,16);
+  free(line);
+  return size;
+}
+
+/*
+Transfer-Encoding: chunked
+
+7\r\n
+Mozilla\r\n
+9\r\n
+Developer\r\n
+7\r\n
+Network\r\n
+0\r\n
+\r\n
+*/
+static void ParseReqBodyChunked(HTTP_REQUEST *req) {
+  char *value,*buf,*p;
+  size_t chunk_size,body_size;
+  value = (char *)g_hash_table_lookup(req->header_hash, "Transfer-Encoding");
+  if (value == NULL) {
+    req->status = HTTP_BAD_REQUEST;
+    Message("does not have content-type");
+    return;
+  }
+  if (strncasecmp("chunked",value,7) != 0) {
+    req->status = HTTP_BAD_REQUEST;
+    Message("transfer-encoding:%s not implement;accept only chunked",value);
+    return;
+  }
+  buf = xmalloc(sizeof(char) * MAX_REQ_SIZE);
+  memset(buf, 0x0, MAX_REQ_SIZE);
+  p = buf;
+  body_size = 0;
+  while(1) {
+    chunk_size = GetChunkSize(req);
+    body_size += chunk_size;
+    if (body_size > MAX_REQ_SIZE) {
+      SendResponse(req, HTTP_REQUEST_ENTITY_TOO_LARGE, NULL, 0, NULL);
+      Error("over max request size :%d", MAX_REQ_SIZE);
+    }
+    if (chunk_size == 0) {
+      memcpy(req->buf,buf,body_size);
+      req->body = req->buf;
+      req->body_size = body_size;
+      free(buf);
+      break;
+    } else {
+      GetChunk(req,p,chunk_size);
+      p += chunk_size;
+    }
+  }
+}
+
+static void ParseReqBody(HTTP_REQUEST *req) {
+  char *value;
+  value = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
+  if (value == NULL) {
+    req->status = HTTP_BAD_REQUEST;
+    Message("does not have content-type");
+    return;
+  }
+  value = (char *)g_hash_table_lookup(req->header_hash, "Content-Length");
+  if (value != NULL) {
+    ParseReqBodyContentLength(req,value);
+  } else {
+    ParseReqBodyChunked(req);
+  }
+}
+
+static void ParseReqAuth(HTTP_REQUEST *req) {
   GRegex *re;
   GMatchInfo *match;
   gchar *head, *base64, *userpass;
@@ -540,7 +624,7 @@ void ParseReqAuth(HTTP_REQUEST *req) {
   g_regex_unref(re);
 }
 
-void ParseRequest(HTTP_REQUEST *req) {
+static void ParseRequest(HTTP_REQUEST *req) {
   ParseReqLine(req);
 
   while (ParseReqHeader(req)) {
@@ -579,7 +663,7 @@ static json_object *ParseReqArguments(char *args) {
   return obj;
 }
 
-json_object *MakeAPIReqJSON(HTTP_REQUEST *req) {
+static json_object *MakeAPIReqJSON(HTTP_REQUEST *req) {
   json_object *obj, *params, *meta, *arguments;
   gchar *ctype;
   char *id;
@@ -631,7 +715,7 @@ json_object *MakeAPIReqJSON(HTTP_REQUEST *req) {
   return obj;
 }
 
-void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
+static void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
   json_object *json_result, *json_status, *json_body, *json_ctype, *api_status;
   int status;
   char *blob,*id;
@@ -1064,7 +1148,7 @@ static gboolean GLAuth(HTTP_REQUEST *req) {
   }
 }
 
-void CheckJSONRPCMethod(HTTP_REQUEST *req) {
+static void CheckJSONRPCMethod(HTTP_REQUEST *req) {
   char *reqjson, *method;
   json_object *obj, *child;
 
