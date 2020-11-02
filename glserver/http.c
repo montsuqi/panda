@@ -86,7 +86,8 @@ static HTTP_REQUEST *HTTP_Init(NETFILE *fp) {
   req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
   memset(req->buf, 0x0, MAX_REQ_SIZE);
   req->body_size = 0;
-  req->body = NULL;
+  req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
+  memset(req->body, 0x0, MAX_REQ_SIZE);
   req->arguments = NULL;
   req->header_hash = NewNameiHash();
   req->user = NULL;
@@ -123,9 +124,9 @@ static void ResponseFree(HTTP_RESPONSE *res) {
   xfree(res);
 }
 
-#define HTTP_CODE2REASON(x, y)                                                 \
-  case x:                                                                      \
-    return y;                                                                  \
+#define HTTP_CODE2REASON(x, y) \
+  case x:                      \
+    return y;                  \
     break;
 
 static char *GetReasonPhrase(int code) {
@@ -282,6 +283,19 @@ badio:
   return 0;
 }
 
+static void TryRecvSize(HTTP_REQUEST *req,size_t size) {
+  size_t parsed,remain;
+  while(1) {
+    parsed = req->head - req->buf;
+    remain = req->buf_size - parsed;
+    if (remain >= size) {
+      return;
+    } else {
+      TryRecv(req);
+    }
+  }
+}
+
 static char *GetNextLine(HTTP_REQUEST *req) {
   char *p;
   char *ret;
@@ -430,7 +444,7 @@ static gboolean ParseReqHeader(HTTP_REQUEST *req) {
 
 static void ParseReqBodyContentLength(HTTP_REQUEST *req,const char *value)
 {
-  size_t body_size, size, left;
+  size_t body_size;
 
   body_size = (size_t)atoi(value);
   if ((body_size + req->buf_size) >= MAX_REQ_SIZE) {
@@ -438,52 +452,31 @@ static void ParseReqBodyContentLength(HTTP_REQUEST *req,const char *value)
     Message("invalid Content-Length:%s", value);
     return;
   }
-  left = body_size - (req->buf_size - (req->head - req->buf));
-  if (left > 0) {
-    while (left > 0) {
-      size = TryRecv(req);
-      if (left < size) {
-        left = 0;
-      } else {
-        left -= size;
-      }
-    }
-  }
-
-  req->body = req->head;
+  TryRecvSize(req,body_size);
+  memcpy(req->body,req->head,body_size);
   req->body_size = body_size;
   req->head += body_size;
 }
 
-static void GetChunk(HTTP_REQUEST *req,char *out,size_t size) {
-  char buf[2];
-  size_t recv_size;
-  recv_size = Recv(req->fp,out,size);
-  ON_IO_ERROR(req->fp, badio);
-  if (recv_size != size) {
-    Message("wrong chunk_size?");
+static void CheckCRLF(HTTP_REQUEST *req) {
+  TryRecvSize(req,2);
+  if (*(req->head) != 0x0d || *(req->head+1) != 0x0a) {
     req->status = HTTP_BAD_REQUEST;
+    Message("CRLF needed; %02x,%02x",*(req->head),*(req->head+1));
     return;
   }
-  /* \r\n */
-  recv_size = Recv(req->fp,buf,2);
-  if (recv_size != 2) {
-    Message("\\r\\n missing");
-    req->status = HTTP_BAD_REQUEST;
-    return;
-  }
-  if (buf[0] != 0x0d || buf[1] != 0x0a) {
-    Message("\\r\\n missing");
-    req->status = HTTP_BAD_REQUEST;
-    return;
-  }
-  return;
-badio:
-  Error("GetChunk Recv Error");
-  return;
+  req->head += 2;
 }
 
-/* (size)\r\n */
+static void GetChunk(HTTP_REQUEST *req,size_t size) {
+  TryRecvSize(req,size);
+  memcpy(req->body+req->body_size,req->head,size);
+  req->head += size;
+  req->body_size += size;
+  CheckCRLF(req);
+}
+
+/* (hexsize)\r\n */
 static size_t GetChunkSize(HTTP_REQUEST *req) {
   char *line;
   line = GetNextLine(req);
@@ -505,7 +498,7 @@ Network\r\n
 \r\n
 */
 static void ParseReqBodyChunked(HTTP_REQUEST *req) {
-  char *value,*buf,*p;
+  char *value;
   size_t chunk_size,body_size;
   value = (char *)g_hash_table_lookup(req->header_hash, "Transfer-Encoding");
   if (value == NULL) {
@@ -518,9 +511,6 @@ static void ParseReqBodyChunked(HTTP_REQUEST *req) {
     Message("transfer-encoding:%s not implement;accept only chunked",value);
     return;
   }
-  buf = xmalloc(sizeof(char) * MAX_REQ_SIZE);
-  memset(buf, 0x0, MAX_REQ_SIZE);
-  p = buf;
   body_size = 0;
   while(1) {
     chunk_size = GetChunkSize(req);
@@ -530,14 +520,10 @@ static void ParseReqBodyChunked(HTTP_REQUEST *req) {
       Error("over max request size :%d", MAX_REQ_SIZE);
     }
     if (chunk_size == 0) {
-      memcpy(req->buf,buf,body_size);
-      req->body = req->buf;
-      req->body_size = body_size;
-      free(buf);
+      CheckCRLF(req);
       break;
     } else {
-      GetChunk(req,p,chunk_size);
-      p += chunk_size;
+      GetChunk(req,chunk_size);
     }
   }
 }
@@ -1241,6 +1227,7 @@ static gboolean PrepareNextRequest(HTTP_REQUEST *req) {
     memset(req->buf, 0, MAX_REQ_SIZE);
     ON_IO_ERROR(req->fp, badio);
   }
+  memset(req->body, 0, MAX_REQ_SIZE);
   return TRUE;
 badio:
   return FALSE;
