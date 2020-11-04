@@ -283,7 +283,7 @@ badio:
   return 0;
 }
 
-static void TryRecvSize(HTTP_REQUEST *req,size_t size) {
+static void RecvBytes(HTTP_REQUEST *req,size_t size) {
   size_t parsed,remain;
   while(1) {
     parsed = req->head - req->buf;
@@ -452,14 +452,14 @@ static void ParseReqBodyContentLength(HTTP_REQUEST *req,const char *value)
     Message("invalid Content-Length:%s", value);
     return;
   }
-  TryRecvSize(req,body_size);
+  RecvBytes(req,body_size);
   memcpy(req->body,req->head,body_size);
   req->body_size = body_size;
   req->head += body_size;
 }
 
 static void CheckCRLF(HTTP_REQUEST *req) {
-  TryRecvSize(req,2);
+  RecvBytes(req,2);
   if (*(req->head) != 0x0d || *(req->head+1) != 0x0a) {
     req->status = HTTP_BAD_REQUEST;
     Message("CRLF needed; %02x,%02x",*(req->head),*(req->head+1));
@@ -469,7 +469,7 @@ static void CheckCRLF(HTTP_REQUEST *req) {
 }
 
 static void GetChunk(HTTP_REQUEST *req,size_t size) {
-  TryRecvSize(req,size);
+  RecvBytes(req,size);
   memcpy(req->body+req->body_size,req->head,size);
   req->head += size;
   req->body_size += size;
