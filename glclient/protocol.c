@@ -187,7 +187,7 @@ size_t HeaderPostBLOB(void *ptr, size_t size, size_t nmemb, void *userdata) {
 
 char *REST_PostBLOB(GLProtocol *ctx, LargeByteString *lbs) {
   struct curl_slist *headers = NULL;
-  char *oid, url[SIZE_URL_BUF + 1], clength[256], buf[256];
+  char *oid, url[SIZE_URL_BUF + 1], buf[256];
   long http_code;
   CURLcode res;
 
@@ -203,9 +203,7 @@ char *REST_PostBLOB(GLProtocol *ctx, LargeByteString *lbs) {
   headers =
       curl_slist_append(headers, "Content-Type: application/octet-stream");
   headers =
-      curl_slist_append(headers, "Transfer-Encoding: identity");
-  snprintf(clength, sizeof(clength), "Content-Length: %ld", LBS_Size(lbs));
-  headers = curl_slist_append(headers, clength);
+      curl_slist_append(headers, "Transfer-Encoding: chunked");
 
   LBS_SetPos(lbs, 0);
 
@@ -424,10 +422,12 @@ static json_object *JSONRPC(GLProtocol *ctx, int type, json_object *obj) {
            PACKAGE_DATE);
   headers = curl_slist_append(headers, buf);
   headers = curl_slist_append(headers, "Content-Type: application/json");
+#if 0
   snprintf(buf, sizeof(buf), "Content-Length: %ld", ctx->ReqSize);
   headers = curl_slist_append(headers, buf);
+#endif
   headers = curl_slist_append(headers, "Expect:");
-  headers = curl_slist_append(headers, "Transfer-Encoding: identity");
+  headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
   if (ctx->fSSO) {
     headers = curl_slist_append(headers, "X-Support-SSO: 1");
   }
