@@ -69,6 +69,7 @@ extern void TermEnqueue(TermNode *term, SessionData *data) {
 
 static SessionData *NewSessionData(void) {
   SessionData *data;
+  uuid_t u;
 
   data = New(SessionData);
   memclear(data, sizeof(SessionData));
@@ -77,6 +78,8 @@ static SessionData *NewSessionData(void) {
   data->hdr = New(MessageHeader);
   memclear(data->hdr, sizeof(MessageHeader));
   data->hdr->command = APL_COMMAND_LINK;
+  uuid_generate(u);
+  uuid_unparse(u, data->hdr->uuid);
   strcpy(data->hdr->tenant, MCP_TENANT);
   data->apsid = -1;
   data->spadata = NewNameHash();
@@ -93,6 +96,11 @@ static SessionData *NewSessionData(void) {
   InitializeValue(data->sysdbval);
   data->count = 0;
   data->w.sp = 0;
+  snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
+           data->hdr->uuid);
+  if (!MakeDir(data->hdr->tempdir, 0700)) {
+    Error("cannot make session tempdir %s", data->hdr->tempdir);
+  }
   return (data);
 }
 
@@ -134,6 +142,13 @@ static void FreeSessionData(SessionData *data) {
   if (data->agent != NULL) {
     xfree(data->agent);
   }
+#if 0
+	if (!getenv("WFC_KEEP_TEMPDIR")) {
+		if (!rm_r(data->hdr->tempdir)) {
+			Error("cannot remove session tempdir %s",data->hdr->tempdir);
+		}
+	}
+#endif
   xfree(data->hdr);
   g_hash_table_foreach_remove(data->spadata, (GHRFunc)FreeSpa, NULL);
   DestroyHashTable(data->spadata);
@@ -166,11 +181,6 @@ static LargeByteString *NewLinkData(void) {
 
 static void RegisterSession(SessionData *data) {
   SessionCtrl *ctrl;
-  snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
-           data->hdr->uuid);
-  if (!MakeDir(data->hdr->tempdir, 0700)) {
-    Error("cannot make session tempdir %s", data->hdr->tempdir);
-  }
 
   ctrl = NewSessionCtrl(SESSION_CONTROL_INSERT);
   ctrl->session = data;
@@ -191,13 +201,6 @@ static SessionData *LookupSession(const char *term) {
 
 static void DeregisterSession(SessionData *data) {
   SessionCtrl *ctrl;
-#if 0
-	if (!getenv("WFC_KEEP_TEMPDIR")) {
-		if (!rm_r(data->hdr->tempdir)) {
-			Error("cannot remove session tempdir %s",data->hdr->tempdir);
-		}
-	}
-#endif
   ctrl = NewSessionCtrl(SESSION_CONTROL_DELETE);
   ctrl->session = data;
   ctrl = ExecSessionCtrl(ctrl);
@@ -230,12 +233,9 @@ static SessionData *InitAPISession(const char *user, const char *wname,
                                    const char *host) {
   SessionData *data;
   LD_Node *ld;
-  uuid_t u;
 
   data = NewSessionData();
   data->type = SESSION_TYPE_API;
-  uuid_generate(u);
-  uuid_unparse(u, data->hdr->uuid);
   strcpy(data->hdr->window, wname);
   strcpy(data->hdr->user, user);
   strcpy(data->hdr->host, host);
@@ -309,7 +309,6 @@ static gboolean CheckClientVersion(char *version) {
 static void RPC_StartSession(TermNode *term, json_object *obj) {
   json_object *params, *meta, *child, *result, *res;
   SessionData *data;
-  uuid_t u;
   int sesnum;
   gchar *prefix, *rpcuri, *resturi;
   if (!json_object_object_get_ex(obj, "params", &params)) {
@@ -349,8 +348,6 @@ static void RPC_StartSession(TermNode *term, json_object *obj) {
   data = NewSessionData();
   data->linkdata = NewLinkData();
   data->term = term;
-  uuid_generate(u);
-  uuid_unparse(u, data->hdr->uuid);
 
   if (!json_object_object_get_ex(meta, "user", &child)) {
     Warning("request have not user");
@@ -927,9 +924,9 @@ static json_object *CheckDownloadList(json_object *obj, SessionData *data) {
 
   res = MakeJSONResponseTemplate(obj);
 
-  snprintf(lockfile, sizeof(lockfile), "%s/__download.lock",
+  snprintf(lockfile, sizeof(lockfile) - 1, "%s/__download.lock",
            data->hdr->tempdir);
-  snprintf(metafile, sizeof(metafile), "%s/__download.json",
+  snprintf(metafile, sizeof(metafile) - 1, "%s/__download.json",
            data->hdr->tempdir);
   lockfile[sizeof(lockfile) - 1] = 0;
   metafile[sizeof(metafile) - 1] = 0;
