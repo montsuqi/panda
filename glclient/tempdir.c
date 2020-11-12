@@ -52,12 +52,12 @@ void InitTempDir() {
 
   RootDir = g_build_filename(g_get_home_dir(), GL_ROOT_DIR, NULL);
   dir = g_build_filename(RootDir, "tmp", NULL);
-  MakeDir(dir, 0700);
+  mkdir_p(dir, 0700);
   rm_r_old(dir, ELAPSED);
   uuid_generate(u);
   uuid_unparse(u, buf);
   TempDir = g_build_filename(dir, buf, NULL);
-  MakeDir(TempDir, 0700);
+  mkdir_p(TempDir, 0700);
   g_free(dir);
   fprintf(stderr, "tempdir: %s\n", TempDir);
 }
