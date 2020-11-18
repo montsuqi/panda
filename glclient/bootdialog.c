@@ -390,6 +390,10 @@ static void boot_dialog_on_close(GtkWidget *close, BootDialog *self) {
   gtk_main_quit();
 }
 
+static void boot_dialog_on_logviewer(GtkWidget *close, BootDialog *self) {
+  //todo
+}
+
 static void boot_dialog_on_config(GtkWidget *widget, BootDialog *self) {
   server_dialog_run(self->dialog);
   boot_dialog_combo_update(self);
@@ -421,7 +425,7 @@ static BootDialog *boot_dialog_new() {
   self->dialog = dialog;
   gtk_window_set_title(GTK_WINDOW(dialog), _("glclient2 Launcher"));
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
-  gtk_window_set_wmclass(GTK_WINDOW(dialog), "lancher", "glclient");
+  gtk_window_set_wmclass(GTK_WINDOW(dialog), "launcher", "glclient");
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
   g_signal_connect(G_OBJECT(dialog), "delete_event",
                    G_CALLBACK(boot_dialog_on_delete_event), self);
@@ -503,6 +507,12 @@ static BootDialog *boot_dialog_new() {
   gtk_box_pack_start(GTK_BOX(action_area), button, TRUE, TRUE, 5);
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(boot_dialog_on_config), self);
+  gtk_widget_set_can_default(button, TRUE);
+
+  button = gtk_button_new_with_label(_("LogViewer"));
+  gtk_box_pack_start(GTK_BOX(action_area), button, TRUE, TRUE, 5);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(boot_dialog_on_logviewer), self);
   gtk_widget_set_can_default(button, TRUE);
 
   /* INFO tab */

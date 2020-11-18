@@ -47,6 +47,7 @@
 #endif
 #define SIZE_FORMAT 256
 
+static char *LogDir = NULL;
 static char *LogFile = NULL;
 static FILE *fp = NULL;
 static int level = GL_LOG_DEBUG;
@@ -56,10 +57,10 @@ void InitLogger(const char *prefix) {
   struct timeval tv;
   struct tm now;
   uuid_t u;
-  gchar *dir, _uuid[64], _time[64];
+  gchar _uuid[64], _time[64];
 
-  dir = g_build_filename(GetRootDir(), "log", NULL);
-  mkdir_p(dir, 0700);
+  LogDir = g_build_filename(GetRootDir(), "log", NULL);
+  mkdir_p(Logdir, 0700);
 
   gettimeofday(&tv, NULL);
   localtime_r((time_t *)&tv.tv_sec, &now);
@@ -67,9 +68,8 @@ void InitLogger(const char *prefix) {
 
   uuid_generate(u);
   uuid_unparse(u, _uuid);
-  LogFile = g_strconcat(dir, "/", prefix, "-", _time, "-", _uuid, ".log", NULL);
-  rm_r_old(dir, 2592000); /* 30days */
-  g_free(dir);
+  LogFile = g_strconcat(LogDir, "/", prefix, "-", _time, "-", _uuid, ".log", NULL);
+  rm_r_old(LogDir, 2592000); /* 30days */
   fprintf(stderr, "LogFile: %s\n", LogFile);
 
   if (fp == NULL) {
@@ -94,6 +94,7 @@ void InitLogger_via_FileName(const char *filename) {
 }
 
 const char *GetLogFile() { return LogFile; }
+const char *GetLogDir() { return LogDir; }
 
 void FinalLogger() {
   if (fp != NULL) {
