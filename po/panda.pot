@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: panda 3.0.0\n"
+"Project-Id-Version: panda 4.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2020-03-09 11:34+0900\n"
+"POT-Creation-Date: 2020-11-18 15:49+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -270,7 +270,7 @@ msgid "glclient print notify"
 msgstr ""
 
 #: glclient/client.c:134 glclient/push_action.c:152
-msgid "orca cloud announce"
+msgid "server announce"
 msgstr ""
 
 #: glclient/client.c:235
@@ -323,103 +323,103 @@ msgstr ""
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:232 glclient/protocol.c:288 glclient/protocol.c:472
+#: glclient/protocol.c:234 glclient/protocol.c:290 glclient/protocol.c:476
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:235 glclient/protocol.c:291 glclient/protocol.c:487
+#: glclient/protocol.c:237 glclient/protocol.c:293 glclient/protocol.c:491
 msgid "server maintenance error"
 msgstr ""
 
-#: glclient/protocol.c:238 glclient/protocol.c:294
+#: glclient/protocol.c:240 glclient/protocol.c:296
 #, c-format
 msgid "http status code[%ld]"
 msgstr ""
 
-#: glclient/protocol.c:323
+#: glclient/protocol.c:325
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:326
+#: glclient/protocol.c:328
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:330 glclient/protocol.c:334
+#: glclient/protocol.c:332 glclient/protocol.c:336
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:346
+#: glclient/protocol.c:348
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:359
+#: glclient/protocol.c:361
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:457 glclient/protocol.c:463
+#: glclient/protocol.c:461 glclient/protocol.c:467
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:476
+#: glclient/protocol.c:480
 msgid "NOT PERMITTED CERTIFICATE"
 msgstr ""
 
-#: glclient/protocol.c:478
+#: glclient/protocol.c:482
 msgid "USER NOT IN TENANTDB"
 msgstr ""
 
-#: glclient/protocol.c:480
+#: glclient/protocol.c:484
 msgid "ON PREMISES ONLY TENANT"
 msgstr ""
 
-#: glclient/protocol.c:482 glclient/protocol.c:489 glclient/protocol.c:493
+#: glclient/protocol.c:486 glclient/protocol.c:493 glclient/protocol.c:497
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:499
+#: glclient/protocol.c:503
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:516
+#: glclient/protocol.c:520
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:521
+#: glclient/protocol.c:525
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:526
+#: glclient/protocol.c:530
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:562
+#: glclient/protocol.c:566
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:573
+#: glclient/protocol.c:577
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:582
+#: glclient/protocol.c:586
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:587
+#: glclient/protocol.c:591
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:691
+#: glclient/protocol.c:695
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:696
+#: glclient/protocol.c:700
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:701
+#: glclient/protocol.c:705
 msgid "invalid message data:abort"
 msgstr ""
 
@@ -439,31 +439,31 @@ msgstr ""
 msgid "websocket_disconnect_message"
 msgstr ""
 
-#: glclient/certificate.c:192
+#: glclient/certificate.c:202
 msgid "no uri object"
 msgstr ""
 
-#: glclient/certificate.c:197
+#: glclient/certificate.c:207
 msgid "no pass object"
 msgstr ""
 
-#: glclient/certificate.c:307
+#: glclient/certificate.c:320
 msgid "Failure update certificate."
 msgstr ""
 
-#: glclient/certificate.c:314
+#: glclient/certificate.c:328
 msgid "Success update certificate."
 msgstr ""
 
-#: glclient/certificate.c:325
+#: glclient/certificate.c:340
 msgid "does not open cert"
 msgstr ""
 
-#: glclient/certificate.c:329
+#: glclient/certificate.c:344
 msgid "cert read failure"
 msgstr ""
 
-#: glclient/certificate.c:346
+#: glclient/certificate.c:361
 msgid ""
 "Certificate Expiration is Approaching.\n"
 "expiration: %Y/%m/%d %H:%M:%S\n"

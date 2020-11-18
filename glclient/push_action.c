@@ -149,7 +149,7 @@ static void event_handler(json_object *obj) {
       return;
     }
     message = (char *)json_object_get_string(child);
-    Notify(_("orca cloud announce"), message, "gtk-dialog-info", 30);
+    Notify(_("server announce"), message, "gtk-dialog-info", 30);
   } else if (!strcmp(ev, "websocket_reconnect")) {
     Notify(_("websocket_reconnect"), _("websocket_reconnect_message"),
            "gtk-dialog-warning", 30);
