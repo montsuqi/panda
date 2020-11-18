@@ -131,7 +131,7 @@ static void ShowStartupMessage() {
   if (fStartupMessage) {
     msg = GLP_GetStartupMessage(GLP(Session));
     if (msg != NULL && strlen(msg) > 0) {
-      Notify(_("orca cloud announce"), msg, "gtk-dialog-info", 30);
+      Notify(_("server announce"), msg, "gtk-dialog-info", 30);
     }
   }
 }
