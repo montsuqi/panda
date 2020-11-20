@@ -1331,6 +1331,7 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 
   DbExecTime = 0;
   rc = 0;
+  ClearFetchResult();
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     res = _PQexec(dbg, "BEGIN");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
@@ -1348,6 +1349,7 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   PGconn *conn;
   rc = 0;
+  ClearFetchResult();
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg);
     InTrans(conn);
