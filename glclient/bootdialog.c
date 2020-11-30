@@ -36,6 +36,7 @@
 #include "bootdialog.h"
 #include "action.h"
 #include "dialogs.h"
+#include "logviewer.h"
 
 /*********************************************************************
  * EditDialog
@@ -391,7 +392,7 @@ static void boot_dialog_on_close(GtkWidget *close, BootDialog *self) {
 }
 
 static void boot_dialog_on_logviewer(GtkWidget *close, BootDialog *self) {
-  //todo
+  LogViewerRun();
 }
 
 static void boot_dialog_on_config(GtkWidget *widget, BootDialog *self) {

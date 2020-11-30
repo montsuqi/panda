@@ -14,5 +14,6 @@ glclient/protocol.c
 glclient/push_action.c
 glclient/certificate.c
 glclient/openid_connect.c
+glclient/logviewer.c
 libs/option.c
 libs/net.c

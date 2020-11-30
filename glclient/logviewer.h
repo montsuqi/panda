@@ -28,7 +28,6 @@
 #include <glib.h>
 
 void LogViewerRun();
-const char* GetLogDir();
 
 #endif /* #ifndef __LOGVIEWER_H_INCLUDED__ */
 

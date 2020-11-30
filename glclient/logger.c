@@ -60,7 +60,7 @@ void InitLogger(const char *prefix) {
   gchar _uuid[64], _time[64];
 
   LogDir = g_build_filename(GetRootDir(), "log", NULL);
-  mkdir_p(Logdir, 0700);
+  mkdir_p(LogDir, 0700);
 
   gettimeofday(&tv, NULL);
   localtime_r((time_t *)&tv.tv_sec, &now);

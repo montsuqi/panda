@@ -33,6 +33,7 @@ extern void InitLogger(const char *prefix);
 extern void InitLogger_via_FileName(const char *filename);
 extern void FinalLogger();
 const char *GetLogFile();
+const char *GetLogDir();
 extern void SetErrorFunc(void (*)(const char *, ...));
 extern void SetLogLevel(int level);
 extern void logger(int level, const char *file, int line, const char *format,
