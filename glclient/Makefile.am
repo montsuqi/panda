@@ -43,6 +43,7 @@ base_sources =						\
 	tempdir.c		tempdir.h		\
 	openid_connect.c openid_connect.h \
 	logger.c		logger.h		\
+	logviewer.c		logviewer.h		\
 					icon.h \
   certificate.c certificate.h
 
