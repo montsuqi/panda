@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 4.0.0\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2020-11-18 15:49+0900\n"
+"POT-Creation-Date: 2020-11-30 14:43+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,11 +25,11 @@ msgstr ""
 msgid "Open Directory"
 msgstr ""
 
-#: glclient/bd_component.c:364 glclient/bootdialog.c:275
+#: glclient/bd_component.c:364 glclient/bootdialog.c:276
 msgid "AuthURI"
 msgstr ""
 
-#: glclient/bd_component.c:373 glclient/bootdialog.c:277
+#: glclient/bd_component.c:373 glclient/bootdialog.c:278
 msgid "User"
 msgstr ""
 
@@ -131,67 +131,71 @@ msgstr ""
 msgid "Show Startup Message"
 msgstr ""
 
-#: glclient/bootdialog.c:54 glclient/bootdialog.c:225
+#: glclient/bootdialog.c:55 glclient/bootdialog.c:226
 msgid "New"
 msgstr ""
 
-#: glclient/bootdialog.c:58 glclient/bootdialog.c:233
+#: glclient/bootdialog.c:59 glclient/bootdialog.c:234
 msgid "Edit"
 msgstr ""
 
-#: glclient/bootdialog.c:74
+#: glclient/bootdialog.c:75
 msgid "ConfigName"
 msgstr ""
 
-#: glclient/bootdialog.c:217
+#: glclient/bootdialog.c:218
 msgid "Server Setting"
 msgstr ""
 
-#: glclient/bootdialog.c:241
+#: glclient/bootdialog.c:242
 msgid "Delete"
 msgstr ""
 
-#: glclient/bootdialog.c:249 glclient/bootdialog.c:496
+#: glclient/bootdialog.c:250 glclient/bootdialog.c:501 glclient/logviewer.c:218
 msgid "Close"
 msgstr ""
 
-#: glclient/bootdialog.c:272
+#: glclient/bootdialog.c:273
 msgid "Description"
 msgstr ""
 
-#: glclient/bootdialog.c:422 glclient/bootdialog.c:431
+#: glclient/bootdialog.c:427 glclient/bootdialog.c:436
 msgid "glclient2 Launcher"
 msgstr ""
 
-#: glclient/bootdialog.c:439
+#: glclient/bootdialog.c:444
 msgid "Server"
 msgstr ""
 
-#: glclient/bootdialog.c:464
+#: glclient/bootdialog.c:469
 msgid "Basic"
 msgstr ""
 
-#: glclient/bootdialog.c:470
+#: glclient/bootdialog.c:475
 msgid "SSL"
 msgstr ""
 
-#: glclient/bootdialog.c:476
+#: glclient/bootdialog.c:481
 msgid "Printer"
 msgstr ""
 
-#: glclient/bootdialog.c:481
+#: glclient/bootdialog.c:486
 msgid "Details"
 msgstr ""
 
-#: glclient/bootdialog.c:487
+#: glclient/bootdialog.c:492
 msgid "Connect"
 msgstr ""
 
-#: glclient/bootdialog.c:502
+#: glclient/bootdialog.c:507
 msgid "Configuration"
 msgstr ""
 
-#: glclient/bootdialog.c:509
+#: glclient/bootdialog.c:513 glclient/logviewer.c:169
+msgid "LogViewer"
+msgstr ""
+
+#: glclient/bootdialog.c:520
 msgid "INFOMATION"
 msgstr ""
 
@@ -203,7 +207,7 @@ msgstr ""
 msgid "save pin"
 msgstr ""
 
-#: glclient/download.c:51
+#: glclient/download.c:51 glclient/logviewer.c:142 glclient/logviewer.c:240
 msgid "Specify filename..."
 msgstr ""
 
@@ -505,6 +509,43 @@ msgstr ""
 
 #: glclient/openid_connect.c:239
 msgid "no Set-Cookie object"
+msgstr ""
+
+#: glclient/logviewer.c:60 glclient/logviewer.c:116
+#, c-format
+msgid "file open failure: %s"
+msgstr ""
+
+#: glclient/logviewer.c:191
+msgid "Datetime"
+msgstr ""
+
+#: glclient/logviewer.c:193
+msgid "Window"
+msgstr ""
+
+#: glclient/logviewer.c:195
+msgid "Widget"
+msgstr ""
+
+#: glclient/logviewer.c:197
+msgid "Event"
+msgstr ""
+
+#: glclient/logviewer.c:199
+msgid "ComTime"
+msgstr ""
+
+#: glclient/logviewer.c:201
+msgid "ServerTime"
+msgstr ""
+
+#: glclient/logviewer.c:203
+msgid "AppTime"
+msgstr ""
+
+#: glclient/logviewer.c:210
+msgid "CSV Out"
 msgstr ""
 
 #: libs/net.c:259
