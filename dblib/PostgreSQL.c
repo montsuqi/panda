@@ -1,4 +1,4 @@
-/*
+char*/*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  *
@@ -54,6 +54,15 @@ static int Dim[SIZE_RNAME];
 /*マルチフェッチ結果*/
 static PGresult *fetch_result = NULL;
 static int fetch_index = 0;
+
+typedef struct {
+  char *sql;
+  int index;
+  int num;
+  PGresult *result;
+  GHashTable *tabel;
+} FetchCache;
+static FetchCache *fcache = NULL;
 
 static void _PQclear(PGresult *res);
 
@@ -726,12 +735,65 @@ static char *PutDim(void) {
   return (buff);
 }
 
-static void ClearFetchResult() {
-  if (fetch_result != NULL) {
-    _PQclear(fetch_result);
+static void InitFetchCache() {
+  fcache = New(FetchCache);
+  fcache->sql = NULL;
+  fcache->index = 0;
+  fcache->num = 0;
+  fcache->result = NULL;
+  fcache->table = NewNameHash();
+}
+
+static gboolean ghr_table(gpointer key, gpointer value, gpointer data) {
+  free((char*)key);
+  _PQClear((PGresult*)value);
+  return TRUE;
+}
+
+static gboolean ghr_table_1(gpointer key, gpointer value, gpointer data) {
+  free((char*)key);
+  _PQClear((PGresult*)value);
+  return FALSE;
+}
+
+static void FreeFetchCache() {
+  if (fcache == NULL) {
+    return;
   }
-  fetch_result = NULL;
-  fetch_index = 0;
+  if (fcache->sql != NULL) {
+    free(fcache->sql);
+  }
+  if (fcache->table != NULL) {
+    g_hash_table_foreach_remove(fcache->table,ghr_table,NULL);
+    g_hash_table_destroy(fcache->table);
+  }
+  free(fcache);
+  fcache = NULL;
+}
+
+static void AddFetchCache(const char *key, PGresult *result)
+{
+  if (fcashe->num >= FETCH_CACHE_MAX_NUM) {
+    g_hash_table_foreach_remove(fcache->table,ghr_table_1,NULL);
+  }
+  g_hash_table_insert(fcache->table,key,result);
+  fcache->index = 0;
+  fcache->num += 1;
+}
+
+static PGresult* GetFetchCache(const char *key)
+{
+  return (PGresult*)g_hash_table_lookup(fcache->table,key);
+}
+
+static void PrepareFetchCache(const char *sql) {
+  if (fcache->sql != NULL) {
+    free(fcache->sql);
+  }
+  fcache->sql = strdup(sql);
+  fcache->resulut = NULL;
+  fcache->index = 0;
+  fcache->num = 0;
 }
 
 static ValueStruct *_PGresToValue(DBG_Struct *dbg, PGresult *res, int count,
@@ -1251,11 +1313,16 @@ static ValueStruct *ExecPGSQL(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 static int _EXEC(DBG_Struct *dbg, char *sql) {
   PGresult *res;
   int rc = MCP_OK;
+  char *p;
 
   if (_PQsendQuery(dbg, sql) == TRUE) {
     while ((res = _PQgetResult(dbg)) != NULL) {
       rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
       _PQclear(res);
+    }
+    /*先頭から3byteまでにSELECTがあればfcache->sqlに記録*/
+    if ((p = strcasestr(sql,"SELECT")) && (p - sql) <= 3) {
+      ResetFetchCache(sql);
     }
   } else {
     Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg)));
@@ -1331,7 +1398,8 @@ static ValueStruct *_DBSTART(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
 
   DbExecTime = 0;
   rc = 0;
-  ClearFetchResult();
+  FreeFetchCache();
+  InitFetchCache();
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     res = _PQexec(dbg, "BEGIN");
     rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
@@ -1349,7 +1417,7 @@ static ValueStruct *_DBCOMMIT(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
   int rc;
   PGconn *conn;
   rc = 0;
-  ClearFetchResult();
+  FreeFetchCache();
   if (dbg->dbstatus == DB_STATUS_CONNECT) {
     conn = PGCONN(dbg);
     InTrans(conn);
@@ -1395,6 +1463,7 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   PathStruct *path;
   ValueStruct *ret;
   LargeByteString *src;
+  PGresult *result;
 
   ret = NULL;
   ctrl->rcount = 0;
@@ -1408,12 +1477,15 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
       ctrl->rc = MCP_OK;
       ret = ExecPGSQL(dbg, ctrl, src, args);
     } else {
-      ret = NULL;
-      if (fetch_result == NULL) {
-        sprintf(sql, "FETCH %d FROM %s_%s_csr", ctrl->limit, ctrl->rname,
-              ctrl->pname);
-        fetch_result = _PQexec(dbg, sql);
-        ctrl->rc = CheckResult(dbg, fetch_result, PGRES_TUPLES_OK);
+      if (fcache->result == NULL) {
+        fcache->result = GetFetchCache();
+        if (fcache->result == NULL) {
+          sprintf(sql, "FETCH %d FROM %s_%s_csr", FETCH_CACHE_LIMIT, ctrl->rname,
+                ctrl->pname);
+          result = _PQexec(dbg, sql);
+          ctrl->rc = CheckResult(dbg, fetch_result, PGRES_TUPLES_OK);
+          AddFetchCache(result);
+        }
       }
       ret = PGresToValueFetch(dbg, ctrl, args);
     }
