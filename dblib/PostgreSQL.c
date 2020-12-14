@@ -1,4 +1,4 @@
-char*/*
+/*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  *
@@ -18,8 +18,6 @@ char*/*
  */
 
 /*
-#define	DEBUG
-#define	TRACE
 */
 
 #ifdef HAVE_CONFIG_H
@@ -51,9 +49,6 @@ static int level;
 static char *rname[SIZE_RNAME];
 static int alevel;
 static int Dim[SIZE_RNAME];
-/*マルチフェッチ結果*/
-static PGresult *fetch_result = NULL;
-static int fetch_index = 0;
 
 typedef struct {
   char *sql;
