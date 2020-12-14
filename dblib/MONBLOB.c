@@ -85,6 +85,8 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   char *filename = NULL;
   char *content_type = NULL;
   int rc;
+  int _lifetype;
+  unsigned int lifetype = 1;
 
   mondbg = GetDBG_monsys();
   if ((val = GetItemLongName(args, "id")) != NULL) {
@@ -99,7 +101,15 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   if ((val = GetItemLongName(args, "content_type")) != NULL) {
     content_type = ValueToString(val, dbg->coding);
   }
-  rid = monblob_import(mondbg, id, persist, filename, content_type, 1);
+  if ((val = GetItemLongName(args, "lifetype")) != NULL) {
+    _lifetype = ValueToInteger(val, dbg->coding);
+    if (_lifetype < 0) {
+      lifetype = 1;
+    } else {
+      lifetype = _lifetype;
+    }
+  }
+  rid = monblob_import(mondbg, id, persist, filename, content_type, lifetype);
   if ((rid != NULL) && (val = GetItemLongName(args, "id")) != NULL) {
     SetValueString(val, rid, dbg->coding);
     xfree(rid);
