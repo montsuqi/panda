@@ -23,7 +23,7 @@
 #include "dblib.h"
 #define MONBLOB "monblob"
 #define BLOBEXPIRE 2
-#define MONBLOBEXPIRE 50
+#define MONBLOBEXPIRE 7
 #define SEQMONBLOB "seqmonblob"
 
 #define MON_LIFE_SHORT 0
