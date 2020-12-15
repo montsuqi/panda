@@ -102,7 +102,7 @@ static ValueStruct *_ImportBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
     content_type = ValueToString(val, dbg->coding);
   }
   if ((val = GetItemLongName(args, "lifetype")) != NULL) {
-    _lifetype = ValueToInteger(val, dbg->coding);
+    _lifetype = ValueToInteger(val);
     if (_lifetype < 0) {
       lifetype = 1;
     } else {
