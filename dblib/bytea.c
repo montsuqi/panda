@@ -394,7 +394,7 @@ static Bool monblob_expire(DBG_Struct *dbg) {
            "DELETE FROM %s WHERE (lifetype = 0 AND (now() > importtime + "
            "CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > "
            "importtime + CAST('%d days' AS INTERVAL)));",
-           MONBLOB, BLOBEXPIRE, MONBLOBEXPIRE);
+           MONBLOB, ThisEnv->blobexpire, ThisEnv->monblobexpire);
   rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return (rc == MCP_OK);
