@@ -139,6 +139,7 @@ static gboolean on_csv(GtkWidget *widget,void *data) {
       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE,
       GTK_RESPONSE_ACCEPT, NULL);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+  gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "out.csv");
   gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 
