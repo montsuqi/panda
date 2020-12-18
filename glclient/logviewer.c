@@ -42,7 +42,7 @@
 static void update_list(GtkWidget *label,GtkWidget *list, const char *fname) {
   GtkListStore *model;
   GtkTreeIter iter;
-  GRegex *re1, *re2, *re3;
+  GRegex *re1,*re2,*re3;
   GMatchInfo *mi;
   FILE *fp;
   char buf[LINE_BUF_SIZE],*host,*datetime,*window,*widget,*event;
@@ -50,7 +50,7 @@ static void update_list(GtkWidget *label,GtkWidget *list, const char *fname) {
 
   re1 = g_regex_new("start_session (.*)",0,0,NULL);
   re2 = g_regex_new("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}).*window\\:(.*) widget\\:(.*) event\\:(.*)",0,0,NULL);
-  re3 = g_regex_new("rpc_total\\:(\\d+) server_total\\:(\\d+)ms server_app\\:(\\d+)ms",0,0,NULL);
+  re3 = g_regex_new("rpc_total\\:(\\d+)(?:ms)? server_total\\:(\\d+)ms server_app\\:(\\d+)ms",0,0,NULL);
 
   model = (GtkListStore *)gtk_tree_view_get_model(GTK_TREE_VIEW(list));
   gtk_list_store_clear(model);

@@ -181,7 +181,7 @@ extern void send_event(GtkWidget *widget, char *event) {
     Info("[send_event] "
          "total:%lums "
          "make_event_data:%lums "
-         "rpc_total:%lu "
+         "rpc_total:%lums "
          "server_total:%lums "
          "server_app:%lums "
          "update_screen:%lums",
