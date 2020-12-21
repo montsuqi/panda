@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2020-11-18 15:49+0900\n"
+"POT-Creation-Date: 2020-11-30 14:43+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -24,11 +24,11 @@ msgstr "参照"
 msgid "Open Directory"
 msgstr "キャッシュディレクトリ名"
 
-#: glclient/bd_component.c:364 glclient/bootdialog.c:275
+#: glclient/bd_component.c:364 glclient/bootdialog.c:276
 msgid "AuthURI"
 msgstr "サーバ"
 
-#: glclient/bd_component.c:373 glclient/bootdialog.c:277
+#: glclient/bd_component.c:373 glclient/bootdialog.c:278
 msgid "User"
 msgstr "ユーザ名"
 
@@ -130,67 +130,71 @@ msgstr "タイマー起動時間(ミリ秒)"
 msgid "Show Startup Message"
 msgstr "接続時お知らせ表示"
 
-#: glclient/bootdialog.c:54 glclient/bootdialog.c:225
+#: glclient/bootdialog.c:55 glclient/bootdialog.c:226
 msgid "New"
 msgstr "新規作成"
 
-#: glclient/bootdialog.c:58 glclient/bootdialog.c:233
+#: glclient/bootdialog.c:59 glclient/bootdialog.c:234
 msgid "Edit"
 msgstr "編集"
 
-#: glclient/bootdialog.c:74
+#: glclient/bootdialog.c:75
 msgid "ConfigName"
 msgstr "設定"
 
-#: glclient/bootdialog.c:217
+#: glclient/bootdialog.c:218
 msgid "Server Setting"
 msgstr "サーバ設定"
 
-#: glclient/bootdialog.c:241
+#: glclient/bootdialog.c:242
 msgid "Delete"
 msgstr "削除"
 
-#: glclient/bootdialog.c:249 glclient/bootdialog.c:496
+#: glclient/bootdialog.c:250 glclient/bootdialog.c:501 glclient/logviewer.c:218
 msgid "Close"
 msgstr "閉じる"
 
-#: glclient/bootdialog.c:272
+#: glclient/bootdialog.c:273
 msgid "Description"
 msgstr "説明"
 
-#: glclient/bootdialog.c:422 glclient/bootdialog.c:431
+#: glclient/bootdialog.c:427 glclient/bootdialog.c:436
 msgid "glclient2 Launcher"
 msgstr "glclient2 ランチャー"
 
-#: glclient/bootdialog.c:439
+#: glclient/bootdialog.c:444
 msgid "Server"
 msgstr "サーバ"
 
-#: glclient/bootdialog.c:464
+#: glclient/bootdialog.c:469
 msgid "Basic"
 msgstr "基本"
 
-#: glclient/bootdialog.c:470
+#: glclient/bootdialog.c:475
 msgid "SSL"
 msgstr "SSL"
 
-#: glclient/bootdialog.c:476
+#: glclient/bootdialog.c:481
 msgid "Printer"
 msgstr "プリンタ"
 
-#: glclient/bootdialog.c:481
+#: glclient/bootdialog.c:486
 msgid "Details"
 msgstr "詳細"
 
-#: glclient/bootdialog.c:487
+#: glclient/bootdialog.c:492
 msgid "Connect"
 msgstr "接続"
 
-#: glclient/bootdialog.c:502
+#: glclient/bootdialog.c:507
 msgid "Configuration"
 msgstr "設定"
 
-#: glclient/bootdialog.c:509
+#: glclient/bootdialog.c:513 glclient/logviewer.c:169
+msgid "LogViewer"
+msgstr "ログビューア"
+
+#: glclient/bootdialog.c:520
 msgid "INFOMATION"
 msgstr "情報"
 
@@ -202,7 +206,7 @@ msgstr "PIN:"
 msgid "save pin"
 msgstr "PINを保存する"
 
-#: glclient/download.c:51
+#: glclient/download.c:51 glclient/logviewer.c:142 glclient/logviewer.c:240
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
 
@@ -552,6 +556,45 @@ msgid "no Set-Cookie object"
 msgstr ""
 "シングルサインオンエラー\n"
 "no Set-Cookie object"
+
+#: glclient/logviewer.c:60 glclient/logviewer.c:116
+#, fuzzy, c-format
+msgid "file open failure: %s"
+msgstr ""
+"Engine_initに失敗しました:\n"
+" %s"
+
+#: glclient/logviewer.c:191
+msgid "Datetime"
+msgstr "日時"
+
+#: glclient/logviewer.c:193
+msgid "Window"
+msgstr "ウィンドウ"
+
+#: glclient/logviewer.c:195
+msgid "Widget"
+msgstr "ウィジェット"
+
+#: glclient/logviewer.c:197
+msgid "Event"
+msgstr "イベント"
+
+#: glclient/logviewer.c:199
+msgid "ComTime"
+msgstr "通信時間"
+
+#: glclient/logviewer.c:201
+msgid "ServerTime"
+msgstr "サーバ処理時間"
+
+#: glclient/logviewer.c:203
+msgid "AppTime"
+msgstr "アプリ処理時間"
+
+#: glclient/logviewer.c:210
+msgid "CSV Out"
+msgstr "CSVファイル出力"
 
 #: libs/net.c:259
 #, c-format
