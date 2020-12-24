@@ -1107,7 +1107,7 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
       break;
     case T_MONBLOBEXPIRE:
       if (GetSymbol == T_ICONST) {
-        ThisEnv->blobexpire = ComInt;
+        ThisEnv->monblobexpire = ComInt;
       } else {
         ParError("invalid blobexpire");
       }
