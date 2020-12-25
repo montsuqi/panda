@@ -863,13 +863,17 @@ static void RPC_PandaAPI(TermNode *term, json_object *obj) {
   data = Process(data);
   api = data->apidata;
 
-  res = MakeJSONResponseTemplate(obj);
-  NativeUnPackValue(NULL, LBS_Body(api->rec), rec->value);
-  buf = xmalloc(JSON_SizeValue(NULL, rec->value));
+  {
+    res = MakeJSONResponseTemplate(obj);
+    val = DuplicateValue(rec->value, FALSE);
+    NativeUnPackValue(NULL, LBS_Body(api->rec), val);
+    buf = xmalloc(JSON_SizeValue(NULL, val));
 
-  JSON_PackValue(NULL, buf, rec->value);
-  child = json_tokener_parse(buf);
-  xfree(buf);
+    JSON_PackValue(NULL, buf, val);
+    child = json_tokener_parse(buf);
+    xfree(buf);
+    FreeValueStruct(val);
+  }
 
   json_object_object_add(res, "result", child);
   json_object_object_add(res, "api_status", json_object_new_int(api->status));
