@@ -106,6 +106,8 @@
 
 #define T_INITIAL_LD (T_YYBASE + 54)
 #define T_CRYPTOPASS (T_YYBASE + 55)
+#define T_BLOBEXPIRE (T_YYBASE + 56)
+#define T_MONBLOBEXPIRE (T_YYBASE + 57)
 
 static TokenTable tokentable[] = {{"ld", T_LD},
                                   {"initial_ld", T_INITIAL_LD},
@@ -160,6 +162,8 @@ static TokenTable tokentable[] = {{"ld", T_LD},
                                   {"dbmaster", T_DBMASTER},
                                   {"auditlog", T_AUDITLOG},
                                   {"sumcheck", T_SUMCHECK},
+                                  {"blobexpire", T_BLOBEXPIRE},
+                                  {"monblobexpire", T_MONBLOBEXPIRE},
                                   {"", 0}};
 
 static GHashTable *Reserved;
@@ -916,6 +920,8 @@ static DI_Struct *NewEnv(char *name) {
   env->DBMasterLogDBName = NULL;
   env->InitialLD = NULL;
   env->CryptoPass = NULL;
+  env->blobexpire = 2;
+  env->monblobexpire = 7;
 
   return (env);
 }
@@ -1091,6 +1097,20 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
     case T_INITIAL_LD:
       GetName;
       ThisEnv->InitialLD = StrDup(ComSymbol);
+      break;
+    case T_BLOBEXPIRE:
+      if (GetSymbol == T_ICONST) {
+        ThisEnv->blobexpire = ComInt;
+      } else {
+        ParError("invalid blobexpire");
+      }
+      break;
+    case T_MONBLOBEXPIRE:
+      if (GetSymbol == T_ICONST) {
+        ThisEnv->monblobexpire = ComInt;
+      } else {
+        ParError("invalid blobexpire");
+      }
       break;
     case T_BD:
       if (GetSymbol == '{') {

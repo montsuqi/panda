@@ -341,6 +341,8 @@ typedef struct {
 
   char *DBMasterLogDBName;
   char *CryptoPass;
+  int blobexpire;
+  int monblobexpire;
 } DI_Struct;
 
 typedef struct {
