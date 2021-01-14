@@ -397,7 +397,7 @@ static Bool monblob_expire(DBG_Struct *dbg) {
            "    (now() > importtime + CAST('%d days' AS INTERVAL))) "
            "OR "
            "  (lifetype = 1 AND "
-           "    (now() > importtime + CAST('%d days' AS INTERVAL))) ",
+           "    (now() > importtime + CAST('%d days' AS INTERVAL))) "
            "OR "
            "  (lifetype = 3 AND "
            "    (now() > importtime + CAST('%d days' AS INTERVAL)));",
