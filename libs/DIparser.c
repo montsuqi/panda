@@ -106,8 +106,9 @@
 
 #define T_INITIAL_LD (T_YYBASE + 54)
 #define T_CRYPTOPASS (T_YYBASE + 55)
-#define T_BLOBEXPIRE (T_YYBASE + 56)
-#define T_MONBLOBEXPIRE (T_YYBASE + 57)
+#define T_BLOB_EXPIRE (T_YYBASE + 56)
+#define T_MONBLOB_EXPIRE (T_YYBASE + 57)
+#define T_MONBLOB_EXPIRE_LONG (T_YYBASE + 58)
 
 static TokenTable tokentable[] = {{"ld", T_LD},
                                   {"initial_ld", T_INITIAL_LD},
@@ -162,8 +163,9 @@ static TokenTable tokentable[] = {{"ld", T_LD},
                                   {"dbmaster", T_DBMASTER},
                                   {"auditlog", T_AUDITLOG},
                                   {"sumcheck", T_SUMCHECK},
-                                  {"blobexpire", T_BLOBEXPIRE},
-                                  {"monblobexpire", T_MONBLOBEXPIRE},
+                                  {"blob_expire", T_BLOB_EXPIRE},
+                                  {"monblob_expire", T_MONBLOB_EXPIRE},
+                                  {"monblob_expire_long", T_MONBLOB_EXPIRE_LONG},
                                   {"", 0}};
 
 static GHashTable *Reserved;
@@ -920,8 +922,9 @@ static DI_Struct *NewEnv(char *name) {
   env->DBMasterLogDBName = NULL;
   env->InitialLD = NULL;
   env->CryptoPass = NULL;
-  env->blobexpire = 2;
-  env->monblobexpire = 7;
+  env->blob_expire = 2;
+  env->monblob_expire = 7;
+  env->monblob_expire_long = 50;
 
   return (env);
 }
@@ -1098,18 +1101,25 @@ static DI_Struct *ParDI(CURFILE *in, char *ld, char *bd, char *db,
       GetName;
       ThisEnv->InitialLD = StrDup(ComSymbol);
       break;
-    case T_BLOBEXPIRE:
+    case T_BLOB_EXPIRE:
       if (GetSymbol == T_ICONST) {
-        ThisEnv->blobexpire = ComInt;
+        ThisEnv->blob_expire = ComInt;
       } else {
-        ParError("invalid blobexpire");
+        ParError("invalid blob_expire");
       }
       break;
-    case T_MONBLOBEXPIRE:
+    case T_MONBLOB_EXPIRE:
       if (GetSymbol == T_ICONST) {
-        ThisEnv->monblobexpire = ComInt;
+        ThisEnv->monblob_expire = ComInt;
       } else {
-        ParError("invalid blobexpire");
+        ParError("invalid monblob_expire");
+      }
+      break;
+    case T_MONBLOB_EXPIRE_LONG:
+      if (GetSymbol == T_ICONST) {
+        ThisEnv->monblob_expire_long = ComInt;
+      } else {
+        ParError("invalid monblob_expire_long");
       }
       break;
     case T_BD:
