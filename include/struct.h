@@ -341,8 +341,9 @@ typedef struct {
 
   char *DBMasterLogDBName;
   char *CryptoPass;
-  int blobexpire;
-  int monblobexpire;
+  int blob_expire;
+  int monblob_expire;
+  int monblob_expire_long;
 } DI_Struct;
 
 typedef struct {

@@ -358,12 +358,12 @@ static char *_monblob_import(DBG_Struct *dbg, char *id, int persist,
   monblob->filename = StrDup(basename((char *)filename));
   monblob->lifetype = lifetype;
   if (persist > 0) {
-    if (monblob->lifetype == 0) {
-      monblob->lifetype = 1;
+    if (monblob->lifetype == MON_LIFE_SHORT) {
+      monblob->lifetype = MON_LIFE_LONG;
     }
   }
-  if (monblob->lifetype > 2) {
-    monblob->lifetype = 2;
+  if (monblob->lifetype > MON_LIFE_LONG_LONG) {
+    monblob->lifetype = MON_LIFE_LONG_LONG;
   }
   timestamp(monblob->importtime, sizeof(monblob->importtime));
   if (content_type != NULL) {
@@ -391,10 +391,18 @@ static Bool monblob_expire(DBG_Struct *dbg) {
 
   sql = (char *)xmalloc(sql_len);
   snprintf(sql, sql_len,
-           "DELETE FROM %s WHERE (lifetype = 0 AND (now() > importtime + "
-           "CAST('%d days' AS INTERVAL))) OR (lifetype = 1 AND (now() > "
-           "importtime + CAST('%d days' AS INTERVAL)));",
-           MONBLOB, ThisEnv->blobexpire, ThisEnv->monblobexpire);
+           "DELETE FROM %s "
+           "WHERE "
+           "  (lifetype = 0 AND "
+           "    (now() > importtime + CAST('%d days' AS INTERVAL))) "
+           "OR "
+           "  (lifetype = 1 AND "
+           "    (now() > importtime + CAST('%d days' AS INTERVAL))) "
+           "OR "
+           "  (lifetype = 3 AND "
+           "    (now() > importtime + CAST('%d days' AS INTERVAL)));",
+           MONBLOB, ThisEnv->blob_expire, ThisEnv->monblob_expire,
+           ThisEnv->monblob_expire_long);
   rc = ExecDBOP(dbg, sql);
   xfree(sql);
   return (rc == MCP_OK);
