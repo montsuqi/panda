@@ -231,6 +231,7 @@ static DB_Primitives Core = {
 };
 
 extern DB_Func *InitMONBLOB(void) {
+  setenv("MONBLOB_VERSION",MONBLOB_VERSION,1);
   return (
       EnterDB_Function("MONBLOB", Operations, DB_PARSER_NULL, &Core, "", ""));
 }
