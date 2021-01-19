@@ -210,9 +210,16 @@ static ValueStruct *_DestroyBLOB(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
   return (ret);
 }
 
+extern ValueStruct *MONBLOB_DBOPEN(DBG_Struct *dbg, DBCOMM_CTRL *ctrl) {
+  dbg->dbstatus = DB_STATUS_CONNECT;
+  ctrl->rc = MCP_OK;
+  setenv("MONBLOB_VERSION",MONBLOB_VERSION,1);
+  return (NULL);
+}
+
 static DB_OPS Operations[] = {
     /*	DB operations		*/
-    {"DBOPEN", (DB_FUNC)_DBOPEN},
+    {"DBOPEN", (DB_FUNC)MONBLOB_DBOPEN},
     {"DBDISCONNECT", (DB_FUNC)_DBDISCONNECT},
     {"DBSTART", (DB_FUNC)_DBSTART},
     {"DBCOMMIT", (DB_FUNC)_DBCOMMIT},
