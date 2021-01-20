@@ -393,16 +393,21 @@ static Bool monblob_expire(DBG_Struct *dbg) {
   snprintf(sql, sql_len,
            "DELETE FROM %s "
            "WHERE "
-           "  (lifetype = 0 AND "
+           "  ((now() > importtime + CAST('%d days' AS INTERVAL))) "
+           "OR "
+           "  (lifetype = %d AND "
            "    (now() > importtime + CAST('%d days' AS INTERVAL))) "
            "OR "
-           "  (lifetype = 1 AND "
+           "  (lifetype = %d AND "
            "    (now() > importtime + CAST('%d days' AS INTERVAL))) "
            "OR "
-           "  (lifetype = 3 AND "
+           "  (lifetype = %d AND "
            "    (now() > importtime + CAST('%d days' AS INTERVAL)));",
-           MONBLOB, ThisEnv->blob_expire, ThisEnv->monblob_expire,
-           ThisEnv->monblob_expire_long);
+           MONBLOB,
+           MONBLOB_FINAL_EXPIRE,
+           MON_LIFE_SHORT, ThisEnv->blob_expire,
+           MON_LIFE_LONG, ThisEnv->monblob_expire,
+           MON_LIFE_LONG_LONG, ThisEnv->monblob_expire_long);
   rc = ExecDBOP(dbg, sql, FALSE);
   xfree(sql);
   return (rc == MCP_OK);

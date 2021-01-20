@@ -26,8 +26,9 @@
 
 #define MON_LIFE_SHORT 0
 #define MON_LIFE_LONG 1
-#define MON_LIFE_ETERNAL 2
-#define MON_LIFE_LONG_LONG 3
+#define MON_LIFE_LONG_LONG 2
+
+#define MONBLOB_FINAL_EXPIRE 50
 
 typedef struct _monblob_struct {
   char *id;
