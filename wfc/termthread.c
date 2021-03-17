@@ -142,8 +142,6 @@ static void FreeSessionData(SessionData *data) {
   if (data->agent != NULL) {
     xfree(data->agent);
   }
-  /* セッションデータの削除 */
-  rm_r_old_depth(TempDirRoot,86400,1); /* 86400 = 1day */
   xfree(data->hdr);
   g_hash_table_foreach_remove(data->spadata, (GHRFunc)FreeSpa, NULL);
   DestroyHashTable(data->spadata);
@@ -181,6 +179,8 @@ static void RegisterSession(SessionData *data) {
   ctrl->session = data;
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
+  /* 古いセッションデータの削除 */
+  rm_r_old_depth(TempDirRoot,86400,1); /* 86400 = 1day */
 }
 
 static SessionData *LookupSession(const char *term) {
