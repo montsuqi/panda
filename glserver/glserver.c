@@ -103,6 +103,7 @@ static void SetDefault(void) {
 static void StopProcess(int ec) {
   //kill process group
   kill(0,SIGINT);
+  exit(0);
 }
 
 static void ExecuteServer(void) {
