@@ -63,6 +63,56 @@
 #include "message.h"
 #include "debug.h"
 
+static unsigned long now(void) {
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+}
+
+static void rm_r_old_depth(const char *name, unsigned int elapsed, int depth) {
+  DIR *dir;
+  struct dirent *ent;
+  struct stat st;
+  time_t now;
+  char path[4096];
+
+  if (name == NULL) {
+    return;
+  }
+
+  now = time(NULL);
+
+  if (stat(name, &st) == 0) {
+    if (S_ISDIR(st.st_mode)) {
+      /* directory */
+      if ((dir = opendir(name)) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+          if (strcmp(".",ent->d_name) == 0 || strcmp("..",ent->d_name) == 0) {
+            // skip
+          } else {
+            snprintf(path, sizeof(path), "%s/%s", name, ent->d_name);
+            rm_r_old_depth(path, elapsed, depth - 1);
+          }
+        }
+        closedir(dir);
+        if ((now - st.st_ctim.tv_sec) > elapsed && depth <= 0) {
+          remove(name);
+        }
+      }
+    } else {
+      /* file */
+      if ((now - st.st_ctim.tv_sec) > elapsed && depth <= 0) {
+        remove(name);
+      }
+    }
+  }
+}
+
+static void rm_r_old(const char *name, unsigned int elapsed) {
+  rm_r_old_depth(name,elapsed,0);
+}
+
 extern void TermEnqueue(TermNode *term, SessionData *data) {
   EnQueue(term->que, data);
 }
@@ -132,7 +182,12 @@ static guint FreeWindowTable(char *name, void *data, void *dummy) {
 }
 
 static void FreeSessionData(SessionData *data) {
-  if (data->type != SESSION_TYPE_API) {
+  /* APIの場合は一時ディレクトリを削除 */
+  if (data->type == SESSION_TYPE_API) {
+    if (!rm_r(data->hdr->tempdir)) {
+      Error("cannot remove api session tempdir %s",data->hdr->tempdir);
+    }
+  } else {
     MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
                      data->hdr->user, data->hdr->host, data->agent);
   }
@@ -142,13 +197,6 @@ static void FreeSessionData(SessionData *data) {
   if (data->agent != NULL) {
     xfree(data->agent);
   }
-#if 0
-	if (!getenv("WFC_KEEP_TEMPDIR")) {
-		if (!rm_r(data->hdr->tempdir)) {
-			Error("cannot remove session tempdir %s",data->hdr->tempdir);
-		}
-	}
-#endif
   xfree(data->hdr);
   g_hash_table_foreach_remove(data->spadata, (GHRFunc)FreeSpa, NULL);
   DestroyHashTable(data->spadata);
@@ -186,6 +234,8 @@ static void RegisterSession(SessionData *data) {
   ctrl->session = data;
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
+  /* 古いセッションデータの削除 */
+  rm_r_old_depth(TempDirRoot,86400,1); /* 86400 = 1day */
 }
 
 static SessionData *LookupSession(const char *term) {
