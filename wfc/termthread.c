@@ -132,7 +132,12 @@ static guint FreeWindowTable(char *name, void *data, void *dummy) {
 }
 
 static void FreeSessionData(SessionData *data) {
-  if (data->type != SESSION_TYPE_API) {
+  /* APIの場合は一時ディレクトリを削除 */
+  if (data->type == SESSION_TYPE_API) {
+    if (!rm_r(data->hdr->tempdir)) {
+      Error("cannot remove api session tempdir %s",data->hdr->tempdir);
+    }
+  } else {
     MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
                      data->hdr->user, data->hdr->host, data->agent);
   }
