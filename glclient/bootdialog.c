@@ -88,18 +88,6 @@ static void edit_dialog_run(GtkWidget *parent, int n) {
   gtk_widget_show_all(table);
 
   component = bd_component_new();
-  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-                     component->basictable, TRUE, TRUE, 0);
-  gtk_widget_show_all(component->basictable);
-
-  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-                     component->ssltable, TRUE, TRUE, 0);
-  gtk_widget_show_all(component->ssltable);
-
-  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-                     component->othertable, TRUE, TRUE, 0);
-  gtk_widget_show_all(component->othertable);
-
   bd_component_set_value(component, n);
 
   /* run */
