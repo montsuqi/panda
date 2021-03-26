@@ -1398,6 +1398,9 @@ static ValueStruct *_DBFETCH(DBG_Struct *dbg, DBCOMM_CTRL *ctrl,
 
   ret = NULL;
   ctrl->rcount = 0;
+  if (ctrl->limit <= 0) {
+    ctrl->limit = 1;
+  }
   if ((rec == NULL) || (rec->type != RECORD_DB)) {
     ctrl->rc = MCP_BAD_ARG;
   } else {
