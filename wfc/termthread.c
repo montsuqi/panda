@@ -96,6 +96,10 @@ static SessionData *NewSessionData(int type) {
   InitializeValue(data->sysdbval);
   data->count = 0;
   data->w.sp = 0;
+  /* 古い一時ディレクトリの削除 */
+  rm_r_old_depth(TempDirRoot,86400,1); /* TERM:1day */
+  rm_r_old_depth(ApiTempDirRoot,10800,1); /* API:3hour */
+  /* 一時ディレクトリ作成 */
   if (type == SESSION_TYPE_TERM) {
     snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
              data->hdr->uuid);
@@ -106,9 +110,6 @@ static SessionData *NewSessionData(int type) {
   if (!MakeDir(data->hdr->tempdir, 0700)) {
     Error("cannot make session tempdir %s", data->hdr->tempdir);
   }
-  /* 古いセッションデータの削除 */
-  rm_r_old_depth(TempDirRoot,86400,1); /* TERM:1day */
-  rm_r_old_depth(ApiTempDirRoot,10800,1); /* API:3hour */
   return (data);
 }
 
