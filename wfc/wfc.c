@@ -289,6 +289,7 @@ static void SetDefault(void) {
   if (TempDirRoot == NULL) {
     TempDirRoot = "/tmp/panda_root/";
   }
+  ApiTempDirRoot = g_strdup_printf("%s/api/",TempDirRoot);
   MaxTransactionRetry = 0;
   ControlPort = NULL;
   SesNum = 0;
