@@ -36,4 +36,5 @@ GLOBAL char *PasswordFile;
 GLOBAL char *SesDir;
 GLOBAL char *D_Dir;
 GLOBAL char *TempDirRoot;
+GLOBAL char *ApiTempDirRoot;
 #endif
