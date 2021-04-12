@@ -140,8 +140,10 @@ static guint FreeWindowTable(char *name, void *data, void *dummy) {
 }
 
 static void FreeSessionData(SessionData *data) {
-  MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
-                   data->hdr->user, data->hdr->host, data->agent);
+  if (data->type == SESSION_TYPE_TERM) {
+    MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
+                     data->hdr->user, data->hdr->host, data->agent);
+  }
   if (data->linkdata != NULL) {
     FreeLBS(data->linkdata);
   }
