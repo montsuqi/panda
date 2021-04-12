@@ -67,13 +67,13 @@ extern void TermEnqueue(TermNode *term, SessionData *data) {
   EnQueue(term->que, data);
 }
 
-static SessionData *NewSessionData(void) {
+static SessionData *NewSessionData(int type) {
   SessionData *data;
   uuid_t u;
 
   data = New(SessionData);
   memclear(data, sizeof(SessionData));
-  data->type = SESSION_TYPE_TERM;
+  data->type = type;
   data->status = SESSION_STATUS_NORMAL;
   data->hdr = New(MessageHeader);
   memclear(data->hdr, sizeof(MessageHeader));
@@ -96,11 +96,19 @@ static SessionData *NewSessionData(void) {
   InitializeValue(data->sysdbval);
   data->count = 0;
   data->w.sp = 0;
-  snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
-           data->hdr->uuid);
+  if (type == SESSION_TYPE_TERM) {
+    snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
+             data->hdr->uuid);
+  } else {
+    snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", ApiTempDirRoot,
+             data->hdr->uuid);
+  }
   if (!MakeDir(data->hdr->tempdir, 0700)) {
     Error("cannot make session tempdir %s", data->hdr->tempdir);
   }
+  /* 古いセッションデータの削除 */
+  rm_r_old_depth(TempDirRoot,86400,1); /* TERM:1day */
+  rm_r_old_depth(ApiTempDirRoot,10800,1); /* API:3hour */
   return (data);
 }
 
@@ -132,15 +140,8 @@ static guint FreeWindowTable(char *name, void *data, void *dummy) {
 }
 
 static void FreeSessionData(SessionData *data) {
-  /* APIの場合は一時ディレクトリを削除 */
-  if (data->type == SESSION_TYPE_API) {
-    if (!rm_r(data->hdr->tempdir)) {
-      Error("cannot remove api session tempdir %s",data->hdr->tempdir);
-    }
-  } else {
-    MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
-                     data->hdr->user, data->hdr->host, data->agent);
-  }
+  MessageLogPrintf("session end %s [%s@%s] %s", data->hdr->uuid,
+                   data->hdr->user, data->hdr->host, data->agent);
   if (data->linkdata != NULL) {
     FreeLBS(data->linkdata);
   }
@@ -184,8 +185,6 @@ static void RegisterSession(SessionData *data) {
   ctrl->session = data;
   ctrl = ExecSessionCtrl(ctrl);
   FreeSessionCtrl(ctrl);
-  /* 古いセッションデータの削除 */
-  rm_r_old_depth(TempDirRoot,86400,1); /* 86400 = 1day */
 }
 
 static SessionData *LookupSession(const char *term) {
@@ -234,8 +233,7 @@ static SessionData *InitAPISession(const char *user, const char *wname,
   SessionData *data;
   LD_Node *ld;
 
-  data = NewSessionData();
-  data->type = SESSION_TYPE_API;
+  data = NewSessionData(SESSION_TYPE_API);
   strcpy(data->hdr->window, wname);
   strcpy(data->hdr->user, user);
   strcpy(data->hdr->host, host);
@@ -345,7 +343,7 @@ static void RPC_StartSession(TermNode *term, json_object *obj) {
     return;
   }
 
-  data = NewSessionData();
+  data = NewSessionData(SESSION_TYPE_TERM);
   data->linkdata = NewLinkData();
   data->term = term;
 
