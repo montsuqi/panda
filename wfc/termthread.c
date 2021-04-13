@@ -63,6 +63,9 @@
 #include "message.h"
 #include "debug.h"
 
+static long old_tempdir_rm_sec     = 86400; /* 1day */
+static long old_api_tempdir_rm_sec = 86400; /* 1day */
+
 extern void TermEnqueue(TermNode *term, SessionData *data) {
   EnQueue(term->que, data);
 }
@@ -97,8 +100,8 @@ static SessionData *NewSessionData(int type) {
   data->count = 0;
   data->w.sp = 0;
   /* 古い一時ディレクトリの削除 */
-  rm_r_old_depth(TempDirRoot,86400,1); /* TERM:1day */
-  rm_r_old_depth(ApiTempDirRoot,10800,1); /* API:3hour */
+  rm_r_old_depth(TempDirRoot,old_tempdir_rm_sec,1);
+  rm_r_old_depth(ApiTempDirRoot,old_api_tempdir_rm_sec,1);
   /* 一時ディレクトリ作成 */
   if (type == SESSION_TYPE_TERM) {
     snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
@@ -1084,8 +1087,25 @@ extern int ConnectTerm(int _fhTerm) {
 }
 
 extern void InitTerm(void) {
+  char *env;
   RecParserInit();
   if (ThisEnv->linkrec != NULL) {
     InitializeValue(ThisEnv->linkrec->value);
+  }
+  if ((env = getenv("WFC_OLD_TEMPDIR_REMOVE_SEC")) != NULL) {
+    MessageLogPrintf("old_tempdir_rm_sec %ld -> %ld", 
+      old_tempdir_rm_sec, atol(env));
+    old_tempdir_rm_sec = atol(env);
+    if (old_tempdir_rm_sec < 0) {
+      old_tempdir_rm_sec = 0;
+    }
+  }
+  if ((env = getenv("WFC_OLD_API_TEMPDIR_REMOVE_SEC")) != NULL) {
+    MessageLogPrintf("old_api_tempdir_rm_sec %ld -> %ld", 
+      old_api_tempdir_rm_sec, atol(env));
+    old_api_tempdir_rm_sec = atol(env);
+    if (old_api_tempdir_rm_sec < 0) {
+      old_api_tempdir_rm_sec = 0;
+    }
   }
 }
