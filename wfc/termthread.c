@@ -100,8 +100,8 @@ static SessionData *NewSessionData(int type) {
   data->count = 0;
   data->w.sp = 0;
   /* 古い一時ディレクトリの削除 */
-  rm_r_old_depth(TempDirRoot,old_tempdir_rm_sec,1); /* TERM:1day */
-  rm_r_old_depth(ApiTempDirRoot,old_api_tempdir_rm_sec,1); /* API:3hour */
+  rm_r_old_depth(TempDirRoot,old_tempdir_rm_sec,1);
+  rm_r_old_depth(ApiTempDirRoot,old_api_tempdir_rm_sec,1);
   /* 一時ディレクトリ作成 */
   if (type == SESSION_TYPE_TERM) {
     snprintf(data->hdr->tempdir, SIZE_PATH, "%s/%s", TempDirRoot,
