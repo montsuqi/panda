@@ -63,8 +63,8 @@
 #include "message.h"
 #include "debug.h"
 
-static long old_tempdir_rm_sec     = 86400; /* 1day  */
-static long old_api_tempdir_rm_sec = 10800; /* 3hour */
+static long old_tempdir_rm_sec     = 86400; /* 1day */
+static long old_api_tempdir_rm_sec = 86400; /* 1day */
 
 extern void TermEnqueue(TermNode *term, SessionData *data) {
   EnQueue(term->que, data);
