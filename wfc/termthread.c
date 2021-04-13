@@ -1100,7 +1100,7 @@ extern void InitTerm(void) {
       old_tempdir_rm_sec = 0;
     }
   }
-  if ((env = getenv("WFC_API_OLD_TEMPDIR_REMOVE_SEC")) != NULL) {
+  if ((env = getenv("WFC_OLD_API_TEMPDIR_REMOVE_SEC")) != NULL) {
     MessageLogPrintf("old_api_tempdir_rm_sec %ld -> %ld", 
       old_api_tempdir_rm_sec, atol(env));
     old_api_tempdir_rm_sec = atol(env);
