@@ -777,6 +777,7 @@ extern void UI_Init(int argc, char **argv) {
       "  bg[NORMAL] = \"#ffffaf\""
       "}"
       "style \"panda-entry\" = \"entry\" {"
+      "  GtkEntry::inner-border = { 0, 0, 0, 0 }"
       "  text[INSENSITIVE] = @text_color"
       "  base[INSENSITIVE] = \"#ffffff\""
       "}"
@@ -784,10 +785,17 @@ extern void UI_Init(int argc, char **argv) {
       "  text[ACTIVE] = @selected_fg_color"
       "  base[ACTIVE] = @selected_bg_color"
       "}"
+      "style \"panda-button\" {"
+      "  GtkButton::default-border = { 0, 0, 0, 0 }"
+      "  GtkButton::inner-border = { 0, 0, 0, 0 }"
+      "  GtkWieget::image-spacing = 0"
+      "  GtkWieget::focus-padding = 0"
+      "}"
       "widget_class \"*.*\" style \"glclient2\""
       "widget_class \"*<GtkPandaEntry>\" style \"panda-entry\""
       "widget_class \"*<GtkNumberEntry>\" style \"panda-entry\""
       "widget_class \"*<GtkPandaCList>\" style \"panda-clist\""
+      "widget_class \"*<GtkButton>\" style \"panda-button\""
       "widget \"gtk-tooltip*\" style \"tooltip\"";
   gtk_rc_parse_string(rcstr);
   gtk_rc_reset_styles(gtk_settings_get_default());
