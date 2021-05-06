@@ -779,7 +779,6 @@ static gboolean APIHandler(HTTP_REQUEST *req) {
   res = WFCIO_JSONRPC(obj);
   json_object_put(obj);
   APISendResponse(req, res);
-  json_object_put(res);
   return TRUE;
 }
 
