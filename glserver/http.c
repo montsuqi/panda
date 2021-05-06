@@ -766,7 +766,6 @@ static void APISendResponse(HTTP_REQUEST *req, json_object *obj) {
   } else {
     SendResponse(req, status, NULL, 0, NULL);
   }
-  json_object_put(obj);
 
   MessageLogPrintf("api %d /%s/%s/%s %s@%s %s", status, req->ld, req->window,
                    req->arguments, req->user, req->host, req->agent);
@@ -779,6 +778,7 @@ static gboolean APIHandler(HTTP_REQUEST *req) {
   res = WFCIO_JSONRPC(obj);
   json_object_put(obj);
   APISendResponse(req, res);
+  json_object_put(res);
   return TRUE;
 }
 
